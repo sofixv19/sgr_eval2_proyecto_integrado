@@ -1,0 +1,31 @@
+# Entorno virtual
+venv/
+env/
+.venv/
+
+# Variables de entorno (contiene datos sensibles, no se sube a GitHub)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Base de datos local (SQLite, solo para desarrollo)
+db.sqlite3
+
+# Archivos estáticos recolectados (collectstatic, en el servidor)
+staticfiles/
+
+# Django
+*.log
+local_settings.py
+
+# Entornos / editores
+.vscode/
+.idea/
+*.swp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Actividades{% endblock %}
+
+{% block contenido %}
+<section class="hero">
+    <img src="{% static 'img/gestion-hero.svg' %}" alt="Ilustración de una lista de tareas" class="hero-logo">
+    <div>
+        <h1>Actividades registradas</h1>
+        <p class="lead">
+            Solicitudes y tareas ingresadas por las delegaciones, con su estado de avance.
+            Información obtenida desde la base de datos mediante Django ORM.
+        </p>
+    </div>
+</section>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <a href="{% url 'gestion:crear' %}" class="btn btn-institucional btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="me-1"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        Agregar actividad
+    </a>
+
+    <form method="get" class="d-flex gap-2 buscador-form" role="search">
+        {% if estado_seleccionado %}<input type="hidden" name="estado" value="{{ estado_seleccionado }}">{% endif %}
+        <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm"
+               placeholder="Buscar por código, descripción, delegación o categoría...">
+        <button type="submit" class="btn btn-outline-secondary btn-sm text-nowrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Buscar
+        </button>
+    </form>
+</div>
+
+<div class="filtro-bar mb-4">
+    <div class="filtro-bar-label">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 5h16l-6 8v6l-4-2v-4L4 5Z" fill="currentColor"/></svg>
+        Filtrar por estado
+    </div>
+    <div class="filtro-bar-opciones">
+        <a href="{% url 'gestion:listado' %}"
+           class="filtro-pill {% if not estado_seleccionado %}filtro-pill-activo{% endif %}">
+            Todas
+        </a>
+        {% for estado in estados %}
+        <a href="?estado={{ estado }}"
+           class="filtro-pill {% if estado_seleccionado == estado %}filtro-pill-activo{% endif %}">
+            {{ estado }}
+        </a>
+        {% endfor %}
+    </div>
+    <div class="filtro-bar-total">{{ total }} actividad{{ total|pluralize }}</div>
+</div>
+
+<div class="row g-4">
+    {% for actividad in actividades %}
+    <div class="col-md-6">
+        <div class="deleg-card">
+            <div class="deleg-card-body pt-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h2 class="h6 mb-0">{{ actividad.codigo }} &middot; {{ actividad.delegacion }}</h2>
+                    {% if actividad.estado == "Pendiente" %}
+                        <span class="badge-estado badge-pendiente">{{ actividad.estado }}</span>
+                    {% elif actividad.estado == "En proceso" %}
+                        <span class="badge-estado badge-en-proceso">{{ actividad.estado }}</span>
+                    {% else %}
+                        <span class="badge-estado badge-realizado">{{ actividad.estado }}</span>
+                    {% endif %}
+                </div>
+                <p class="small text-muted mb-2">{{ actividad.categoria }} &middot; {{ actividad.fecha }}</p>
+                <p class="mb-0">{{ actividad.descripcion }}</p>
+            </div>
+            <div class="deleg-card-acciones">
+                <a href="{% url 'gestion:detalle' actividad.id %}" class="deleg-card-link">
+                    Ver detalle
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+                <div class="deleg-card-botones">
+                    <a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary" title="Modificar">Modificar</a>
+                    <a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">Eliminar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p>No hay actividades para los filtros seleccionados.</p>
+    {% endfor %}
+</div>
+{% endblock %}

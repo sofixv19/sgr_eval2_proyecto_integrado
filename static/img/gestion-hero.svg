@@ -1,0 +1,15 @@
+<svg viewBox="0 0 480 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración de una lista de tareas o tickets de gestión">
+  <rect width="480" height="260" fill="#F4F4F5"/>
+  <rect x="150" y="35" width="180" height="210" rx="10" fill="#FFFFFF" stroke="#920000" stroke-width="3"/>
+  <rect x="200" y="20" width="80" height="30" rx="6" fill="#920000"/>
+  <circle cx="180" cy="80" r="9" fill="#3FA089"/>
+  <rect x="200" y="73" width="110" height="12" fill="#DADADD"/>
+  <circle cx="180" cy="115" r="9" fill="#3FA089"/>
+  <rect x="200" y="108" width="90" height="12" fill="#DADADD"/>
+  <circle cx="180" cy="150" r="9" fill="#E0A93E"/>
+  <rect x="200" y="143" width="100" height="12" fill="#DADADD"/>
+  <circle cx="180" cy="185" r="9" fill="#C23B4A"/>
+  <rect x="200" y="178" width="70" height="12" fill="#DADADD"/>
+  <circle cx="180" cy="220" r="9" fill="#3FA089"/>
+  <rect x="200" y="213" width="95" height="12" fill="#DADADD"/>
+</svg>

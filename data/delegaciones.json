@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "nombre": "Avenida del Mar",
+    "encargado": "Rodrigo Fuenzalida Vásquez",
+    "direccion": "Avenida del Mar 2500",
+    "telefono": "512 206518",
+    "email": "avenidadelmar@laserena.cl",
+    "territorio": "Borde costero, turismo, residencial y servicios",
+    "enfoque": "Coordinación estacional, espacios públicos, seguridad y prevención, vinculación con residentes, comercio, edificios y servicios turísticos."
+  },
+  {
+    "id": 2,
+    "nombre": "Centro",
+    "encargado": "Alan Von Kretschmann",
+    "direccion": "Cienfuegos 226",
+    "telefono": "512 207861",
+    "email": "centro@laserena.cl",
+    "territorio": "Centro histórico, administrativo, comercial y patrimonial",
+    "enfoque": "Atención territorial, convivencia urbana, articulación con comercio y organizaciones, operativos municipales y gestión del espacio público."
+  },
+  {
+    "id": 3,
+    "nombre": "La Antena - La Florida",
+    "encargado": "Elizabeth Villanueva Oyarce",
+    "direccion": "Avenida 18 de Septiembre S/N",
+    "telefono": "512 206618",
+    "email": "antena@laserena.cl",
+    "territorio": "Sector urbano oriental y barrios asociados",
+    "enfoque": "Participación vecinal, canalización de requerimientos, apoyo social y comunitario, coordinación de servicios y acciones en terreno."
+  },
+  {
+    "id": 4,
+    "nombre": "Las Compañías",
+    "encargado": "Pablo Cuadra Corrales",
+    "direccion": "Esmeralda 2422, costado Banco Estado",
+    "telefono": "512 206527",
+    "email": "lascompanias@laserena.cl",
+    "territorio": "Sector urbano norte de alta densidad y fuerte identidad territorial",
+    "enfoque": "Gestión comunitaria, articulación con organizaciones, acceso a programas y servicios, operativos sociales y actividades territoriales."
+  },
+  {
+    "id": 5,
+    "nombre": "La Pampa",
+    "encargado": "María Soledad Rojas",
+    "direccion": "Larraín Alcalde 3505",
+    "telefono": "512 206788",
+    "email": "pampa@laserena.cl",
+    "territorio": "Sector urbano sur y áreas residenciales asociadas",
+    "enfoque": "Asistencia social, orientación de subsidios, apoyo a organizaciones, gestión de requerimientos de aseo, alumbrado, plazas y áreas verdes."
+  },
+  {
+    "id": 6,
+    "nombre": "Rural",
+    "encargado": "Manuel Barraza Delgado",
+    "direccion": "O'Higgins 154",
+    "telefono": "512 206687",
+    "email": "rural@laserena.cl",
+    "territorio": "Localidades y comunidades rurales dispersas",
+    "enfoque": "Acercamiento de servicios, coordinación intersectorial, apoyo a organizaciones rurales, emergencias, conectividad territorial."
+  }
+]

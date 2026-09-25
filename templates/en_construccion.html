@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina }}{% endblock %}
+
+{% block contenido %}
+<div class="en-construccion">
+    <svg class="en-construccion-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 2 3 7v2h18V7l-9-5Z" fill="currentColor"/>
+        <path d="M5 10v9h3v-7h2v7h4v-7h2v7h3v-9H5Z" fill="currentColor"/>
+        <rect x="3" y="20" width="18" height="2" fill="currentColor"/>
+    </svg>
+    <h1 class="h4 mb-2">{{ accion }}</h1>
+    <p class="text-muted mb-4">
+        Este control ya está conectado a una ruta real del sistema, tal como
+        exige la Evaluación Sumativa 2. Su operación funcional (formulario que
+        crea, modifica o elimina el registro en la base de datos) se
+        implementará en la Evaluación Sumativa N&deg;3.
+    </p>
+    <a href="{{ volver_url }}" class="btn btn-institucional">Volver</a>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block titulo %}Resumen de gestión{% endblock %}
+
+{% block contenido %}
+<p class="text-uppercase small eyebrow mb-2">Aplicación de Gestión</p>
+<h1 class="h2 mb-1">Resumen de gestión</h1>
+<p class="text-muted mb-4">
+    Totales calculados en tiempo real mediante consultas ORM sobre la base de datos.
+</p>
+
+<div class="row g-4 mb-4">
+    <div class="col-sm-4">
+        <div class="stat-box" style="border-top-color: var(--color-rojo);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="color: var(--color-rojo); margin-bottom: .5rem;">
+                <circle cx="12" cy="12" r="9" fill="currentColor"/>
+                <rect x="11" y="6" width="2" height="7" fill="#fff"/>
+                <rect x="11" y="14.5" width="2" height="2" fill="#fff"/>
+            </svg>
+            <div class="stat-valor" style="color: var(--color-rojo);">{{ conteo.pendiente }}</div>
+            <div class="stat-label">Pendientes</div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-box" style="border-top-color: var(--color-ambar);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="color: var(--color-ambar); margin-bottom: .5rem;">
+                <circle cx="12" cy="12" r="9" fill="currentColor"/>
+                <path d="M12 7v5l3.5 2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            </svg>
+            <div class="stat-valor" style="color: var(--color-ambar);">{{ conteo.en_proceso }}</div>
+            <div class="stat-label">En proceso</div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-box" style="border-top-color: var(--color-verde);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="color: var(--color-verde); margin-bottom: .5rem;">
+                <circle cx="12" cy="12" r="9" fill="currentColor"/>
+                <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <div class="stat-valor" style="color: var(--color-verde);">{{ conteo.realizado }}</div>
+            <div class="stat-label">Realizadas</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h2 class="h6 chart-title">Distribución por estado</h2>
+            <div class="donut-wrap">
+                <div class="donut" style="background: conic-gradient(
+                    var(--color-rojo) 0deg {{ donut_grados.pendiente }}deg,
+                    var(--color-ambar) {{ donut_grados.pendiente }}deg {{ donut_grados.en_proceso }}deg,
+                    var(--color-verde) {{ donut_grados.en_proceso }}deg {{ donut_grados.realizado }}deg
+                );">
+                    <div class="donut-hole">
+                        <span class="donut-total">{{ total }}</span>
+                        <span class="donut-total-label">total</span>
+                    </div>
+                </div>
+                <ul class="donut-legend">
+                    <li><span class="dot" style="background: var(--color-rojo);"></span>Pendiente <strong>{{ conteo.pendiente }}</strong></li>
+                    <li><span class="dot" style="background: var(--color-ambar);"></span>En proceso <strong>{{ conteo.en_proceso }}</strong></li>
+                    <li><span class="dot" style="background: var(--color-verde);"></span>Realizado <strong>{{ conteo.realizado }}</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="chart-card d-flex flex-column justify-content-center text-center h-100">
+            <p class="text-muted mb-1">Porcentaje de actividades realizadas</p>
+            <div class="stat-valor" style="font-size: 3rem; color: var(--color-verde);">{{ porcentaje_realizado }}%</div>
+            <div class="bar-track mt-3 mb-2" style="height: 14px;">
+                <div class="bar-fill" style="width: {{ porcentaje_realizado }}%; background: var(--color-verde);"></div>
+            </div>
+            <p class="text-muted small mb-0">{{ total }} actividades en total</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

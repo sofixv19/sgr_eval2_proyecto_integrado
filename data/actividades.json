@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "codigo": "RUR-001",
+    "fecha": "2026-08-05",
+    "delegacion": "Rural",
+    "categoria": "Diserco",
+    "descripcion": "Solicitud de máquina para reparar camino cortado por lluvias",
+    "funcionario": "F. Contreras (ejemplo)",
+    "estado": "Realizado"
+  },
+  {
+    "id": 2,
+    "codigo": "PAM-014",
+    "fecha": "2026-08-10",
+    "delegacion": "La Pampa",
+    "categoria": "Social",
+    "descripcion": "Orientación sobre postulación a subsidio de agua potable",
+    "funcionario": "P. Rojas (ejemplo)",
+    "estado": "En proceso"
+  },
+  {
+    "id": 3,
+    "codigo": "CEN-022",
+    "fecha": "2026-08-12",
+    "delegacion": "Centro",
+    "categoria": "Seguridad",
+    "descripcion": "Reporte de luminaria pública apagada en calle Cienfuegos",
+    "funcionario": "J. Herrera (ejemplo)",
+    "estado": "Pendiente"
+  },
+  {
+    "id": 4,
+    "codigo": "COM-031",
+    "fecha": "2026-08-14",
+    "delegacion": "Las Compañías",
+    "categoria": "Organizaciones Comunitarias",
+    "descripcion": "Coordinación de reunión con directiva de junta de vecinos",
+    "funcionario": "M. Soto (ejemplo)",
+    "estado": "Realizado"
+  },
+  {
+    "id": 5,
+    "codigo": "MAR-007",
+    "fecha": "2026-08-18",
+    "delegacion": "Avenida del Mar",
+    "categoria": "Diserco",
+    "descripcion": "Poda de árboles en plaza sector Puerta del Mar",
+    "funcionario": "R. Fuenzalida (ejemplo)",
+    "estado": "En proceso"
+  },
+  {
+    "id": 6,
+    "codigo": "ANT-019",
+    "fecha": "2026-08-20",
+    "delegacion": "La Antena - La Florida",
+    "categoria": "Social",
+    "descripcion": "Entrega de certificado social para postulación universitaria",
+    "funcionario": "E. Villanueva (ejemplo)",
+    "estado": "Pendiente"
+  },
+  {
+    "id": 7,
+    "codigo": "RUR-004",
+    "fecha": "2026-08-22",
+    "delegacion": "Rural",
+    "categoria": "Seguridad",
+    "descripcion": "Visita técnica preventiva por riesgo de aluvión en sector alto",
+    "funcionario": "M. Barraza (ejemplo)",
+    "estado": "Pendiente"
+  },
+  {
+    "id": 8,
+    "codigo": "PAM-020",
+    "fecha": "2026-08-25",
+    "delegacion": "La Pampa",
+    "categoria": "Diserco",
+    "descripcion": "Retiro de escombros en sitio eriazo",
+    "funcionario": "P. Rojas (ejemplo)",
+    "estado": "Realizado"
+  }
+]
