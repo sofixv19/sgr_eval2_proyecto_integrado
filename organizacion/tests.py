@@ -112,7 +112,7 @@ class CargoMantenedorTests(TestCase):
         self.cargo = CargoFuncion.objects.create(nombre_cargo='Gestor Social')
 
     def test_cp_car_001_crear_cargo_valido(self):
-        """CP-CAR-001: se crea un cargo con datos válidos y se redirige al listado."""
+        """CP-CAR-001: Se crea un cargo con datos válidos y se redirige al listado."""
         respuesta = self.client.post(reverse('organizacion:cargo_crear'), {
             'nombre_cargo': 'Inspector Territorial', 'descripcion': 'Fiscaliza en terreno', 'active': 'on',
         })
@@ -120,18 +120,18 @@ class CargoMantenedorTests(TestCase):
         self.assertTrue(CargoFuncion.objects.filter(nombre_cargo='Inspector Territorial', active=True).exists())
 
     def test_cp_car_002_nombre_duplicado(self):
-        """CP-CAR-002: no se acepta un cargo con el mismo nombre, aunque cambien mayúsculas."""
+        """CP-CAR-002: No se acepta un cargo con el mismo nombre, aunque cambien mayúsculas."""
         form = CargoFuncionForm(data={'nombre_cargo': 'GESTOR SOCIAL', 'active': True})
         self.assertFalse(form.is_valid())
         self.assertIn('Ya existe un cargo con ese nombre.', form.errors['nombre_cargo'])
 
     def test_cp_car_003_nombre_obligatorio_e_invalido(self):
-        """CP-CAR-003: el nombre del cargo es obligatorio y no admite números ni símbolos."""
+        """CP-CAR-003: El nombre del cargo es obligatorio y no admite números ni símbolos."""
         self.assertFalse(CargoFuncionForm(data={'nombre_cargo': ''}).is_valid())
         self.assertFalse(CargoFuncionForm(data={'nombre_cargo': 'Cargo#1'}).is_valid())
 
     def test_cp_car_004_editar_vigencia(self):
-        """CP-CAR-004: se puede modificar un cargo y dejarlo como no vigente."""
+        """CP-CAR-004: Se puede modificar un cargo y dejarlo como no vigente."""
         self.client.post(reverse('organizacion:cargo_editar', args=[self.cargo.pk]), {
             'nombre_cargo': 'Gestor Social', 'descripcion': 'Atiende casos sociales',
         })
@@ -140,7 +140,7 @@ class CargoMantenedorTests(TestCase):
         self.assertEqual(self.cargo.descripcion, 'Atiende casos sociales')
 
     def test_cp_car_005_eliminar_cargo_con_funcionarios(self):
-        """CP-CAR-005: no se elimina un cargo con funcionarios; se muestra un mensaje de error."""
+        """CP-CAR-005: No se elimina un cargo con funcionarios; se muestra un mensaje de error."""
         Funcionario.objects.create(
             nombre='Ana Rojas', rut='12.345.678-5', email='ana@laserena.cl',
             delegacion=_delegacion(), cargo=self.cargo,
@@ -150,7 +150,7 @@ class CargoMantenedorTests(TestCase):
         self.assertContains(respuesta, 'No se puede eliminar')
 
     def test_cp_car_006_eliminar_cargo_sin_funcionarios(self):
-        """CP-CAR-006: un cargo sin funcionarios se elimina correctamente."""
+        """CP-CAR-006: Un cargo sin funcionarios se elimina correctamente."""
         respuesta = self.client.post(reverse('organizacion:cargo_eliminar', args=[self.cargo.pk]))
         self.assertRedirects(respuesta, reverse('organizacion:cargos'))
         self.assertFalse(CargoFuncion.objects.filter(pk=self.cargo.pk).exists())
@@ -175,55 +175,55 @@ class FuncionarioMantenedorTests(TestCase):
         return Funcionario.objects.create(**datos)
 
     def test_cp_fun_001_crear_funcionario_valido(self):
-        """CP-FUN-001: se crea un funcionario; el RUT se normaliza y el correo se guarda en minúsculas."""
+        """CP-FUN-001: Se crea un funcionario; el RUT se normaliza y el correo se guarda en minúsculas."""
         respuesta = self.client.post(reverse('organizacion:funcionario_crear'), self.datos)
         self.assertRedirects(respuesta, reverse('organizacion:listado'))
         funcionario = Funcionario.objects.get(rut='12.345.678-5')
         self.assertEqual(funcionario.email, 'ana.rojas@laserena.cl')
 
     def test_cp_fun_002_rut_con_dv_incorrecto(self):
-        """CP-FUN-002: el formulario rechaza un RUT con dígito verificador incorrecto."""
+        """CP-FUN-002: El formulario rechaza un RUT con dígito verificador incorrecto."""
         form = FuncionarioForm(data={**self.datos, 'rut': '12.345.678-9'})
         self.assertFalse(form.is_valid())
         self.assertIn('rut', form.errors)
 
     def test_cp_fun_003_rut_duplicado(self):
-        """CP-FUN-003: no se puede registrar dos veces el mismo RUT, aunque se escriba sin puntos."""
+        """CP-FUN-003: No se puede registrar dos veces el mismo RUT, aunque se escriba sin puntos."""
         self._existente(rut='12.345.678-5')
         form = FuncionarioForm(data=self.datos)
         self.assertFalse(form.is_valid())
         self.assertIn('Ya existe un funcionario con ese RUT.', form.errors['rut'])
 
     def test_cp_fun_004_correo_duplicado(self):
-        """CP-FUN-004: no se acepta un correo ya registrado (sin distinguir mayúsculas)."""
+        """CP-FUN-004: No se acepta un correo ya registrado (sin distinguir mayúsculas)."""
         self._existente(email='ana.rojas@laserena.cl')
         form = FuncionarioForm(data=self.datos)
         self.assertFalse(form.is_valid())
         self.assertIn('email', form.errors)
 
     def test_cp_fun_005_un_solo_delegado_por_delegacion(self):
-        """CP-FUN-005: una delegación no puede tener dos Delegados activos."""
+        """CP-FUN-005: Una delegación no puede tener dos Delegados activos."""
         self._existente(rol='Delegado')
         form = FuncionarioForm(data={**self.datos, 'rol': 'Delegado'})
         self.assertFalse(form.is_valid())
         self.assertIn('ya tiene un Delegado activo', str(form.non_field_errors()))
 
     def test_cp_fun_006_solo_cargos_vigentes(self):
-        """CP-FUN-006: el formulario solo ofrece cargos vigentes."""
+        """CP-FUN-006: El formulario solo ofrece cargos vigentes."""
         no_vigente = CargoFuncion.objects.create(nombre_cargo='Cargo antiguo', active=False)
         form = FuncionarioForm()
         self.assertIn(self.cargo, form.fields['cargo'].queryset)
         self.assertNotIn(no_vigente, form.fields['cargo'].queryset)
 
     def test_cp_fun_007_campos_obligatorios(self):
-        """CP-FUN-007: nombre, RUT, correo, delegación y cargo son obligatorios."""
+        """CP-FUN-007: Nombre, RUT, correo, delegación y cargo son obligatorios."""
         form = FuncionarioForm(data={'rol': 'Funcionario'})
         self.assertFalse(form.is_valid())
         for campo in ['nombre', 'rut', 'email', 'delegacion', 'cargo']:
             self.assertIn(campo, form.errors)
 
     def test_cp_fun_008_editar_funcionario(self):
-        """CP-FUN-008: se modifica un funcionario existente y se puede desactivar."""
+        """CP-FUN-008: Se modifica un funcionario existente y se puede desactivar."""
         funcionario = self._existente()
         self.client.post(reverse('organizacion:funcionario_editar', args=[funcionario.pk]), {
             'nombre': 'Pedro Soto Díaz', 'rut': '7.654.321-6', 'email': 'pedro@laserena.cl',
@@ -234,7 +234,7 @@ class FuncionarioMantenedorTests(TestCase):
         self.assertFalse(funcionario.activo)
 
     def test_cp_fun_009_eliminar_funcionario_con_actividades(self):
-        """CP-FUN-009: no se elimina un funcionario con actividades registradas (PROTECT)."""
+        """CP-FUN-009: No se elimina un funcionario con actividades registradas (PROTECT)."""
         funcionario = self._existente()
         Actividad.objects.create(
             codigo='RUR-900', fecha=datetime.date(2026, 10, 1), delegacion=self.delegacion,
@@ -245,14 +245,14 @@ class FuncionarioMantenedorTests(TestCase):
         self.assertContains(respuesta, 'No se puede eliminar')
 
     def test_cp_fun_010_eliminar_y_ver_detalle(self):
-        """CP-FUN-010: el detalle responde 200 y un funcionario sin actividades se elimina."""
+        """CP-FUN-010: El detalle responde 200 y un funcionario sin actividades se elimina."""
         funcionario = self._existente()
         self.assertEqual(self.client.get(reverse('organizacion:funcionario_detalle', args=[funcionario.pk])).status_code, 200)
         self.client.post(reverse('organizacion:funcionario_eliminar', args=[funcionario.pk]))
         self.assertFalse(Funcionario.objects.filter(pk=funcionario.pk).exists())
 
     def test_cp_fun_011_busqueda_en_listado(self):
-        """CP-FUN-011: el listado filtra por nombre, RUT, cargo o delegación."""
+        """CP-FUN-011: El listado filtra por nombre, RUT, cargo o delegación."""
         self._existente()
         respuesta = self.client.get(reverse('organizacion:listado'), {'q': '7.654.321'})
         self.assertContains(respuesta, 'Pedro Soto')
@@ -272,13 +272,13 @@ class MetaMantenedorTests(TestCase):
         }
 
     def test_cp_met_001_crear_meta_valida(self):
-        """CP-MET-001: se crea una meta válida y se redirige al listado."""
+        """CP-MET-001: Se crea una meta válida y se redirige al listado."""
         respuesta = self.client.post(reverse('organizacion:meta_crear'), self.datos)
         self.assertRedirects(respuesta, reverse('organizacion:metas'))
         self.assertEqual(MetaProyecto.objects.get().ponderador, 40)
 
     def test_cp_met_002_valor_objetivo_cero_o_texto(self):
-        """CP-MET-002: el valor objetivo debe ser un número mayor que cero (RN-002)."""
+        """CP-MET-002: El valor objetivo debe ser un número mayor que cero (RN-002)."""
         for valor in ['0', '-5', 'veinte', '']:
             with self.subTest(valor=valor):
                 form = MetaProyectoForm(data={**self.datos, 'valor_objetivo': valor})
@@ -286,13 +286,13 @@ class MetaMantenedorTests(TestCase):
                 self.assertIn('valor_objetivo', form.errors)
 
     def test_cp_met_003_porcentaje_mayor_a_100(self):
-        """CP-MET-003: si la unidad es Porcentaje, el valor objetivo no puede superar 100."""
+        """CP-MET-003: Si la unidad es Porcentaje, el valor objetivo no puede superar 100."""
         form = MetaProyectoForm(data={**self.datos, 'unidad': 'Porcentaje', 'valor_objetivo': '120'})
         self.assertFalse(form.is_valid())
         self.assertIn('valor_objetivo', form.errors)
 
     def test_cp_met_004_ponderador_fuera_de_rango(self):
-        """CP-MET-004: el ponderador debe estar entre 1 y 100."""
+        """CP-MET-004: El ponderador debe estar entre 1 y 100."""
         for ponderador in [0, 101, -10]:
             with self.subTest(ponderador=ponderador):
                 form = MetaProyectoForm(data={**self.datos, 'ponderador': ponderador})
@@ -300,20 +300,20 @@ class MetaMantenedorTests(TestCase):
                 self.assertIn('ponderador', form.errors)
 
     def test_cp_met_005_suma_de_ponderadores_supera_100(self):
-        """CP-MET-005: la suma de ponderadores de un cargo no puede superar 100 % (RN-001)."""
+        """CP-MET-005: La suma de ponderadores de un cargo no puede superar 100 % (RN-001)."""
         MetaProyecto.objects.create(cargo=self.cargo, item_medible='Meta A', valor_objetivo='10', ponderador=70)
         form = MetaProyectoForm(data={**self.datos, 'ponderador': 40})
         self.assertFalse(form.is_valid())
         self.assertIn('110 %', str(form.errors['ponderador']))
 
     def test_cp_met_006_editar_no_cuenta_su_propio_ponderador(self):
-        """CP-MET-006: al editar una meta, su propio ponderador anterior no se suma dos veces."""
+        """CP-MET-006: Al editar una meta, su propio ponderador anterior no se suma dos veces."""
         meta = MetaProyecto.objects.create(cargo=self.cargo, item_medible='Meta A', valor_objetivo='10', ponderador=90)
         form = MetaProyectoForm(data={**self.datos, 'item_medible': 'Meta A', 'ponderador': 100}, instance=meta)
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_cp_met_007_editar_y_eliminar_meta(self):
-        """CP-MET-007: una meta se modifica y luego se elimina desde el mantenedor."""
+        """CP-MET-007: Una meta se modifica y luego se elimina desde el mantenedor."""
         meta = MetaProyecto.objects.create(cargo=self.cargo, item_medible='Meta A', valor_objetivo='10', ponderador=10)
         self.client.post(reverse('organizacion:meta_editar', args=[meta.pk]), {**self.datos, 'ponderador': 30})
         meta.refresh_from_db()

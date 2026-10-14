@@ -169,33 +169,33 @@ class DelegacionValidacionesTests(TestCase):
         }
 
     def test_cp_del_001_formulario_valido(self):
-        """CP-DEL-001: con datos válidos el formulario es válido y el correo queda en minúsculas."""
+        """CP-DEL-001: Con datos válidos el formulario es válido y el correo queda en minúsculas."""
         form = DelegacionForm(data=self.datos)
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['email'], 'norte@laserena.cl')
 
     def test_cp_del_002_telefono_invalido(self):
-        """CP-DEL-002: un teléfono que no tiene 9 dígitos se rechaza."""
+        """CP-DEL-002: Un teléfono que no tiene 9 dígitos se rechaza."""
         form = DelegacionForm(data={**self.datos, 'telefono': '1234'})
         self.assertFalse(form.is_valid())
         self.assertIn('telefono', form.errors)
 
     def test_cp_del_003_nombre_duplicado(self):
-        """CP-DEL-003: no se acepta una delegación con un nombre ya registrado (sin distinguir mayúsculas)."""
+        """CP-DEL-003: No se acepta una delegación con un nombre ya registrado (sin distinguir mayúsculas)."""
         Delegacion.objects.create(**{**self.datos, 'email': 'otra@laserena.cl'})
         form = DelegacionForm(data={**self.datos, 'nombre': 'DELEGACIÓN NORTE'})
         self.assertFalse(form.is_valid())
         self.assertIn('nombre', form.errors)
 
     def test_cp_del_004_campos_obligatorios(self):
-        """CP-DEL-004: todos los campos de la delegación son obligatorios."""
+        """CP-DEL-004: Todos los campos de la delegación son obligatorios."""
         form = DelegacionForm(data={})
         self.assertFalse(form.is_valid())
         for campo in ['nombre', 'encargado', 'direccion', 'telefono', 'email', 'territorio', 'enfoque']:
             self.assertIn(campo, form.errors)
 
     def test_cp_del_005_eliminar_con_funcionarios(self):
-        """CP-DEL-005: no se elimina una delegación con funcionarios (RESTRICT); se muestra un mensaje."""
+        """CP-DEL-005: No se elimina una delegación con funcionarios (RESTRICT); se muestra un mensaje."""
         from organizacion.models import CargoFuncion, Funcionario
         delegacion = Delegacion.objects.create(**self.datos)
         Funcionario.objects.create(
@@ -207,7 +207,7 @@ class DelegacionValidacionesTests(TestCase):
         self.assertContains(respuesta, 'No se puede eliminar la delegación')
 
     def test_cp_del_006_sin_permiso_no_crea(self):
-        """CP-DEL-006: un usuario sin permiso de agregar recibe 403 y no se crea la delegación."""
+        """CP-DEL-006: Un usuario sin permiso de agregar recibe 403 y no se crea la delegación."""
         from comun.pruebas import crear_usuario
         self.client.force_login(crear_usuario('sin.permisos'))
         respuesta = self.client.post(reverse('delegaciones:crear'), self.datos)

@@ -353,7 +353,7 @@ class CategoriaMantenedorTests(TestCase):
         self.categoria = Categoria.objects.create(nombre='Social', descripcion='Casos sociales')
 
     def test_cp_cat_001_crear_categoria_valida(self):
-        """CP-CAT-001: se crea una categoría con datos válidos y aparece el mensaje de éxito."""
+        """CP-CAT-001: Se crea una categoría con datos válidos y aparece el mensaje de éxito."""
         respuesta = self.client.post(reverse('gestion:categoria_crear'), {
             'nombre': 'Medio Ambiente', 'descripcion': 'Limpieza de playas',
         }, follow=True)
@@ -361,19 +361,19 @@ class CategoriaMantenedorTests(TestCase):
         self.assertContains(respuesta, 'creado/a correctamente')
 
     def test_cp_cat_002_nombre_duplicado(self):
-        """CP-CAT-002: no se acepta una categoría repetida, aunque cambien mayúsculas."""
+        """CP-CAT-002: No se acepta una categoría repetida, aunque cambien mayúsculas."""
         form = CategoriaForm(data={'nombre': 'SOCIAL'})
         self.assertFalse(form.is_valid())
         self.assertIn('Ya existe una categoría con ese nombre.', form.errors['nombre'])
 
     def test_cp_cat_003_nombre_obligatorio_y_formato(self):
-        """CP-CAT-003: el nombre es obligatorio, de al menos 3 letras y sin números."""
+        """CP-CAT-003: El nombre es obligatorio, de al menos 3 letras y sin números."""
         for nombre in ['', 'Ab', 'Categoría 2']:
             with self.subTest(nombre=nombre):
                 self.assertFalse(CategoriaForm(data={'nombre': nombre}).is_valid())
 
     def test_cp_cat_004_editar_categoria(self):
-        """CP-CAT-004: se modifica el nombre y la descripción de una categoría."""
+        """CP-CAT-004: Se modifica el nombre y la descripción de una categoría."""
         self.client.post(reverse('gestion:categoria_editar', args=[self.categoria.pk]), {
             'nombre': 'Social y Comunitaria', 'descripcion': 'Actualizada',
         })
@@ -381,13 +381,13 @@ class CategoriaMantenedorTests(TestCase):
         self.assertEqual(self.categoria.nombre, 'Social y Comunitaria')
 
     def test_cp_cat_005_eliminar_categoria_sin_uso(self):
-        """CP-CAT-005: una categoría sin actividades se elimina y se redirige al listado."""
+        """CP-CAT-005: Una categoría sin actividades se elimina y se redirige al listado."""
         respuesta = self.client.post(reverse('gestion:categoria_eliminar', args=[self.categoria.pk]))
         self.assertRedirects(respuesta, reverse('gestion:categorias'))
         self.assertFalse(Categoria.objects.filter(pk=self.categoria.pk).exists())
 
     def test_cp_cat_006_eliminar_categoria_en_uso(self):
-        """CP-CAT-006: una categoría usada por actividades no se elimina; se informa el error sin caer el sistema."""
+        """CP-CAT-006: Una categoría usada por actividades no se elimina; se informa el error sin caer el sistema."""
         delegacion = Delegacion.objects.create(
             nombre='Rural', encargado='E', direccion='D', telefono='512206518',
             email='r@laserena.cl', territorio='T', enfoque='E',
@@ -402,7 +402,7 @@ class CategoriaMantenedorTests(TestCase):
         self.assertContains(respuesta, 'No se puede eliminar')
 
     def test_cp_cat_007_listado_con_busqueda(self):
-        """CP-CAT-007: el listado muestra las categorías y filtra por texto."""
+        """CP-CAT-007: El listado muestra las categorías y filtra por texto."""
         Categoria.objects.create(nombre='Seguridad')
         respuesta = self.client.get(reverse('gestion:categorias'), {'q': 'segu'})
         self.assertContains(respuesta, 'Seguridad')
