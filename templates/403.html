@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block titulo %}Acceso denegado{% endblock %}
+{% block contenido %}
+<div class="form-card form-card-peligro">
+    <h1 class="h4 mb-2">Acceso denegado (403)</h1>
+    <p class="text-muted mb-4">Su usuario no tiene permiso para realizar esta acción. Si cree que es un error, solicite el permiso al Administrador del sistema.</p>
+    <a href="{% url 'delegaciones:inicio' %}" class="btn btn-outline-secondary">Volver al inicio</a>
+</div>
+{% endblock %}

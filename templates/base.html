@@ -23,12 +23,10 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navPrincipal">
+                    {% if user.is_authenticated %}
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'delegaciones:inicio' %}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'delegaciones:listado' %}">Delegaciones</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'gestion:listado' %}">Actividades</a>
@@ -36,13 +34,48 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mantenedores</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'delegaciones:listado' %}">Delegaciones</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:listado' %}">Funcionarios</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:cargos' %}">Cargos y funciones</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:metas' %}">Metas institucionales</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestion:categorias' %}">Categorías de actividad</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ user.get_username }}</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><span class="dropdown-item-text small text-muted">Rol: {% for g in user.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% if user.is_superuser %}Superusuario{% else %}Sin rol{% endif %}{% endfor %}</span></li>
+                                {% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Panel de administración</a></li>{% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'cuentas:logout' %}" class="px-3">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">Cerrar sesión</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
+                    {% endif %}
                 </div>
             </div>
         </nav>
     </header>
 
     <main class="container page-content">
+        {% if messages %}
+        <div class="mensajes-sistema mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'success' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% block contenido %}{% endblock %}
     </main>
 
@@ -50,7 +83,7 @@
         <div class="container">
             <p class="mb-1">Sistema de Gestión de Resultados (SGR) &mdash; Prototipo académico</p>
             <p class="mb-0 text-muted small">
-                Ilustre Municipalidad de La Serena · Evaluación Sumativa 2, Programación Back End (TI3041) · INACAP
+                Ilustre Municipalidad de La Serena · Proyecto Integrado · Programación Back End · INACAP
             </p>
         </div>
     </footer>

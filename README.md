@@ -7,6 +7,19 @@ Municipalidad de La Serena, ahora migrado desde archivos JSON hacia una
 para desplegarse en una instancia **AWS EC2** con control de versiones en
 **GitHub**.
 
+## Novedades Evaluación 2 de Proyecto Integrado (octubre 2026)
+
+- **Inicio de sesión obligatorio** en todo el sitio (`/cuentas/ingresar/`), con bloqueo temporal tras 5 intentos fallidos y cierre de sesión por POST.
+- **Mantenedores (CRUD) de todas las tablas maestras**, con validaciones y permisos por rol:
+  - Delegaciones (`/delegaciones/`)
+  - Funcionarios (`/organizacion/funcionarios/`)
+  - Cargos (`/organizacion/cargos/`)
+  - Metas (`/organizacion/metas/`)
+  - Categorías (`/gestion/categorias/`)
+- **Roles con permisos**: `python manage.py configurar_roles` crea los grupos Administrador, Coordinador, Delegado, Funcionario y Verificador. Con `--usuarios-demo --clave "..."` crea además un usuario de prueba por rol.
+- **108 pruebas unitarias**: `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
+- **Estándares** de construcción y de seguridad documentados en `ESTANDARES.md`. El estilo se revisa con `flake8`.
+
 ## Qué cambió respecto a la Evaluación 1
 
 | Evaluación 1 | Evaluación 2 |
@@ -22,6 +35,54 @@ Las 2 aplicaciones (`delegaciones` y `gestion`), sus rutas y su diseño visual
 (Bootstrap local, paleta institucional, gráficos) se mantienen tal como en la
 Evaluación 1.
 
+## Proyecto fusionado (equipo)
+
+Esta versión integra en **un solo proyecto** el trabajo de ambos integrantes
+del equipo para esta evaluación:
+
+- **delegaciones** y **gestion**: desarrollados originalmente por Sofía.
+- **organizacion** (`CargoFuncion`, `Funcionario`, `MetaProyecto`): diseño
+  original del compañero de equipo (antes en apps separadas
+  `gestionCargosApp` / `registroActividadesApp`), incorporado aquí para que
+  `Actividad.funcionario` sea una relación real hacia un `Funcionario` con
+  cargo y delegación, en vez de un simple texto libre.
+
+No se duplicó la tabla de `Delegacion` (el compañero también tenía una
+propia): se usa una única `Delegacion`, la de la app `delegaciones`. Tampoco
+se duplicó `Actividad`: a la de `gestion` se le agregaron los campos de
+"solicitud vecinal" (`solicitud_problema`, `contacto`, `telefono_contacto`)
+que el compañero había modelado en su propia versión.
+
+## Jerarquía de roles y validación de actividades
+
+Tras la retroalimentación del profesor Ciceo en la primera prueba de
+Proyecto Integrado, se incorporó al proyecto la jerarquía de roles que
+pidió, y la regla de que **el Delegado valida, no el propio Funcionario**:
+
+```
+Administrador (staff/superuser de Django)
+        │
+   Coordinador (rol 'Coordinador')
+        │
+    Delegado (rol 'Delegado' — uno por delegación, valida actividades)
+        │
+Funcionario Operativo (rol 'Funcionario' — registra actividades y evidencia)
+```
+
+- Un **Funcionario Operativo** registra una actividad (`gestion:crear`).
+- Solo un **Delegado** puede marcarla como validada, desde el formulario
+  que aparece en la ficha de la actividad (`gestion:detalle`) mientras no
+  esté validada. El Delegado **no puede ser la misma persona** que
+  registró la actividad, ni puede validar un par del mismo nivel
+  jerárquico: esta regla está aplicada dos veces —en
+  `Actividad.clean()` (modelo, válida también desde Django Admin) y en
+  `Actividad.marcar_validado()` (método usado por el formulario y por el
+  seed de datos)— y cubierta por pruebas automatizadas (ver `TESTING.md`).
+- El detalle del diagrama de clases, incluidos estos campos de
+  validación, está en `DIAGRAMA_CLASES.md`.
+- La tabla de trazabilidad de todos los casos de uso (actor, ruta,
+  estado, prueba que lo cubre) está en `CASOS_DE_USO.md`.
+
 ## Estructura del proyecto
 
 ```
@@ -29,16 +90,44 @@ sgr_evaluacion/      # Configuración del proyecto (settings, urls raíz)
 delegaciones/        # Aplicación 1: información institucional de las delegaciones
   models.py           #   Delegacion
   admin.py            #   Administración de Delegacion
+organizacion/        # Aplicación de cargos/funcionarios (diseño: compañero de equipo)
+  models.py            #   CargoFuncion, Funcionario, MetaProyecto
+  admin.py             #   Administración de las 3 entidades (con metas inline)
 gestion/             # Aplicación 2: actividades / solicitudes registradas
-  models.py           #   Categoria, Actividad (FK a Delegacion y Categoria)
+  models.py           #   Categoria, Actividad (FK a Delegacion, Categoria y Funcionario)
   admin.py            #   Administración de Categoria y Actividad
   services.py          #   Agregaciones ORM (resumen por estado, donut)
-  management/commands/cargar_datos_iniciales.py  # Migra los JSON de Eval. 1 a la BD
+  management/commands/cargar_datos_iniciales.py  # Migra los JSON + siembra cargos/funcionarios
 data/                # JSON originales de la Evaluación 1 (fuente para el seed)
 static/              # Bootstrap local, CSS propio e imágenes
-templates/           # Plantilla base compartida + pantalla "en construcción"
+templates/           # Plantilla base + formulario genérico + confirmación de borrado
 .env.example         # Plantilla de variables de entorno (copiar a .env)
+DIAGRAMA_CLASES.md   # Diagrama de clases (Mermaid + PNG), 13 clases, estructura de Eval. 1
+TESTING.md           # Plan de pruebas: automatizadas + manuales + rendimiento, con evidencia
+CASOS_DE_USO.md       # Matriz de trazabilidad: caso de uso -> ruta -> prueba
+CRONOGRAMA.md         # Metodología Scrum y cronograma del equipo (Eval. 2, 2.1.1)
+ARQUITECTURA.md       # Vistas 4+1 y tabla de tecnologías (Eval. 2, 2.1.2)
+PROTOTIPO.md          # Prototipo interactivo, adaptabilidad y retroalimentación (Eval. 2, 2.1.3)
+MODELO_DATOS.md       # Modelo relacional real + datos estructurados/no estructurados (Eval. 2, 2.1.4)
+SEGURIDAD.md          # Autenticación/autorización, amenazas y estándares (Eval. 2, 2.1.5)
+PREGUNTAS_FRECUENTES.md  # Preparación de preguntas orales (Eval. 2, 2.1.6.15)
+GUIA_DESPLIEGUE.md    # Paso a paso para correr con MySQL local y desplegar en AWS EC2
 ```
+
+> Los 6 archivos marcados "(Eval. 2, ...)" cubren, en conjunto, las 15
+> secciones de la rúbrica de Evaluación 2 del ramo de Caiceo (Proyecto
+> Integrado), siguiendo la misma estructura corregida de la Evaluación 1.
+
+## Pruebas automatizadas
+
+El proyecto incluye 41 pruebas (`python manage.py test`) sobre las cuatro
+apps: unitarias de modelo (slugs, unicidad, relaciones y restricciones de
+borrado), unitarias de la regla de validación (solo un Delegado valida, no
+autovalidación), e integrales de vista (listados, filtros, búsqueda, 404,
+CRUD real de Delegación y Actividad, flujo de validación). Todas corren
+contra la misma base de datos configurada en `.env` (MySQL o SQLite) y
+pasan sin errores. Detalle completo y evidencia de una corrida real en
+`TESTING.md`.
 
 ## Modelo de datos
 
@@ -46,11 +135,21 @@ templates/           # Plantilla base compartida + pantalla "en construcción"
   correo, territorio, enfoque.
 - **Categoria** (`gestion`): catálogo de categorías de actividad (Diserco,
   Social, Seguridad, Organizaciones Comunitarias, etc.).
-- **Actividad** (`gestion`): código, fecha, descripción, funcionario, estado
-  (Pendiente / En proceso / Realizado), con **ForeignKey** hacia `Delegacion`
-  y hacia `Categoria`.
+- **CargoFuncion** (`organizacion`): catálogo de cargos municipales (nombre,
+  descripción, vigencia).
+- **Funcionario** (`organizacion`): nombre, RUT, correo, rol de sistema, con
+  **ForeignKey** hacia `Delegacion` y hacia `CargoFuncion`.
+- **MetaProyecto** (`organizacion`): meta medible asociada a un `CargoFuncion`
+  (valor objetivo, unidad, ponderador).
+- **Actividad** (`gestion`): código, fecha, descripción, estado (Pendiente /
+  En proceso / Realizado), con **ForeignKey** hacia `Delegacion`, `Categoria`
+  y `Funcionario`, más los campos opcionales de solicitud vecinal
+  (`solicitud_problema`, `contacto`, `telefono_contacto`), y los campos de
+  validación `validado`, `validado_por` (FK a `Funcionario`, solo con rol
+  Delegado) y `fecha_validacion`.
 
-Ambas relaciones (`Actividad → Delegacion`, `Actividad → Categoria`) se
+Todas estas relaciones (`Actividad → Delegacion/Categoria/Funcionario`,
+`Funcionario → Delegacion/CargoFuncion`, `MetaProyecto → CargoFuncion`) se
 navegan desde Django Admin mediante `autocomplete_fields`.
 
 ## Cómo ejecutar el proyecto en local (desarrollo)
@@ -76,8 +175,9 @@ MySQL.
    ```bash
    python manage.py migrate
    ```
-5. Cargar los datos de la Evaluación 1 (delegaciones y actividades) en la base
-   de datos:
+5. Cargar los datos de la Evaluación 1 (delegaciones y actividades), el
+   catálogo de cargos/funcionarios (incluyendo Funcionarios con rol
+   Delegado) y algunas actividades ya validadas de ejemplo:
    ```bash
    python manage.py cargar_datos_iniciales
    ```
@@ -178,17 +278,29 @@ archivos de caché de Python, tal como exige la pauta.
 
 ## Botones de acción (Agregar / Modificar / Eliminar / Buscar)
 
-Cada listado (`delegaciones` y `gestion`) incluye los 4 controles pedidos:
+Cada listado (`delegaciones`, `gestion` y `organizacion`) incluye los
+controles pedidos, y **ya son funcionales de extremo a extremo** (antes
+"Agregar/Modificar/Eliminar" solo mostraban una pantalla informativa; esto
+se implementó junto con el resto de los cambios de esta sección):
 
-- **Buscar**: funcional, filtra los resultados mediante consultas ORM
-  (`icontains` / `Q`) mientras se escribe y se envía el formulario.
-- **Agregar / Modificar / Eliminar**: enlazan a rutas reales del proyecto
-  (`.../nueva/`, `.../<id>/editar/`, `.../<id>/eliminar/`) que hoy muestran
-  una pantalla informativa. Su implementación funcional (formularios que
-  efectivamente escriban en la base de datos desde la interfaz pública) es
-  el alcance de la **Evaluación Sumativa N.º 3**; toda la administración de
-  datos (crear, modificar, eliminar) ya está disponible y operativa desde
-  **Django Admin**.
+- **Buscar**: filtra los resultados mediante consultas ORM (`icontains` /
+  `Q`) al enviar el formulario.
+- **Agregar / Modificar**: formularios reales (`ModelForm`) que validan y
+  escriben en la base de datos, con mensajes de confirmación.
+- **Eliminar**: pide confirmación explícita antes de borrar (y avisa si el
+  borrado arrastra registros relacionados, por ejemplo las actividades de
+  una delegación).
+
+Toda la administración de datos también sigue disponible desde **Django
+Admin**, incluida la acción masiva "Marcar como validadas" sobre
+actividades.
+
+## Página pública de Funcionarios
+
+`organizacion:listado` (`/organizacion/funcionarios/`) lista los
+funcionarios municipales con su cargo, delegación y rol de acceso
+(Funcionario Operativo, Delegado de Delegación, Coordinador Estratégico o
+Verificador/Auditor), con búsqueda por nombre, cargo o delegación.
 
 ## Notas
 

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load comun_tags %}
+
+{% block titulo %}{{ titulo_pagina }}{% endblock %}
+
+{% block contenido %}
+<p class="text-uppercase small eyebrow mb-2">Mantenedor de tabla maestra</p>
+<h1 class="h2 mb-1">{{ nombre_plural|capfirst }}</h1>
+<p class="text-muted mb-4">
+    {{ object_list|length }} registro(s){% if query %} que coinciden con «{{ query }}»{% endif %}.
+    {% if descripcion %}{{ descripcion }}{% endif %}
+</p>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    {% if puede_agregar and url_crear %}
+    <a href="{% url url_crear %}" class="btn btn-institucional btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="me-1"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        Agregar {{ nombre_singular }}
+    </a>
+    {% else %}<span></span>{% endif %}
+
+    <form method="get" class="d-flex gap-2 buscador-form" role="search">
+        <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm" placeholder="Buscar..." maxlength="100">
+        <button type="submit" class="btn btn-outline-secondary btn-sm text-nowrap">Buscar</button>
+    </form>
+</div>
+
+<div class="funcionarios-card">
+    <div class="table-responsive">
+        <table class="table funcionarios-table align-middle mb-0">
+            <thead>
+                <tr>
+                    {% for titulo, campo in columnas %}<th>{{ titulo }}</th>{% endfor %}
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in object_list %}
+                <tr>
+                    {% for titulo, campo in columnas %}<td>{{ obj|atributo:campo }}</td>{% endfor %}
+                    <td class="text-end text-nowrap">
+                        {% if url_detalle %}<a href="{% url url_detalle obj.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a>{% endif %}
+                        {% if puede_editar and url_editar %}<a href="{% url url_editar obj.pk %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
+                        {% if puede_eliminar and url_eliminar %}<a href="{% url url_eliminar obj.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="{{ columnas|length|add:1 }}" class="text-muted py-4">No hay registros que coincidan con la búsqueda.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

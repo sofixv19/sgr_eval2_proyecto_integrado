@@ -6,8 +6,8 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a href="{% url 'gestion:listado' %}" class="small">&larr; Volver al listado</a>
     <div class="deleg-card-botones">
-        <a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary">Modificar</a>
-        <a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+        {% if perms.gestion.change_actividad %}<a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
+        {% if perms.gestion.delete_actividad %}<a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
     </div>
 </div>
 
@@ -49,7 +49,7 @@
         <svg class="deleg-dato-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="2" fill="none"/></svg>
         <div>
             <span class="deleg-detalle-label">Funcionario</span>
-            <p class="mb-0">{{ actividad.funcionario }}</p>
+            <p class="mb-0">{{ actividad.funcionario.nombre }} ({{ actividad.funcionario.cargo.nombre_cargo }})</p>
         </div>
     </div>
     <div class="deleg-detalle-item deleg-detalle-full">
@@ -74,5 +74,43 @@
             </p>
         </div>
     </div>
+    <div class="deleg-detalle-item deleg-detalle-full">
+        <svg class="deleg-dato-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+            <span class="deleg-detalle-label">Validación</span>
+            <p class="mb-0">
+                {% if actividad.validado %}
+                    <span class="badge-validacion badge-validacion-ok">Validado ✓</span>
+                    <span class="text-muted small ms-1">
+                        por {{ actividad.validado_por.nombre }} (Delegado)
+                        {% if actividad.fecha_validacion %}&middot; {{ actividad.fecha_validacion|date:"d/m/Y H:i" }}{% endif %}
+                    </span>
+                {% else %}
+                    <span class="badge-validacion badge-validacion-pendiente">Pendiente de validación</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
 </div>
+
+{% if not actividad.validado %}
+<div class="validacion-card">
+    <h2 class="h6 mb-2">Validar esta actividad</h2>
+    <p class="text-muted small mb-3">
+        Solo un Funcionario con rol <strong>Delegado</strong> puede validar, y no puede ser
+        quien registró la actividad (regla pedida por el profesor Ciceo tras la
+        retroalimentación de la Evaluación 1).
+    </p>
+    <form method="post" class="d-flex flex-wrap align-items-end gap-2">
+        {% csrf_token %}
+        <div>
+            {{ validacion_form.validado_por }}
+            {% for error in validacion_form.validado_por.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <button type="submit" name="validar" value="1" class="btn btn-institucional btn-sm">Marcar como validada</button>
+    </form>
+</div>
+{% endif %}
 {% endblock %}

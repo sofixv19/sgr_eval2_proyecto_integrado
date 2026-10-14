@@ -29,3 +29,7 @@ local_settings.py
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Registros de seguridad generados en ejecución
+logs/
+staticfiles/

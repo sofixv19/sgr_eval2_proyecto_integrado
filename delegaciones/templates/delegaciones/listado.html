@@ -10,10 +10,12 @@
 </p>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    {% if perms.delegaciones.add_delegacion %}
     <a href="{% url 'delegaciones:crear' %}" class="btn btn-institucional btn-sm">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="me-1"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         Agregar delegación
     </a>
+    {% else %}<span></span>{% endif %}
 
     <form method="get" class="d-flex gap-2 buscador-form" role="search">
         <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm"
@@ -56,8 +58,8 @@
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
                 <div class="deleg-card-botones">
-                    <a href="{% url 'delegaciones:editar' delegacion.slug %}" class="btn btn-sm btn-outline-secondary" title="Modificar">Modificar</a>
-                    <a href="{% url 'delegaciones:eliminar' delegacion.slug %}" class="btn btn-sm btn-outline-danger" title="Eliminar">Eliminar</a>
+                    {% if perms.delegaciones.change_delegacion %}<a href="{% url 'delegaciones:editar' delegacion.slug %}" class="btn btn-sm btn-outline-secondary" title="Modificar">Modificar</a>{% endif %}
+                    {% if perms.delegaciones.delete_delegacion %}<a href="{% url 'delegaciones:eliminar' delegacion.slug %}" class="btn btn-sm btn-outline-danger" title="Eliminar">Eliminar</a>{% endif %}
                 </div>
             </div>
         </div>

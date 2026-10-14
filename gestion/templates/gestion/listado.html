@@ -16,10 +16,12 @@
 </section>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    {% if perms.gestion.add_actividad %}
     <a href="{% url 'gestion:crear' %}" class="btn btn-institucional btn-sm">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="me-1"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         Agregar actividad
     </a>
+    {% else %}<span></span>{% endif %}
 
     <form method="get" class="d-flex gap-2 buscador-form" role="search">
         {% if estado_seleccionado %}<input type="hidden" name="estado" value="{{ estado_seleccionado }}">{% endif %}
@@ -68,7 +70,12 @@
                     {% endif %}
                 </div>
                 <p class="small text-muted mb-2">{{ actividad.categoria }} &middot; {{ actividad.fecha }}</p>
-                <p class="mb-0">{{ actividad.descripcion }}</p>
+                <p class="mb-2">{{ actividad.descripcion }}</p>
+                {% if actividad.validado %}
+                    <span class="badge-validacion badge-validacion-ok">Validado ✓</span>
+                {% else %}
+                    <span class="badge-validacion badge-validacion-pendiente">Pendiente de validación</span>
+                {% endif %}
             </div>
             <div class="deleg-card-acciones">
                 <a href="{% url 'gestion:detalle' actividad.id %}" class="deleg-card-link">
@@ -76,8 +83,8 @@
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
                 <div class="deleg-card-botones">
-                    <a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary" title="Modificar">Modificar</a>
-                    <a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">Eliminar</a>
+                    {% if perms.gestion.change_actividad %}<a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary" title="Modificar">Modificar</a>{% endif %}
+                    {% if perms.gestion.delete_actividad %}<a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">Eliminar</a>{% endif %}
                 </div>
             </div>
         </div>

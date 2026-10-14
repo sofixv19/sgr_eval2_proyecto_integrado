@@ -7,8 +7,14 @@ vistas propias, solo delega ("include") hacia las rutas de cada aplicación.
 from django.contrib import admin
 from django.urls import include, path
 
+admin.site.site_header = 'SGR La Serena — Administración'
+admin.site.site_title = 'SGR La Serena'
+admin.site.index_title = 'Panel de administración (acceso restringido)'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('cuentas/', include('cuentas.urls')),
     path('', include('delegaciones.urls')),
     path('gestion/', include('gestion.urls')),
+    path('organizacion/', include('organizacion.urls')),
 ]

@@ -15,6 +15,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 from pathlib import Path
 
 from decouple import Csv, config
+from django.contrib.messages import constants as mensajes
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,7 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'comun',
+    'cuentas',
     'delegaciones',
+    'organizacion',
     'gestion',
 ]
 
@@ -54,7 +58,17 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'cuentas.middleware.LoginObligatorioMiddleware',
 ]
+
+# WhiteNoise sirve los archivos estáticos cuando DEBUG=False (producción en
+# EC2). Si la librería no está instalada, el sitio sigue funcionando igual.
+try:
+    import whitenoise  # noqa: F401
+except ImportError:
+    pass
+else:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'sgr_evaluacion.urls'
 
@@ -145,3 +159,66 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ---------------------------------------------------------------------------
+# Autenticación y sesiones
+# ---------------------------------------------------------------------------
+# Los mensajes de error usan la clase 'danger' de Bootstrap.
+MESSAGE_TAGS = {mensajes.ERROR: 'danger'}
+
+LOGIN_URL = 'cuentas:login'
+LOGIN_REDIRECT_URL = '/'
+
+# Bloqueo temporal tras intentos fallidos de inicio de sesión.
+SGR_LOGIN_MAX_INTENTOS = config('SGR_LOGIN_MAX_INTENTOS', default=5, cast=int)
+SGR_LOGIN_MINUTOS_BLOQUEO = config('SGR_LOGIN_MINUTOS_BLOQUEO', default=15, cast=int)
+
+SESSION_COOKIE_AGE = 30 * 60              # la sesión expira tras 30 minutos
+SESSION_SAVE_EVERY_REQUEST = True         # ...contados desde la última acción
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True            # JavaScript no puede leer la cookie
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Cabeceras de seguridad
+X_FRAME_OPTIONS = 'DENY'                  # evita clickjacking
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+
+# Solo se activan cuando el sitio tenga HTTPS (variable USAR_HTTPS en .env).
+USAR_HTTPS = config('USAR_HTTPS', default=False, cast=bool)
+SESSION_COOKIE_SECURE = USAR_HTTPS
+CSRF_COOKIE_SECURE = USAR_HTTPS
+SECURE_SSL_REDIRECT = USAR_HTTPS
+
+# Hash de contraseñas: PBKDF2-SHA256 (valor por defecto de Django).
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+]
+
+# ---------------------------------------------------------------------------
+# Registro de eventos de seguridad (logs/seguridad.log)
+# ---------------------------------------------------------------------------
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {'format': '{asctime} [{levelname}] {name}: {message}', 'style': '{'},
+    },
+    'handlers': {
+        'archivo_seguridad': {
+            'class': 'logging.FileHandler',
+            'filename': LOGS_DIR / 'seguridad.log',
+            'formatter': 'simple',
+            'encoding': 'utf-8',
+        },
+    },
+    'loggers': {
+        'sgr.seguridad': {'handlers': ['archivo_seguridad'], 'level': 'INFO', 'propagate': False},
+        'django.security': {'handlers': ['archivo_seguridad'], 'level': 'WARNING', 'propagate': False},
+    },
+}

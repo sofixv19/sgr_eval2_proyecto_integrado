@@ -5,13 +5,16 @@ Evaluación Sumativa 2: todas las vistas obtienen la información mediante
 consultas Django ORM contra la base de datos (antes se leía desde
 data/delegaciones.json).
 """
-from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404, render
+from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
+from django.db.models import Count, ProtectedError, Q, RestrictedError
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from gestion.models import Actividad
 from gestion.services import grados_donut, resumen_por_estado
 
+from .forms import DelegacionForm
 from .models import Delegacion
 
 
@@ -95,39 +98,81 @@ def detalle(request, slug):
 
 
 # ---------------------------------------------------------------------------
-# Marcadores de posición para las operaciones CRUD desde la interfaz.
-#
-# La Evaluación 2 solo exige que los botones "Agregar / Modificar / Eliminar"
-# existan visualmente y enlacen a una ruta real; la implementación funcional
-# (formularios que efectivamente creen/editen/borren registros) es el
-# alcance de la Evaluación Sumativa 3. Por ahora, estas vistas muestran una
-# pantalla informativa reutilizable (templates/en_construccion.html).
+# CRUD real de Delegación (Evaluación Sumativa N.º 3): formularios ModelForm
+# que efectivamente crean, modifican y eliminan registros en la base de
+# datos, con mensajes de confirmación (django.contrib.messages).
 # ---------------------------------------------------------------------------
 
+@permission_required('delegaciones.add_delegacion', raise_exception=True)
 def crear(request):
+    if request.method == 'POST':
+        form = DelegacionForm(request.POST)
+        if form.is_valid():
+            delegacion = form.save()
+            messages.success(request, f'Delegación "{delegacion.nombre}" creada correctamente.')
+            return redirect('delegaciones:detalle', slug=delegacion.slug)
+    else:
+        form = DelegacionForm()
+
     contexto = {
         'titulo_pagina': 'Agregar delegación',
         'accion': 'Agregar delegación',
+        'form': form,
         'volver_url': reverse('delegaciones:listado'),
     }
-    return render(request, 'en_construccion.html', contexto)
+    return render(request, 'delegaciones/form.html', contexto)
 
 
+@permission_required('delegaciones.change_delegacion', raise_exception=True)
 def editar(request, slug):
     delegacion = get_object_or_404(Delegacion, slug=slug)
+
+    if request.method == 'POST':
+        form = DelegacionForm(request.POST, instance=delegacion)
+        if form.is_valid():
+            delegacion = form.save()
+            messages.success(request, f'Delegación "{delegacion.nombre}" actualizada correctamente.')
+            return redirect('delegaciones:detalle', slug=delegacion.slug)
+    else:
+        form = DelegacionForm(instance=delegacion)
+
     contexto = {
         'titulo_pagina': f'Editar {delegacion.nombre}',
         'accion': f'Modificar delegación: {delegacion.nombre}',
+        'form': form,
         'volver_url': reverse('delegaciones:detalle', args=[delegacion.slug]),
     }
-    return render(request, 'en_construccion.html', contexto)
+    return render(request, 'delegaciones/form.html', contexto)
 
 
+@permission_required('delegaciones.delete_delegacion', raise_exception=True)
 def eliminar(request, slug):
     delegacion = get_object_or_404(Delegacion, slug=slug)
+
+    if request.method == 'POST':
+        nombre = delegacion.nombre
+        try:
+            delegacion.delete()
+        except (ProtectedError, RestrictedError):
+            # Funcionario.delegacion usa on_delete=RESTRICT: no se puede
+            # borrar una delegación que todavía tiene funcionarios.
+            messages.error(
+                request,
+                f'No se puede eliminar la delegación "{nombre}" porque tiene funcionarios '
+                'asignados. Primero reasígnelos a otra delegación.',
+            )
+            return redirect('delegaciones:detalle', slug=delegacion.slug)
+        messages.success(request, f'Delegación "{nombre}" eliminada correctamente.')
+        return redirect('delegaciones:listado')
+
     contexto = {
         'titulo_pagina': f'Eliminar {delegacion.nombre}',
         'accion': f'Eliminar delegación: {delegacion.nombre}',
+        'objeto': delegacion,
+        'advertencia': (
+            f'Esto eliminará también las {delegacion.total_actividades} actividad(es) '
+            'asociadas a esta delegación (relación en cascada).'
+        ) if delegacion.total_actividades else '',
         'volver_url': reverse('delegaciones:detalle', args=[delegacion.slug]),
     }
-    return render(request, 'en_construccion.html', contexto)
+    return render(request, 'confirmar_eliminar.html', contexto)
