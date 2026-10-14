@@ -11,6 +11,7 @@ Es idempotente: se puede ejecutar varias veces sin duplicar registros,
 usando update_or_create() / get_or_create() según la clave natural de
 cada modelo.
 """
+import datetime
 import json
 from pathlib import Path
 
@@ -19,7 +20,7 @@ from django.core.management.base import BaseCommand
 
 from delegaciones.models import Delegacion
 from gestion.models import Actividad, Categoria
-from organizacion.models import CargoFuncion, Funcionario, MetaProyecto
+from organizacion.models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 # ---------------------------------------------------------------------------
 # Catálogo de cargos (diseño original: compañero, app 'gestionCargosApp').
@@ -138,11 +139,18 @@ class Command(BaseCommand):
         for nombre_cargo in CARGOS_SEED:
             CargoFuncion.objects.get_or_create(nombre_cargo=nombre_cargo)
 
+        # Período de medición vigente (tabla 'periodo' del MER de la Evaluación 1).
+        periodo, _ = Periodo.objects.get_or_create(
+            nombre='Segundo semestre 2026',
+            defaults={'fecha_inicio': datetime.date(2026, 7, 1), 'fecha_fin': datetime.date(2026, 12, 31),
+                      'estado': Periodo.Estado.ABIERTO},
+        )
         for meta in METAS_SEED:
             cargo = CargoFuncion.objects.get(nombre_cargo=meta['cargo'])
             MetaProyecto.objects.update_or_create(
                 cargo=cargo, item_medible=meta['item_medible'],
                 defaults={
+                    'periodo': periodo,
                     'valor_objetivo': meta['valor_objetivo'],
                     'unidad': meta['unidad'],
                     'ponderador': meta['ponderador'],

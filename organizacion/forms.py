@@ -7,7 +7,7 @@ from django.db.models import Sum
 
 from comun.validadores import nombre_repetido, normalizar_rut, validar_nombre, validar_texto_minimo
 
-from .models import CargoFuncion, Funcionario, MetaProyecto
+from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 UNIDADES = [
     ('Porcentaje', 'Porcentaje'),
@@ -95,6 +95,51 @@ class FuncionarioForm(forms.ModelForm):
         return datos
 
 
+class PeriodoForm(forms.ModelForm):
+    """Mantenedor de la tabla maestra Período (tabla 'periodo' de la Evaluación 1)."""
+
+    class Meta:
+        model = Periodo
+        fields = ['nombre', 'fecha_inicio', 'fecha_fin', 'estado']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 60,
+                                             'placeholder': 'Segundo semestre 2026'}),
+            'fecha_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'fecha_fin': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'estado': forms.Select(attrs={'class': 'form-select'}),
+        }
+        help_texts = {
+            'estado': ('Un período Cerrado no se puede modificar, salvo para volver a abrirlo (RN-013). '
+                       'Solo puede haber un período Abierto.'),
+        }
+
+    def clean_nombre(self):
+        nombre = validar_texto_minimo(self.cleaned_data.get('nombre'), minimo=3, campo='nombre del período')
+        if nombre_repetido(Periodo.objects.all(), 'nombre', nombre, self.instance.pk):
+            raise forms.ValidationError('Ya existe un período con ese nombre.')
+        return nombre
+
+    def clean(self):
+        datos = super().clean()
+        inicio, fin, estado = datos.get('fecha_inicio'), datos.get('fecha_fin'), datos.get('estado')
+        if inicio and fin and fin <= inicio:
+            self.add_error('fecha_fin', 'La fecha de término debe ser posterior a la fecha de inicio.')
+        elif inicio and fin:
+            otro = (Periodo.objects.filter(fecha_inicio__lte=fin, fecha_fin__gte=inicio)
+                    .exclude(pk=self.instance.pk).first())
+            if otro:
+                raise forms.ValidationError(f'Las fechas se cruzan con el período "{otro}". Los períodos no pueden solaparse.')
+        abiertos = Periodo.objects.filter(estado=Periodo.Estado.ABIERTO).exclude(pk=self.instance.pk)
+        if estado == Periodo.Estado.ABIERTO and abiertos.exists():
+            self.add_error('estado', 'Ya existe un período Abierto. Ciérrelo antes de abrir otro.')
+        if self.instance.pk and self.instance.estado == Periodo.Estado.CERRADO and estado == Periodo.Estado.CERRADO:
+            cambios = [c for c in ('nombre', 'fecha_inicio', 'fecha_fin') if c in self.changed_data]
+            if cambios:
+                raise forms.ValidationError(
+                    'El período está Cerrado y no se puede modificar. Para corregirlo, primero cámbielo a Abierto (RN-013).')
+        return datos
+
+
 class MetaProyectoForm(forms.ModelForm):
     unidad = forms.ChoiceField(
         label='Unidad de medida', choices=UNIDADES,
@@ -103,20 +148,27 @@ class MetaProyectoForm(forms.ModelForm):
 
     class Meta:
         model = MetaProyecto
-        fields = ['cargo', 'item_medible', 'valor_objetivo', 'unidad', 'ponderador']
+        fields = ['cargo', 'periodo', 'item_medible', 'valor_objetivo', 'unidad', 'ponderador']
         widgets = {
             'cargo': forms.Select(attrs={'class': 'form-select'}),
+            'periodo': forms.Select(attrs={'class': 'form-select'}),
             'item_medible': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 100}),
             'valor_objetivo': forms.TextInput(attrs={'class': 'form-control', 'inputmode': 'decimal'}),
             'ponderador': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 100}),
         }
         help_texts = {
             'valor_objetivo': 'Número mayor que cero. Si la unidad es Porcentaje, no puede superar 100.',
-            'ponderador': 'Entre 1 y 100. La suma de ponderadores de un cargo no puede superar 100 %.',
+            'ponderador': 'Entre 1 y 100. La suma de ponderadores de un cargo en un período no puede superar 100 %.',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['periodo'].required = True
+        # No se pueden agregar metas a un período cerrado (se conserva el actual al editar).
+        periodos = Periodo.objects.exclude(estado=Periodo.Estado.CERRADO)
+        if self.instance.pk and self.instance.periodo_id:
+            periodos = periodos | Periodo.objects.filter(pk=self.instance.periodo_id)
+        self.fields['periodo'].queryset = periodos.distinct()
         actual = self.instance.unidad if self.instance.pk else None
         if actual and actual not in dict(UNIDADES):
             self.fields['unidad'].choices = UNIDADES + [(actual, actual)]
@@ -142,16 +194,17 @@ class MetaProyectoForm(forms.ModelForm):
 
     def clean(self):
         datos = super().clean()
-        cargo, ponderador = datos.get('cargo'), datos.get('ponderador')
+        cargo, ponderador, periodo = datos.get('cargo'), datos.get('ponderador'), datos.get('periodo')
         unidad, valor = datos.get('unidad'), datos.get('valor_objetivo')
         if unidad == 'Porcentaje' and valor and float(valor) > 100:
             self.add_error('valor_objetivo', 'Un valor en porcentaje no puede superar 100.')
-        if cargo and ponderador:
-            otras = MetaProyecto.objects.filter(cargo=cargo).exclude(pk=self.instance.pk)
+        if cargo and ponderador and periodo:
+            otras = MetaProyecto.objects.filter(cargo=cargo, periodo=periodo).exclude(pk=self.instance.pk)
             suma = (otras.aggregate(total=Sum('ponderador'))['total'] or 0) + ponderador
             if suma > 100:
                 self.add_error(
                     'ponderador',
-                    f'La suma de ponderadores del cargo {cargo} quedaría en {suma} %. No puede superar 100 % (RN-001).',
+                    f'La suma de ponderadores del cargo {cargo} en el período {periodo} quedaría en {suma} %. '
+                    'No puede superar 100 % (RN-001).',
                 )
         return datos

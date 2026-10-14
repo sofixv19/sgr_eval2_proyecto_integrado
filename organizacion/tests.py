@@ -12,8 +12,8 @@ from comun.pruebas import iniciar_sesion_admin
 from delegaciones.models import Delegacion
 from gestion.models import Actividad, Categoria
 
-from .forms import CargoFuncionForm, FuncionarioForm, MetaProyectoForm
-from .models import CargoFuncion, Funcionario, MetaProyecto
+from .forms import CargoFuncionForm, FuncionarioForm, MetaProyectoForm, PeriodoForm
+from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 
 class CargoFuncionTests(TestCase):
@@ -266,8 +266,13 @@ class MetaMantenedorTests(TestCase):
     def setUp(self):
         iniciar_sesion_admin(self.client)
         self.cargo = CargoFuncion.objects.create(nombre_cargo='Encargado de Delegación')
+        Periodo.objects.all().delete()  # la migración 0005 crea un período inicial
+        self.periodo = Periodo.objects.create(
+            nombre='Segundo semestre 2026', fecha_inicio=datetime.date(2026, 7, 1),
+            fecha_fin=datetime.date(2026, 12, 31), estado='Abierto',
+        )
         self.datos = {
-            'cargo': self.cargo.pk, 'item_medible': 'Actividades registradas por mes',
+            'cargo': self.cargo.pk, 'periodo': self.periodo.pk, 'item_medible': 'Actividades registradas por mes',
             'valor_objetivo': '20', 'unidad': 'Cantidad', 'ponderador': 40,
         }
 
@@ -300,23 +305,117 @@ class MetaMantenedorTests(TestCase):
                 self.assertIn('ponderador', form.errors)
 
     def test_cp_met_005_suma_de_ponderadores_supera_100(self):
-        """CP-MET-005: La suma de ponderadores de un cargo no puede superar 100 % (RN-001)."""
-        MetaProyecto.objects.create(cargo=self.cargo, item_medible='Meta A', valor_objetivo='10', ponderador=70)
+        """CP-MET-005: La suma de ponderadores de un cargo en un período no puede superar 100 % (RN-001)."""
+        MetaProyecto.objects.create(
+            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=70)
         form = MetaProyectoForm(data={**self.datos, 'ponderador': 40})
         self.assertFalse(form.is_valid())
         self.assertIn('110 %', str(form.errors['ponderador']))
 
     def test_cp_met_006_editar_no_cuenta_su_propio_ponderador(self):
         """CP-MET-006: Al editar una meta, su propio ponderador anterior no se suma dos veces."""
-        meta = MetaProyecto.objects.create(cargo=self.cargo, item_medible='Meta A', valor_objetivo='10', ponderador=90)
+        meta = MetaProyecto.objects.create(
+            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=90)
         form = MetaProyectoForm(data={**self.datos, 'item_medible': 'Meta A', 'ponderador': 100}, instance=meta)
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_cp_met_007_editar_y_eliminar_meta(self):
         """CP-MET-007: Una meta se modifica y luego se elimina desde el mantenedor."""
-        meta = MetaProyecto.objects.create(cargo=self.cargo, item_medible='Meta A', valor_objetivo='10', ponderador=10)
+        meta = MetaProyecto.objects.create(
+            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=10)
         self.client.post(reverse('organizacion:meta_editar', args=[meta.pk]), {**self.datos, 'ponderador': 30})
         meta.refresh_from_db()
         self.assertEqual(meta.ponderador, 30)
         self.client.post(reverse('organizacion:meta_eliminar', args=[meta.pk]))
         self.assertFalse(MetaProyecto.objects.filter(pk=meta.pk).exists())
+
+    def test_cp_met_008_mismo_cargo_otro_periodo(self):
+        """CP-MET-008: Los ponderadores se suman por período: en otro período el mismo cargo parte desde cero."""
+        MetaProyecto.objects.create(
+            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=90)
+        otro = Periodo.objects.create(nombre='Primer semestre 2027', fecha_inicio=datetime.date(2027, 1, 1),
+                                      fecha_fin=datetime.date(2027, 6, 30))
+        form = MetaProyectoForm(data={**self.datos, 'periodo': otro.pk, 'ponderador': 60})
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_cp_met_009_periodo_obligatorio_y_no_cerrado(self):
+        """CP-MET-009: El período es obligatorio y no se pueden crear metas en un período Cerrado."""
+        self.assertIn('periodo', MetaProyectoForm(data={**self.datos, 'periodo': ''}).errors)
+        cerrado = Periodo.objects.create(nombre='Primer semestre 2026', fecha_inicio=datetime.date(2026, 1, 1),
+                                         fecha_fin=datetime.date(2026, 6, 30), estado='Cerrado')
+        self.assertNotIn(cerrado, MetaProyectoForm().fields['periodo'].queryset)
+
+
+class PeriodoMantenedorTests(TestCase):
+    """Unidades: PeriodoForm (fechas, solapamiento, estados, RN-013) y vistas del mantenedor de Períodos."""
+
+    def setUp(self):
+        iniciar_sesion_admin(self.client)
+        Periodo.objects.all().delete()  # la migración 0005 crea un período inicial
+        self.periodo = Periodo.objects.create(
+            nombre='Segundo semestre 2026', fecha_inicio=datetime.date(2026, 7, 1),
+            fecha_fin=datetime.date(2026, 12, 31), estado='Abierto',
+        )
+        self.datos = {'nombre': 'Primer semestre 2027', 'fecha_inicio': '2027-01-01', 'fecha_fin': '2027-06-30',
+                      'estado': 'Planificado'}
+
+    def test_cp_per_001_crear_periodo_valido(self):
+        """CP-PER-001: Se crea un período válido y se redirige al listado."""
+        respuesta = self.client.post(reverse('organizacion:periodo_crear'), self.datos)
+        self.assertRedirects(respuesta, reverse('organizacion:periodos'))
+        self.assertTrue(Periodo.objects.filter(nombre='Primer semestre 2027').exists())
+
+    def test_cp_per_002_campos_obligatorios(self):
+        """CP-PER-002: Nombre, fechas y estado son obligatorios."""
+        form = PeriodoForm(data={})
+        self.assertFalse(form.is_valid())
+        for campo in ['nombre', 'fecha_inicio', 'fecha_fin', 'estado']:
+            self.assertIn(campo, form.errors)
+
+    def test_cp_per_003_fecha_fin_anterior(self):
+        """CP-PER-003: La fecha de término debe ser posterior a la de inicio."""
+        form = PeriodoForm(data={**self.datos, 'fecha_fin': '2026-12-31'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('fecha_fin', form.errors)
+
+    def test_cp_per_004_periodos_solapados(self):
+        """CP-PER-004: No se acepta un período cuyas fechas se cruzan con otro."""
+        form = PeriodoForm(data={**self.datos, 'fecha_inicio': '2026-12-01', 'fecha_fin': '2027-03-31'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('se cruzan', str(form.non_field_errors()))
+
+    def test_cp_per_005_un_solo_periodo_abierto(self):
+        """CP-PER-005: Solo puede haber un período Abierto a la vez."""
+        form = PeriodoForm(data={**self.datos, 'estado': 'Abierto'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('estado', form.errors)
+
+    def test_cp_per_006_periodo_cerrado_no_se_modifica(self):
+        """CP-PER-006: Un período Cerrado no se puede modificar sin reabrirlo (RN-013)."""
+        cerrado = Periodo.objects.create(nombre='Primer semestre 2026', fecha_inicio=datetime.date(2026, 1, 1),
+                                         fecha_fin=datetime.date(2026, 6, 30), estado='Cerrado')
+        form = PeriodoForm(data={'nombre': 'Primer semestre 2026 corregido', 'fecha_inicio': '2026-01-01',
+                                 'fecha_fin': '2026-06-30', 'estado': 'Cerrado'}, instance=cerrado)
+        self.assertFalse(form.is_valid())
+        self.assertIn('Cerrado', str(form.non_field_errors()))
+
+    def test_cp_per_007_editar_periodo(self):
+        """CP-PER-007: Se modifica el estado de un período desde el mantenedor."""
+        self.client.post(reverse('organizacion:periodo_editar', args=[self.periodo.pk]), {
+            'nombre': 'Segundo semestre 2026', 'fecha_inicio': '2026-07-01', 'fecha_fin': '2026-12-31', 'estado': 'Cerrado',
+        })
+        self.periodo.refresh_from_db()
+        self.assertEqual(self.periodo.estado, 'Cerrado')
+
+    def test_cp_per_008_eliminar_periodo_con_metas(self):
+        """CP-PER-008: Un período con metas no se elimina (PROTECT) y uno sin metas sí."""
+        cargo = CargoFuncion.objects.create(nombre_cargo='Gestor Social')
+        MetaProyecto.objects.create(
+            cargo=cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=10)
+        respuesta = self.client.post(reverse('organizacion:periodo_eliminar', args=[self.periodo.pk]), follow=True)
+        self.assertTrue(Periodo.objects.filter(pk=self.periodo.pk).exists())
+        self.assertContains(respuesta, 'No se puede eliminar')
+        libre = Periodo.objects.create(nombre='Primer semestre 2027', fecha_inicio=datetime.date(2027, 1, 1),
+                                       fecha_fin=datetime.date(2027, 6, 30))
+        self.client.post(reverse('organizacion:periodo_eliminar', args=[libre.pk]))
+        self.assertFalse(Periodo.objects.filter(pk=libre.pk).exists())

@@ -19,6 +19,7 @@ TABLAS_MAESTRAS = [
     ('organizacion', 'cargofuncion'),
     ('organizacion', 'funcionario'),
     ('organizacion', 'metaproyecto'),
+    ('organizacion', 'periodo'),
 ]
 TRANSACCIONALES = [('gestion', 'actividad')]
 
@@ -32,6 +33,7 @@ GRUPOS = {
         **{t: ['view'] for t in TABLAS_MAESTRAS},
         ('organizacion', 'cargofuncion'): ['view', 'add', 'change'],
         ('organizacion', 'metaproyecto'): ['view', 'add', 'change', 'delete'],
+        ('organizacion', 'periodo'): ['view', 'add', 'change'],
         ('gestion', 'actividad'): ['view'],
     },
     'Delegado': {

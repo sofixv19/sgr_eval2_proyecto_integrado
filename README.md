@@ -16,8 +16,9 @@ para desplegarse en una instancia **AWS EC2** con control de versiones en
   - Cargos (`/organizacion/cargos/`)
   - Metas (`/organizacion/metas/`)
   - Categorías (`/gestion/categorias/`)
+  - Períodos de medición (`/organizacion/periodos/`), que es la tabla `periodo` del MER de la Evaluación 1. Las metas ahora pertenecen a un cargo **y a un período**.
 - **Roles con permisos**: `python manage.py configurar_roles` crea los grupos Administrador, Coordinador, Delegado, Funcionario y Verificador. Con `--usuarios-demo --clave "..."` crea además un usuario de prueba por rol.
-- **108 pruebas unitarias**: `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
+- **118 pruebas unitarias**: `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
 - **Estándares** de construcción y de seguridad documentados en `ESTANDARES.md`. El estilo se revisa con `flake8`.
 
 ## Qué cambió respecto a la Evaluación 1

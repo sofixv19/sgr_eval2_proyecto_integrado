@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CargoFuncion, Funcionario, MetaProyecto
+from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 
 class MetaProyectoInline(admin.TabularInline):
@@ -40,3 +40,10 @@ class MetaProyectoAdmin(admin.ModelAdmin):
     list_filter = ('cargo',)
     search_fields = ('item_medible',)
     autocomplete_fields = ('cargo',)
+
+
+@admin.register(Periodo)
+class PeriodoAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'fecha_inicio', 'fecha_fin', 'estado')
+    list_filter = ('estado',)
+    search_fields = ('nombre',)

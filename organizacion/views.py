@@ -7,12 +7,14 @@ control de acceso por permisos, los mensajes y el manejo de errores al
 eliminar. Aquí solo se configura qué modelo, formulario y columnas usa cada
 mantenedor.
 """
+from django.db.models import Count
+
 from comun.vistas import (
     MantenedorCrear, MantenedorDetalle, MantenedorEditar, MantenedorEliminar, MantenedorListado,
 )
 
-from .forms import CargoFuncionForm, FuncionarioForm, MetaProyectoForm
-from .models import CargoFuncion, Funcionario, MetaProyecto
+from .forms import CargoFuncionForm, FuncionarioForm, MetaProyectoForm, PeriodoForm
+from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 
 # --------------------------------------------------------------------- Cargos
@@ -97,14 +99,14 @@ class MetaConfig:
 class MetaListado(MetaConfig, MantenedorListado):
     campos_busqueda = ('item_medible', 'cargo__nombre_cargo')
     columnas = (
-        ('Cargo', 'cargo.nombre_cargo'), ('Meta', 'item_medible'), ('Valor objetivo', 'valor_objetivo'),
+        ('Cargo', 'cargo.nombre_cargo'), ('Período', 'periodo'), ('Meta', 'item_medible'), ('Valor objetivo', 'valor_objetivo'),
         ('Unidad', 'unidad'), ('Ponderador (%)', 'ponderador'),
     )
     url_crear, url_editar, url_eliminar = 'organizacion:meta_crear', 'organizacion:meta_editar', 'organizacion:meta_eliminar'
-    descripcion = 'La suma de ponderadores de cada cargo no puede superar 100 %.'
+    descripcion = 'La suma de ponderadores de cada cargo en un período no puede superar 100 %.'
 
     def get_queryset(self):
-        return super().get_queryset().select_related('cargo')
+        return super().get_queryset().select_related('cargo', 'periodo')
 
 
 class MetaCrear(MetaConfig, MantenedorCrear):
@@ -117,3 +119,37 @@ class MetaEditar(MetaConfig, MantenedorEditar):
 
 class MetaEliminar(MetaConfig, MantenedorEliminar):
     pass
+
+
+# ------------------------------------------------------------------- Períodos
+class PeriodoConfig:
+    model = Periodo
+    form_class = PeriodoForm
+    nombre_singular = 'período'
+    nombre_plural = 'períodos de medición'
+    url_listado = 'organizacion:periodos'
+
+
+class PeriodoListado(PeriodoConfig, MantenedorListado):
+    campos_busqueda = ('nombre', 'estado')
+    columnas = (('Período', 'nombre'), ('Inicio', 'fecha_inicio'), ('Término', 'fecha_fin'), ('Estado', 'estado'),
+                ('N.º de metas', 'total_metas'))
+    url_crear, url_editar, url_eliminar = (
+        'organizacion:periodo_crear', 'organizacion:periodo_editar', 'organizacion:periodo_eliminar',
+    )
+    descripcion = 'Solo puede haber un período Abierto y los períodos no pueden solaparse.'
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(total_metas=Count('metas'))
+
+
+class PeriodoCrear(PeriodoConfig, MantenedorCrear):
+    pass
+
+
+class PeriodoEditar(PeriodoConfig, MantenedorEditar):
+    pass
+
+
+class PeriodoEliminar(PeriodoConfig, MantenedorEliminar):
+    advertencia = 'Si el período tiene metas asociadas no se podrá eliminar.'

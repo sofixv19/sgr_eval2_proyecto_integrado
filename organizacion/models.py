@@ -43,6 +43,35 @@ class CargoFuncion(models.Model):
         return self.nombre_cargo
 
 
+class Periodo(models.Model):
+    """Período de medición de la gestión (por ejemplo, "Segundo semestre 2026").
+
+    Corresponde a la tabla 'periodo' del MER y del script de base de datos
+    de la Evaluación 1. Las metas se definen para un cargo y un período
+    (regla RN-001: la suma de ponderadores de un cargo en un período no
+    puede superar 100 %).
+    """
+
+    class Estado(models.TextChoices):
+        PLANIFICADO = 'Planificado', 'Planificado'
+        ABIERTO = 'Abierto', 'Abierto'
+        CERRADO = 'Cerrado', 'Cerrado'
+
+    nombre = models.CharField(max_length=60, unique=True, verbose_name='Nombre del período')
+    fecha_inicio = models.DateField(verbose_name='Fecha de inicio')
+    fecha_fin = models.DateField(verbose_name='Fecha de término')
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.PLANIFICADO, verbose_name='Estado')
+
+    class Meta:
+        db_table = 'periodos'
+        verbose_name = 'Período'
+        verbose_name_plural = 'Períodos de medición'
+        ordering = ['-fecha_inicio']
+
+    def __str__(self):
+        return self.nombre
+
+
 class Funcionario(models.Model):
     """Funcionario municipal, asociado a una delegación y a un cargo."""
 
@@ -85,6 +114,10 @@ class MetaProyecto(models.Model):
     cargo = models.ForeignKey(
         CargoFuncion, on_delete=models.CASCADE,
         related_name='metas', verbose_name='Cargo Relacionado',
+    )
+    periodo = models.ForeignKey(
+        Periodo, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='metas', verbose_name='Período de medición',
     )
     item_medible = models.CharField(max_length=100, verbose_name='Ítem / Nombre de la Meta')
     valor_objetivo = models.CharField(max_length=255, verbose_name='Meta Asignada (Valor Objetivo)')
