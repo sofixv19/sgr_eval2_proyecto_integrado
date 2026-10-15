@@ -1,11 +1,11 @@
-# SGR La Serena — Evaluación Sumativa 2 (Programación Back End)
+# SGR La Serena — Proyecto Integrado, Evaluación 2
 
-Continuación del proyecto desarrollado en la **Evaluación Sumativa 1**: el mismo
-caso "Sistema de Gestión de Resultados (SGR)" de las delegaciones de la
-Municipalidad de La Serena, ahora migrado desde archivos JSON hacia una
-**base de datos relacional**, administrable desde **Django Admin** y pensado
-para desplegarse en una instancia **AWS EC2** con control de versiones en
-**GitHub**.
+Sistema de Gestión de Resultados (SGR) de las delegaciones de la
+I. Municipalidad de La Serena. Proyecto Django con base de datos MariaDB,
+desplegado en AWS EC2 (http://184.194.243.125:8000/).
+
+Es la continuación de la Evaluación 1 de Proyecto Integrado y comparte
+la base del proyecto del ramo de Programación Back End.
 
 ## Novedades Evaluación 2 de Proyecto Integrado (octubre 2026)
 
