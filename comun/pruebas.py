@@ -1,7 +1,13 @@
 """Ayudas compartidas por las pruebas automatizadas del proyecto."""
+import tempfile
+
 from django.contrib.auth.models import Group, User
 
 CLAVE_PRUEBA = 'ClaveDePrueba.2026'
+
+# Carpeta temporal para las evidencias que suben las pruebas (no se mezclan
+# con las evidencias reales de media/).
+MEDIA_PRUEBAS = tempfile.mkdtemp(prefix='sgr_media_pruebas_')
 
 
 def crear_usuario(username='usuario.prueba', clave=CLAVE_PRUEBA, grupos=(), activo=True, superusuario=False):

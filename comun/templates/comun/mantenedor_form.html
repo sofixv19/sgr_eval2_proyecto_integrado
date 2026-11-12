@@ -3,11 +3,12 @@
 {% block titulo %}{{ titulo_pagina }}{% endblock %}
 
 {% block contenido %}
-<a href="{{ volver_url }}" class="small">&larr; Volver</a>
+<a href="{{ volver_url }}" class="small form-volver">&larr; Volver</a>
 
 <div class="form-card mt-3">
     <h1 class="h4 mb-1">{{ accion }}</h1>
     <p class="text-muted small mb-4">Los campos marcados con * son obligatorios.</p>
+    {% if ayuda %}<div class="alert alert-light border small mb-4">{{ ayuda }}</div>{% endif %}
 
     <form method="post" novalidate>
         {% csrf_token %}

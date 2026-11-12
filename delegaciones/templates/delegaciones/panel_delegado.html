@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block titulo %}Panel del Delegado{% endblock %}
+{% block contenido %}
+<section class="dash-banner mb-4">
+    <div class="dash-banner-persona">
+        <div class="dash-avatar">{{ perfil.nombre|slice:":1"|upper }}</div>
+        <div>
+            <div class="dash-banner-eyebrow">Delegado · {{ perfil.nombre }}</div>
+            <h1 class="dash-banner-titulo">Delegación {{ delegacion }}</h1>
+            <div class="dash-chips">
+                <span class="dash-chip">{{ detalle|length }} funcionario{{ detalle|length|pluralize }}</span>
+                {% if periodo %}<span class="dash-chip">{{ periodo }}</span>{% endif %}
+                {% if total_por_validar %}<span class="dash-chip dash-chip-alerta">{{ total_por_validar }} por validar</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="dash-banner-acciones">
+        <a href="{% url 'gestion:listado' %}?validacion=Pendiente" class="btn btn-light fw-semibold">Validar actividades</a>
+        <a href="{% url 'organizacion:listado' %}" class="btn btn-outline-light">Mis funcionarios</a>
+        <a href="{% url 'organizacion:metas' %}" class="btn btn-outline-light">Asignar metas</a>
+    </div>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-5">
+        {% include "includes/dash_gauge.html" with titulo="Cumplimiento de la delegación" valor=porcentaje barra=barra esperado=esperado color=color mensaje=mensaje %}
+    </div>
+    <div class="col-xl-7">
+        <div class="row g-3 h-100">
+            <div class="col-6"><div class="dash-stat dash-tono-ambar"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="reloj" %}</div><div><div class="dash-stat-valor">{{ total_por_validar }}</div><div class="dash-stat-etiqueta">Evidencias por validar</div></div></div></div>
+            <div class="col-6"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="personas" %}</div><div><div class="dash-stat-valor">{{ detalle|length }}</div><div class="dash-stat-etiqueta">Funcionarios a cargo</div></div></div></div>
+            <div class="col-6"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="actividades" %}</div><div><div class="dash-stat-valor">{{ total_actividades }}</div><div class="dash-stat-etiqueta">Actividades de la delegación</div></div></div></div>
+            <div class="col-6"><div class="dash-stat dash-tono-verde"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="validada" %}</div><div><div class="dash-stat-valor">{{ esperado }}<small>%</small></div><div class="dash-stat-etiqueta">Avance esperado a la fecha</div></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="dash-card h-100">
+            <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Evidencias pendientes</h2><div class="dash-card-sub">Revise y valide el trabajo de su equipo</div></div><a href="{% url 'gestion:listado' %}?validacion=Pendiente" class="dash-link">Ver todas →</a></div>
+            <ul class="dash-timeline">
+            {% for actividad in por_validar %}
+                <li class="dash-timeline-{{ actividad.estado_validacion|lower }}">
+                    <div class="dash-timeline-fila">
+                        <span class="dash-codigo">{{ actividad.codigo }}</span>
+                        <a href="{% url 'gestion:detalle' actividad.id %}" class="btn btn-sm btn-institucional">Revisar</a>
+                    </div>
+                    <div class="dash-timeline-texto">{{ actividad.funcionario.nombre }}</div>
+                    <div class="small text-muted">{{ actividad.categoria }} · {{ actividad.fecha|date:"d/m/Y" }}</div>
+                </li>
+            {% empty %}
+                <li class="dash-vacio">Todo al día: no hay evidencias pendientes.</li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dash-card h-100">
+            <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Cumplimiento por funcionario</h2><div class="dash-card-sub">Solo actividades validadas</div></div></div>
+            <ul class="dash-ranking">
+            {% for r in detalle %}
+                <li>
+                    <div class="dash-avatar dash-avatar-chico">{{ r.funcionario.nombre|slice:":1"|upper }}</div>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex justify-content-between gap-2"><a href="{% url 'organizacion:funcionario_detalle' r.funcionario.pk %}" class="fw-semibold text-truncate">{{ r.funcionario.nombre }}</a>{% if r.tiene_metas %}<span class="dash-pill dash-pill-{{ r.color }} dash-pill-chica">{{ r.cumplimiento }} %</span>{% else %}<span class="dash-pill dash-pill-gris dash-pill-chica">Sin metas</span>{% endif %}</div>
+                        <div class="small text-muted mb-1">{{ r.funcionario.cargo.nombre_cargo }}</div>
+                        {% localize off %}<div class="dash-barra dash-barra-{{ r.color }}"><div class="dash-barra-relleno" style="width: {{ r.barra }}%"></div></div>{% endlocalize %}
+                    </div>
+                </li>
+            {% empty %}
+                <li class="dash-vacio">La delegación no tiene funcionarios activos.</li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

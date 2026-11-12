@@ -3,8 +3,8 @@
 {% block titulo %}Funcionarios{% endblock %}
 
 {% block contenido %}
-<p class="text-uppercase small eyebrow mb-2">Mantenedor de tabla maestra</p>
-<h1 class="h2 mb-1">Funcionarios</h1>
+<p class="text-uppercase small eyebrow mb-2">{% if rol_usuario == "Delegado" %}Gestión de funcionarios de {{ perfil_usuario.delegacion }}{% elif rol_usuario == "Coordinador" %}Delegados y funcionarios{% else %}Mantenedor de tabla maestra{% endif %}</p>
+<h1 class="h2 mb-1">{% if rol_usuario == "Delegado" %}Mis funcionarios{% else %}Funcionarios{% endif %}</h1>
 <p class="text-muted mb-4">
     {{ object_list|length }} funcionario(s){% if query %} que coinciden con «{{ query }}»{% endif %} · Cargo, delegación y rol de acceso obtenidos desde la base de datos.
 </p>
@@ -13,7 +13,7 @@
     {% if puede_agregar %}
     <a href="{% url 'organizacion:funcionario_crear' %}" class="btn btn-institucional btn-sm">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="me-1"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-        Agregar funcionario
+        {% if rol_usuario == "Coordinador" %}Agregar Delegado{% else %}Agregar funcionario{% endif %}
     </a>
     {% else %}<span></span>{% endif %}
     <form method="get" class="d-flex gap-2 buscador-form" role="search">
@@ -57,8 +57,8 @@
                     <td><span class="badge-rol badge-rol-{{ f.rol|lower }}">{{ f.get_rol_display }}</span></td>
                     <td class="text-end text-nowrap">
                         <a href="{% url 'organizacion:funcionario_detalle' f.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a>
-                        {% if puede_editar %}<a href="{% url 'organizacion:funcionario_editar' f.pk %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
-                        {% if puede_eliminar %}<a href="{% url 'organizacion:funcionario_eliminar' f.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
+                        {% if puede_editar and f.pk in ids_gestionables %}<a href="{% url 'organizacion:funcionario_editar' f.pk %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
+                        {% if puede_eliminar and f.pk in ids_gestionables %}<a href="{% url 'organizacion:funcionario_eliminar' f.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
                     </td>
                 </tr>
                 {% empty %}

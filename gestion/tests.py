@@ -20,15 +20,19 @@ Se agregan además (retroalimentación del profesor Ciceo, Evaluación 1):
 import datetime
 
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
-from comun.pruebas import iniciar_sesion_admin
+from comun.pruebas import CLAVE_PRUEBA, MEDIA_PRUEBAS, iniciar_sesion_admin
+from cuentas.perfiles import sincronizar_cuenta
 
 from delegaciones.models import Delegacion
 from organizacion.models import CargoFuncion, Funcionario
 from .forms import CategoriaForm
-from .models import Actividad, Categoria
+from .models import Actividad, Categoria, Evidencia
 
 
 def crear_funcionario(nombre, rut, delegacion, cargo=None, rol='Funcionario'):
@@ -247,18 +251,18 @@ class ActividadCrudTests(TestCase):
         )
 
     def test_crear_actividad_mediante_formulario(self):
-        """CP-ACT-009: Se registra una actividad desde el formulario."""
+        """CP-ACT-009: El Administrador registra una actividad a nombre de un funcionario; delegación y código son automáticos."""
         datos = {
-            'codigo': 'ACT-CRUD-NUEVA', 'fecha': '2026-10-05',
-            'delegacion': self.delegacion.id, 'categoria': self.categoria.id,
-            'funcionario': self.funcionario.id, 'estado': Actividad.Estado.PENDIENTE,
-            'descripcion': 'Creada desde el formulario real',
+            'funcionario': self.funcionario.id, 'fecha': timezone.localdate().isoformat(),
+            'categoria': self.categoria.id, 'descripcion': 'Creada desde el formulario real',
             'solicitud_problema': '', 'contacto': '', 'telefono_contacto': '',
         }
         response = self.client.post(reverse('gestion:crear'), datos)
-        actividad = Actividad.objects.get(codigo='ACT-CRUD-NUEVA')
+        actividad = Actividad.objects.get(descripcion='Creada desde el formulario real')
         self.assertRedirects(response, reverse('gestion:detalle', args=[actividad.id]))
-        self.assertEqual(actividad.descripcion, 'Creada desde el formulario real')
+        self.assertEqual(actividad.delegacion, self.funcionario.delegacion)
+        self.assertEqual(actividad.estado, Actividad.Estado.PENDIENTE)
+        self.assertTrue(actividad.codigo.startswith(self.funcionario.cargo.area + '-'))
 
     def test_editar_actividad_mediante_formulario(self):
         """CP-ACT-010: Se modifica una actividad desde el formulario."""
@@ -287,56 +291,70 @@ class ActividadCrudTests(TestCase):
         self.assertTrue(Actividad.objects.filter(id=self.actividad.id).exists())
 
 
+@override_settings(MEDIA_ROOT=MEDIA_PRUEBAS)
 class ActividadValidacionVistaTests(TestCase):
-    """Pruebas integrales del formulario de validación en gestion/detalle.html."""
+    """Validación de la evidencia por el Delegado desde gestion/detalle.html
+    (flujo pedido por el profesor Caiceo en la revisión de la Evaluación 2)."""
 
     def setUp(self):
-        iniciar_sesion_admin(self.client)
+        call_command('configurar_roles', verbosity=0)
         self.delegacion = Delegacion.objects.create(
             nombre='Delegación Vista Val.', encargado='A', direccion='A', telefono='1',
             email='vistaval@laserena.cl', territorio='A', enfoque='A',
         )
+        self.otra = Delegacion.objects.create(
+            nombre='Otra Delegación', encargado='B', direccion='B', telefono='2',
+            email='otra@laserena.cl', territorio='B', enfoque='B',
+        )
         self.categoria = Categoria.objects.create(nombre='Categoría Vista Val.')
         self.funcionario = crear_funcionario('Funcionario Vista', '23.000.000-1', self.delegacion)
-        self.delegado = crear_funcionario(
-            'Delegado Vista', '23.000.000-2', self.delegacion, rol='Delegado',
-        )
+        self.delegado = crear_funcionario('Delegado Vista', '23.000.000-2', self.delegacion, rol='Delegado')
+        self.delegado_otra = crear_funcionario('Delegado Otra', '23.000.000-3', self.otra, rol='Delegado')
+        for f in (self.funcionario, self.delegado, self.delegado_otra):
+            sincronizar_cuenta(f, clave=CLAVE_PRUEBA)
         self.actividad = Actividad.objects.create(
-            codigo='ACT-VISTA-001', fecha=datetime.date(2026, 10, 1),
-            delegacion=self.delegacion, categoria=self.categoria,
+            fecha=datetime.date(2026, 10, 1), delegacion=self.delegacion, categoria=self.categoria,
             descripcion='Pendiente de validar', funcionario=self.funcionario,
         )
 
+    def _con_evidencia(self):
+        Evidencia.objects.create(actividad=self.actividad,
+                                 archivo=SimpleUploadedFile('foto.jpg', b'\xff\xd8\xff', content_type='image/jpeg'))
+
     def test_detalle_muestra_formulario_cuando_no_esta_validada(self):
-        """CP-VLD-007: La ficha de una actividad pendiente muestra el formulario de validación."""
+        """CP-VLD-007: El Delegado de la delegación ve el formulario para validar la actividad."""
+        self._con_evidencia()
+        self.client.force_login(self.delegado.usuario)
         response = self.client.get(reverse('gestion:detalle', args=[self.actividad.id]))
-        self.assertContains(response, 'Validar esta actividad')
+        self.assertContains(response, 'Validar la actividad')
 
     def test_detalle_no_muestra_formulario_cuando_ya_esta_validada(self):
         """CP-VLD-008: La ficha de una actividad validada no muestra el formulario."""
         self.actividad.marcar_validado(self.delegado)
+        self.client.force_login(self.delegado.usuario)
         response = self.client.get(reverse('gestion:detalle', args=[self.actividad.id]))
-        self.assertNotContains(response, 'Validar esta actividad')
-        self.assertContains(response, 'Validado')
+        self.assertNotContains(response, 'Validar la actividad')
+        self.assertContains(response, 'Validada')
 
     def test_validar_desde_la_vista_aplica_la_regla_de_negocio(self):
-        """CP-VLD-009: Validar desde la pantalla registra Delegado y fecha."""
-        response = self.client.post(
-            reverse('gestion:detalle', args=[self.actividad.id]),
-            {'validar': '1', 'validado_por': self.delegado.id},
-        )
+        """CP-VLD-009: El Delegado aprueba la evidencia y queda registrado quién validó y cuándo."""
+        self._con_evidencia()
+        self.client.force_login(self.delegado.usuario)
+        response = self.client.post(reverse('gestion:detalle', args=[self.actividad.id]),
+                                    {'revisar': '1', 'decision': 'aprobar'})
         self.assertRedirects(response, reverse('gestion:detalle', args=[self.actividad.id]))
         self.actividad.refresh_from_db()
         self.assertTrue(self.actividad.validado)
+        self.assertEqual(self.actividad.estado_validacion, Actividad.EstadoValidacion.VALIDADA)
         self.assertEqual(self.actividad.validado_por, self.delegado)
 
     def test_validar_rechaza_autovalidacion_desde_la_vista(self):
-        """CP-VLD-010: La pantalla rechaza que el funcionario se valide a sí mismo."""
-        response = self.client.post(
-            reverse('gestion:detalle', args=[self.actividad.id]),
-            {'validar': '1', 'validado_por': self.funcionario.id},
-        )
-        self.assertEqual(response.status_code, 200)  # se queda en el formulario con el error
+        """CP-VLD-010: El Delegado de otra delegación no ve la actividad (404) y el funcionario no puede validarse."""
+        self._con_evidencia()
+        self.client.force_login(self.delegado_otra.usuario)
+        self.assertEqual(self.client.get(reverse('gestion:detalle', args=[self.actividad.id])).status_code, 404)
+        self.client.force_login(self.funcionario.usuario)
+        self.client.post(reverse('gestion:detalle', args=[self.actividad.id]), {'revisar': '1', 'decision': 'aprobar'})
         self.actividad.refresh_from_db()
         self.assertFalse(self.actividad.validado)
 

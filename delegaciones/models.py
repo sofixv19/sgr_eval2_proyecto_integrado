@@ -24,6 +24,10 @@ class Delegacion(models.Model):
     email = models.EmailField('Correo electrónico')
     territorio = models.CharField('Territorio', max_length=200)
     enfoque = models.TextField('Enfoque de gestión')
+    activa = models.BooleanField(
+        'Activa', default=True,
+        help_text='Una delegación desactivada no aparece para asignar funcionarios ni registrar actividades.',
+    )
 
     class Meta:
         verbose_name = 'Delegación'
@@ -46,3 +50,8 @@ class Delegacion(models.Model):
     @property
     def total_actividades(self):
         return self.actividades.count()
+
+    @property
+    def delegado(self):
+        """Funcionario con rol Delegado activo asignado a esta delegación."""
+        return self.funcionarios.filter(rol='Delegado', activo=True).first()

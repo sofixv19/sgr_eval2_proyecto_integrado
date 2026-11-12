@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.utils import timezone
 
-from .models import Actividad, Categoria
+from .models import Actividad, Categoria, Evidencia
 
 
 @admin.register(Categoria)
@@ -15,26 +15,34 @@ class CategoriaAdmin(admin.ModelAdmin):
         return obj.actividades.count()
 
 
+class EvidenciaInline(admin.TabularInline):
+    model = Evidencia
+    extra = 0
+    fields = ('archivo', 'descripcion', 'subida_por', 'fecha_carga')
+    readonly_fields = ('subida_por', 'fecha_carga')
+
+
 @admin.register(Actividad)
 class ActividadAdmin(admin.ModelAdmin):
     """Administración completa de Actividad, con navegación hacia sus
     entidades relacionadas (Delegacion y Categoria) mediante autocomplete."""
 
-    list_display = ('codigo', 'fecha', 'delegacion', 'categoria', 'funcionario', 'estado', 'validado')
-    list_filter = ('estado', 'validado', 'categoria', 'delegacion')
+    list_display = ('codigo', 'fecha', 'delegacion', 'categoria', 'funcionario', 'estado', 'estado_validacion')
+    list_filter = ('estado', 'estado_validacion', 'categoria', 'delegacion')
     search_fields = (
         'codigo', 'descripcion', 'funcionario__nombre', 'delegacion__nombre',
         'solicitud_problema', 'contacto',
     )
     date_hierarchy = 'fecha'
     ordering = ('-fecha',)
-    readonly_fields = ('fecha_validacion',)
+    readonly_fields = ('fecha_validacion', 'fecha_registro')
     actions = ['marcar_validadas']
 
     # autocomplete_fields permite navegar/buscar la delegación, la
     # categoría, el funcionario y el delegado validador relacionados
     # directamente desde el formulario de Actividad.
     autocomplete_fields = ('delegacion', 'categoria', 'funcionario', 'validado_por')
+    inlines = [EvidenciaInline]
 
     fieldsets = (
         ('Identificación', {
@@ -47,7 +55,7 @@ class ActividadAdmin(admin.ModelAdmin):
             'fields': ('descripcion',),
         }),
         ('Validación del Delegado', {
-            'fields': ('validado', 'validado_por', 'fecha_validacion'),
+            'fields': ('estado_validacion', 'validado', 'validado_por', 'fecha_validacion', 'observacion_validacion'),
             'description': (
                 'El Delegado de la delegación valida la actividad; el Funcionario '
                 'que la registró no puede validarse a sí mismo (regla pedida por '

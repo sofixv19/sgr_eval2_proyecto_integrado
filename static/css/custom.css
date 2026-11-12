@@ -697,6 +697,10 @@ code {
   max-width: 640px;
 }
 
+.form-card-ancha {
+  max-width: none;
+}
+
 .form-card-peligro {
   border-top-color: #b02a37;
   text-align: left;
@@ -731,6 +735,15 @@ code {
 
 .badge-validacion-ok { background-color: var(--color-verde); color: #fff; }
 .badge-validacion-pendiente { background-color: #f1f1ef; color: #6b6b63; border: 1px solid var(--color-borde); }
+.badge-validacion-rechazada { background-color: #b42318; color: #fff; }
+.semaforo { display: inline-block; min-width: 4.5rem; text-align: center; padding: .15rem .5rem; border-radius: 999px; font-weight: 600; font-size: .85rem; }
+.semaforo-verde { background: #d1f2dc; color: #135c2c; }
+.semaforo-ambar { background: #fff1c2; color: #7a5700; }
+.semaforo-rojo { background: #fde0dc; color: #8f1d12; }
+.semaforo-gris { background: #eee; color: #666; }
+.panel-kpi { background:#fff; border:1px solid var(--color-borde); border-radius:.75rem; padding:1rem 1.25rem; height:100%; }
+.panel-kpi .valor { font-size:1.8rem; font-weight:700; line-height:1.1; }
+.panel-kpi .etiqueta { color:#6b6b63; font-size:.85rem; }
 
 .validacion-card {
   background-color: var(--color-crema);
@@ -739,3 +752,312 @@ code {
   padding: 1.25rem;
   margin-top: 1rem;
 }
+/* ---------------------------------------------------------------------
+   Panel (dashboard) por rol: Funcionario, Delegado y Coordinador
+   --------------------------------------------------------------------- */
+:root {
+  --dash-sombra: 0 1px 2px rgba(17, 17, 26, .05), 0 6px 18px rgba(17, 17, 26, .06);
+  --dash-sombra-hover: 0 2px 4px rgba(17, 17, 26, .06), 0 12px 28px rgba(17, 17, 26, .10);
+  --dash-radio: 16px;
+  --dash-texto-suave: #6b6b73;
+}
+
+/* Encabezado institucional */
+.dash-banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.75rem 2rem;
+  border-radius: var(--dash-radio);
+  color: #fff;
+  background: linear-gradient(120deg, #5a0000 0%, #920000 55%, #b8323d 100%);
+  box-shadow: 0 10px 30px rgba(146, 0, 0, .25);
+}
+.dash-banner::before,
+.dash-banner::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .07);
+  pointer-events: none;
+}
+.dash-banner::before { width: 320px; height: 320px; right: -80px; top: -160px; }
+.dash-banner::after { width: 200px; height: 200px; right: 180px; bottom: -130px; }
+.dash-banner > * { position: relative; z-index: 1; }
+.dash-banner-persona { display: flex; align-items: center; gap: 1.1rem; min-width: 0; }
+.dash-banner-eyebrow { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.dash-banner-titulo { font-size: 1.85rem; margin: .15rem 0 .55rem; color: #fff; }
+.dash-banner-acciones { display: flex; flex-wrap: wrap; gap: .5rem; }
+.dash-banner .btn-light { color: var(--color-institucional); }
+.dash-banner .btn-outline-light:hover { color: var(--color-institucional); }
+
+.dash-avatar {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, .16);
+  border: 2px solid rgba(255, 255, 255, .45);
+}
+.dash-avatar svg { width: 28px; height: 28px; }
+.dash-avatar-chico {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+  color: var(--color-institucional);
+  background: #f6e5e5;
+  border: 0;
+}
+
+.dash-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.dash-chip {
+  display: inline-block;
+  padding: .25rem .7rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .25);
+}
+.dash-chip-alerta { background: #ffd66b; border-color: #ffd66b; color: #5c3d00; font-weight: 600; }
+
+.dash-aviso {
+  padding: .9rem 1.2rem;
+  border-radius: 12px;
+  background: #fff8e1;
+  border: 1px solid #ffe08a;
+  border-left: 5px solid var(--color-ambar);
+  color: #5c4500;
+}
+
+/* Tonos (semáforo y marca) */
+.dash-tono-marca { --tono: var(--color-institucional); --tono-suave: #f6e5e5; --tono-texto: #920000; }
+.dash-tono-verde { --tono: var(--color-verde); --tono-suave: #def1ec; --tono-texto: #1f7a62; }
+.dash-tono-ambar { --tono: var(--color-ambar); --tono-suave: #fbf0d9; --tono-texto: #8a5e00; }
+.dash-tono-rojo { --tono: var(--color-rojo); --tono-suave: #f8e1e4; --tono-texto: #a52a38; }
+.dash-tono-gris { --tono: #a3a3ab; --tono-suave: #efeff1; --tono-texto: #5d5d66; }
+
+/* Indicador circular */
+.dash-gauge-card {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 1.6rem 1.75rem;
+  background: #fff;
+  border-radius: var(--dash-radio);
+  box-shadow: var(--dash-sombra);
+}
+.dash-gauge { position: relative; flex: 0 0 160px; width: 160px; height: 160px; }
+.dash-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.dash-gauge circle { fill: none; stroke-width: 11; }
+.dash-gauge-fondo { stroke: #ececef; }
+.dash-gauge-valor { stroke: var(--tono); stroke-linecap: round; transition: stroke-dasharray .8s ease; }
+.dash-gauge-esperado { stroke: var(--color-tinta); stroke-width: 17 !important; }
+.dash-gauge-centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tono-texto);
+}
+.dash-gauge-centro strong { font-size: 2.3rem; font-weight: 800; letter-spacing: -.02em; }
+.dash-gauge-centro span { font-size: 1.1rem; font-weight: 600; margin-left: .1rem; margin-top: .55rem; }
+.dash-gauge-texto { min-width: 0; }
+.dash-gauge-titulo { font-size: 1.05rem; font-weight: 700; margin-bottom: .55rem; }
+.dash-gauge-leyenda { margin-top: .9rem; font-size: .88rem; color: var(--dash-texto-suave); display: grid; gap: .3rem; }
+.dash-punto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .3rem; vertical-align: middle; }
+.dash-punto-verde { background: var(--color-verde); }
+.dash-punto-ambar { background: var(--color-ambar); }
+.dash-punto-rojo { background: var(--color-rojo); }
+.dash-punto-gris { background: #a3a3ab; }
+.dash-punto-marca { background: var(--color-tinta); border-radius: 2px; width: 4px; height: 14px; }
+
+/* Etiquetas de estado */
+.dash-pill {
+  display: inline-block;
+  padding: .3rem .8rem;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dash-pill-chica { padding: .15rem .6rem; font-size: .76rem; }
+.dash-pill-verde { background: #def1ec; color: #1f7a62; }
+.dash-pill-ambar { background: #fbf0d9; color: #8a5e00; }
+.dash-pill-rojo { background: #f8e1e4; color: #a52a38; }
+.dash-pill-gris { background: #efeff1; color: #5d5d66; }
+
+/* Tarjetas de cifras */
+.dash-stat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.15rem 1.3rem;
+  background: #fff;
+  border-radius: var(--dash-radio);
+  box-shadow: var(--dash-sombra);
+  border-bottom: 3px solid var(--tono, var(--color-institucional));
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.dash-stat:hover { transform: translateY(-2px); box-shadow: var(--dash-sombra-hover); }
+.dash-stat-icono {
+  flex: 0 0 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tono-suave, #f6e5e5);
+  color: var(--tono-texto, var(--color-institucional));
+}
+.dash-stat-valor { font-size: 1.9rem; font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
+.dash-stat-valor small { font-size: 1rem; font-weight: 600; margin-left: .1rem; }
+.dash-stat-etiqueta { color: var(--dash-texto-suave); font-size: .85rem; }
+
+/* Tarjetas de contenido */
+.dash-card {
+  background: #fff;
+  border-radius: var(--dash-radio);
+  box-shadow: var(--dash-sombra);
+  padding: 1.4rem 1.6rem;
+}
+.dash-card-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .75rem;
+  padding-bottom: .9rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid #ececef;
+}
+.dash-card-titulo { font-size: 1.1rem; font-weight: 700; margin: 0; }
+.dash-card-sub { color: var(--dash-texto-suave); font-size: .82rem; margin-top: .15rem; }
+.dash-link { font-size: .85rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.dash-link:hover { text-decoration: underline; }
+.dash-vacio {
+  list-style: none;
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--dash-texto-suave);
+  background: var(--color-crema);
+  border-radius: 10px;
+}
+
+/* Barras de avance */
+.dash-barra { position: relative; height: 10px; background: #ececef; border-radius: 999px; }
+.dash-barra-relleno {
+  height: 100%;
+  min-width: 6px;
+  border-radius: 999px;
+  background: var(--color-institucional);
+  transition: width .8s ease;
+}
+.dash-barra-verde .dash-barra-relleno { background: linear-gradient(90deg, #5bbfa5, var(--color-verde)); }
+.dash-barra-ambar .dash-barra-relleno { background: linear-gradient(90deg, #f0c56f, var(--color-ambar)); }
+.dash-barra-rojo .dash-barra-relleno { background: linear-gradient(90deg, #e0707c, var(--color-rojo)); }
+.dash-barra-gris .dash-barra-relleno { background: #c4c4cb; }
+
+/* Metas */
+.dash-meta { display: flex; align-items: center; gap: 1rem; padding: .85rem 0; }
+.dash-meta + .dash-meta { border-top: 1px dashed #e2e2e6; }
+.dash-meta-fraccion {
+  flex: 0 0 64px;
+  height: 64px;
+  border-radius: 14px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 1rem;
+  background: var(--tono-suave);
+  color: var(--tono-texto);
+}
+.dash-meta-fraccion strong { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.dash-meta-fraccion span { font-size: .9rem; font-weight: 600; opacity: .8; }
+.dash-meta-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding: .85rem 1.1rem;
+  background: var(--color-crema);
+  border-radius: 12px;
+  font-weight: 700;
+}
+.min-w-0 { min-width: 0; }
+
+/* Línea de tiempo de actividades */
+.dash-timeline { list-style: none; margin: 0; padding: 0 0 0 1.4rem; position: relative; }
+.dash-timeline::before {
+  content: "";
+  position: absolute;
+  left: .4rem;
+  top: .4rem;
+  bottom: .4rem;
+  width: 2px;
+  background: #ececef;
+}
+.dash-timeline > li:not(.dash-vacio) { position: relative; padding: .2rem 0 1rem .4rem; }
+.dash-timeline > li:not(.dash-vacio)::before {
+  content: "";
+  position: absolute;
+  left: -1.3rem;
+  top: .45rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--color-ambar);
+}
+.dash-timeline > li.dash-timeline-validada::before { border-color: var(--color-verde); }
+.dash-timeline > li.dash-timeline-rechazada::before { border-color: var(--color-rojo); }
+.dash-timeline > li.dash-vacio { margin-left: -1.4rem; }
+.dash-timeline-fila { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.dash-timeline-texto { font-weight: 600; margin-top: .15rem; }
+.dash-codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-size: .85rem;
+  padding: .15rem .5rem;
+  border-radius: 6px;
+  background: #f6e5e5;
+  color: var(--color-institucional);
+  text-decoration: none;
+}
+a.dash-codigo:hover { background: var(--color-institucional); color: #fff; }
+
+/* Ranking de funcionarios */
+.dash-ranking { list-style: none; margin: 0; padding: 0; }
+.dash-ranking > li:not(.dash-vacio) { display: flex; align-items: center; gap: .9rem; padding: .75rem 0; }
+.dash-ranking > li + li { border-top: 1px dashed #e2e2e6; }
+.dash-ranking a { text-decoration: none; color: var(--color-tinta); }
+.dash-ranking a:hover { color: var(--color-institucional); }
+
+/* Tabla del Coordinador */
+.dash-tabla th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--dash-texto-suave); font-weight: 700; }
+.dash-tabla tbody tr:hover { background: #faf6f6; }
+
+@media (max-width: 576px) {
+  .dash-banner { padding: 1.4rem 1.25rem; }
+  .dash-banner-titulo { font-size: 1.45rem; }
+  .dash-avatar { flex-basis: 52px; width: 52px; height: 52px; font-size: 1.3rem; }
+  .dash-gauge-card { flex-direction: column; text-align: center; }
+  .dash-gauge-leyenda { justify-items: center; }
+  .dash-card { padding: 1.2rem; }
+}
+.dash-timeline:has(> .dash-vacio)::before { display: none; }
+
+/* Formularios centrados en la página */
+.form-card:not(.form-card-ancha) { margin-left: auto; margin-right: auto; }
+.form-volver { display: block; max-width: 640px; margin: 0 auto; }

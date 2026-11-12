@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block titulo %}Mi panel{% endblock %}
+{% block contenido %}
+<section class="dash-banner mb-4">
+    <div class="dash-banner-persona">
+        <div class="dash-avatar">{{ perfil.nombre|slice:":1"|upper }}</div>
+        <div>
+            <div class="dash-banner-eyebrow">Funcionario · Delegación {{ perfil.delegacion }}</div>
+            <h1 class="dash-banner-titulo">Hola, {{ perfil.nombre }}</h1>
+            <div class="dash-chips">
+                <span class="dash-chip">{{ perfil.cargo.nombre_cargo }}</span>
+                <span class="dash-chip">Área {{ perfil.cargo.get_area_display }}</span>
+                {% if periodo %}<span class="dash-chip">{{ periodo }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="dash-banner-acciones">
+        <a href="{% url 'gestion:crear' %}" class="btn btn-light fw-semibold">+ Registrar actividad</a>
+        <a href="{% url 'gestion:listado' %}" class="btn btn-outline-light">Ver mis actividades</a>
+    </div>
+</section>
+
+{% if rechazadas %}
+<div class="dash-aviso mb-4">
+    <strong>Tiene actividades rechazadas por su Delegado.</strong> Revise la observación y suba una nueva evidencia:
+    {% for a in rechazadas %}<a href="{% url 'gestion:detalle' a.id %}" class="ms-1">{{ a.codigo }}</a>{% if not forloop.last %},{% endif %}{% endfor %}
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-5">
+        {% include "includes/dash_gauge.html" with titulo="Mi cumplimiento del período" valor=resultado.cumplimiento barra=resultado.barra esperado=resultado.esperado color=resultado.color mensaje=resultado.mensaje %}
+    </div>
+    <div class="col-xl-7">
+        <div class="row g-3 h-100">
+            <div class="col-6"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="actividades" %}</div><div><div class="dash-stat-valor">{{ total }}</div><div class="dash-stat-etiqueta">Actividades registradas</div></div></div></div>
+            <div class="col-6"><div class="dash-stat dash-tono-verde"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="validada" %}</div><div><div class="dash-stat-valor">{{ validadas }}</div><div class="dash-stat-etiqueta">Validadas por mi Delegado</div></div></div></div>
+            <div class="col-6"><div class="dash-stat dash-tono-ambar"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="reloj" %}</div><div><div class="dash-stat-valor">{{ pendientes }}</div><div class="dash-stat-etiqueta">Esperando validación</div></div></div></div>
+            <div class="col-6"><div class="dash-stat dash-tono-rojo"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="imagen" %}</div><div><div class="dash-stat-valor">{{ sin_evidencia }}</div><div class="dash-stat-etiqueta">Sin evidencia todavía</div></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="dash-card h-100">
+            <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Mis metas del período</h2><div class="dash-card-sub">Solo cuentan las actividades validadas por el Delegado</div></div></div>
+            {% include "gestion/includes/tabla_metas.html" with resultado=resultado %}
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="dash-card h-100">
+            <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Últimas actividades</h2><div class="dash-card-sub">Lo último que registró</div></div><a href="{% url 'gestion:listado' %}" class="dash-link">Ver todas →</a></div>
+            <ul class="dash-timeline">
+            {% for actividad in recientes %}
+                <li class="dash-timeline-{{ actividad.estado_validacion|lower }}">
+                    <div class="dash-timeline-fila">
+                        <a href="{% url 'gestion:detalle' actividad.id %}" class="dash-codigo">{{ actividad.codigo }}</a>
+                        {% include "gestion/includes/badge_validacion.html" %}
+                    </div>
+                    <div class="dash-timeline-texto">{{ actividad.categoria }}</div>
+                    <div class="small text-muted">{{ actividad.fecha|date:"d \d\e F, Y" }}</div>
+                </li>
+            {% empty %}
+                <li class="dash-vacio">Aún no registra actividades. Parta con <a href="{% url 'gestion:crear' %}">Registrar actividad</a>.</li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

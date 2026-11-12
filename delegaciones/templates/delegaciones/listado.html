@@ -38,7 +38,7 @@
                     <rect x="3" y="20" width="18" height="2" fill="currentColor"/>
                 </svg>
                 <div>
-                    <h2 class="h6 mb-0">{{ delegacion.nombre }}</h2>
+                    <h2 class="h6 mb-0">{{ delegacion.nombre }}{% if not delegacion.activa %} <span class="badge bg-secondary">Inactiva</span>{% endif %}</h2>
                     <span class="deleg-territorio">{{ delegacion.territorio }}</span>
                 </div>
             </div>

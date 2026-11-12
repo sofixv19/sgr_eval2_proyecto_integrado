@@ -6,7 +6,9 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a href="{% url 'delegaciones:listado' %}" class="small">&larr; Volver al listado</a>
     <div class="deleg-card-botones">
-        {% if perms.delegaciones.change_delegacion %}<a href="{% url 'delegaciones:editar' delegacion.slug %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
+        {% if perms.delegaciones.change_delegacion %}<a href="{% url 'delegaciones:editar' delegacion.slug %}" class="btn btn-sm btn-outline-secondary">Modificar</a>
+        <form method="post" action="{% url 'delegaciones:cambiar_estado' delegacion.slug %}" class="d-inline">{% csrf_token %}
+            <button type="submit" class="btn btn-sm {% if delegacion.activa %}btn-outline-danger{% else %}btn-outline-success{% endif %}">{% if delegacion.activa %}Desactivar{% else %}Activar{% endif %}</button></form>{% endif %}
         {% if perms.delegaciones.delete_delegacion %}<a href="{% url 'delegaciones:eliminar' delegacion.slug %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
     </div>
 </div>
@@ -18,7 +20,7 @@
         <rect x="3" y="20" width="18" height="2" fill="currentColor"/>
     </svg>
     <div>
-        <h1 class="h2 mb-0">{{ delegacion.nombre }}</h1>
+        <h1 class="h2 mb-0">{{ delegacion.nombre }}{% if not delegacion.activa %} <span class="badge bg-secondary fs-6 align-middle">Inactiva</span>{% endif %}</h1>
         <p class="text-muted mb-0">{{ delegacion.territorio }}</p>
     </div>
 </div>
@@ -59,6 +61,20 @@
             <p class="mb-0">{{ delegacion.enfoque }}</p>
         </div>
     </div>
+</div>
+
+<div class="form-card form-card-ancha mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h6 mb-0">Delegado: {% if delegado %}{{ delegado.nombre }} ({{ delegado.email }}){% else %}<span class="text-danger">sin Delegado asignado</span>{% endif %}</h2>
+        {% if puede_asignar_delegado and not delegado %}<a href="{% url 'organizacion:funcionario_crear' %}?delegacion={{ delegacion.pk }}" class="btn btn-sm btn-institucional">Crear y asignar Delegado</a>{% endif %}
+    </div>
+    <p class="mb-2">Cumplimiento de la delegación: <span class="semaforo semaforo-{{ color }}">{% if color == "gris" %}Sin metas{% else %}{{ porcentaje }} %{% endif %}</span></p>
+    <table class="table table-sm align-middle mb-0">
+        <thead><tr><th>Funcionario</th><th>Cargo</th><th class="text-end">Cumplimiento</th></tr></thead>
+        <tbody>{% for r in detalle_funcionarios %}<tr><td>{{ r.funcionario.nombre }}</td><td>{{ r.funcionario.cargo.nombre_cargo }}</td>
+            <td class="text-end">{% if r.tiene_metas %}<span class="semaforo semaforo-{{ r.color }}">{{ r.cumplimiento }} %</span>{% else %}<span class="text-muted small">Sin metas</span>{% endif %}</td></tr>
+        {% empty %}<tr><td colspan="3" class="text-muted">Sin funcionarios activos.</td></tr>{% endfor %}</tbody>
+    </table>
 </div>
 
 <div class="mt-4">

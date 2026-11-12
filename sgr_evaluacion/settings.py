@@ -82,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'cuentas.context_processors.rol_usuario',
             ],
         },
     },
@@ -173,6 +174,17 @@ LOGIN_REDIRECT_URL = '/'
 # Bloqueo temporal tras intentos fallidos de inicio de sesión.
 SGR_LOGIN_MAX_INTENTOS = config('SGR_LOGIN_MAX_INTENTOS', default=5, cast=int)
 SGR_LOGIN_MINUTOS_BLOQUEO = config('SGR_LOGIN_MINUTOS_BLOQUEO', default=15, cast=int)
+
+# Reglas de negocio parametrizables (Guía SGR, sección 13.1)
+SGR_DIAS_REGISTRO_RETROACTIVO = config('SGR_DIAS_REGISTRO_RETROACTIVO', default=7, cast=int)
+SGR_TOPE_CUMPLIMIENTO = config('SGR_TOPE_CUMPLIMIENTO', default=150, cast=int)   # % máximo computable
+SGR_EVIDENCIA_MAX_MB = config('SGR_EVIDENCIA_MAX_MB', default=5, cast=int)
+
+# Evidencias subidas por los funcionarios. No se publican en una URL
+# abierta: se entregan con la vista gestion:evidencia, que revisa permisos.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
 SESSION_COOKIE_AGE = 30 * 60              # la sesión expira tras 30 minutos
 SESSION_SAVE_EVERY_REQUEST = True         # ...contados desde la última acción

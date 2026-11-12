@@ -1,0 +1,24 @@
+{% load l10n %}{% comment %}
+Indicador circular de cumplimiento.
+Parámetros: titulo, valor, barra (0-100), esperado, color (verde/ambar/rojo/gris), mensaje.
+{% endcomment %}
+<div class="dash-gauge-card dash-tono-{{ color }} h-100">
+    <div class="dash-gauge">
+        {% localize off %}
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="dash-gauge-fondo" cx="60" cy="60" r="50" pathLength="100"/>
+            <circle class="dash-gauge-valor" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="{{ barra }} 100"/>
+            <circle class="dash-gauge-esperado" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="0.9 100" stroke-dashoffset="-{{ esperado }}"/>
+        </svg>
+        {% endlocalize %}
+        <div class="dash-gauge-centro"><strong>{{ valor }}</strong><span>%</span></div>
+    </div>
+    <div class="dash-gauge-texto">
+        <div class="dash-gauge-titulo">{{ titulo }}</div>
+        <div class="dash-pill dash-pill-{{ color }}">{{ mensaje }}</div>
+        <div class="dash-gauge-leyenda">
+            <div><span class="dash-punto dash-punto-{{ color }}"></span> Logrado: <strong>{{ valor }} %</strong></div>
+            <div><span class="dash-punto dash-punto-marca"></span> Esperado a hoy: <strong>{{ esperado }} %</strong></div>
+        </div>
+    </div>
+</div>

@@ -33,3 +33,6 @@ Thumbs.db
 # Registros de seguridad generados en ejecución
 logs/
 staticfiles/
+
+# Evidencias subidas (archivos de usuarios)
+media/

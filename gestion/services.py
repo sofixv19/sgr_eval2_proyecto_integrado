@@ -16,12 +16,15 @@ _CLAVES_POR_ESTADO = {
 }
 
 
-def resumen_por_estado():
+def resumen_por_estado(consulta=None):
     """Cuenta, mediante una única consulta ORM agregada (GROUP BY estado),
-    cuántas actividades hay en cada estado."""
+    cuántas actividades hay en cada estado. Si se entrega una consulta, se
+    cuenta solo sobre ella (por ejemplo, las actividades visibles para el
+    usuario según su rol)."""
     conteo = {'pendiente': 0, 'en_proceso': 0, 'realizado': 0}
 
-    filas = Actividad.objects.values('estado').annotate(cantidad=Count('id'))
+    consulta = Actividad.objects.all() if consulta is None else consulta
+    filas = consulta.values('estado').annotate(cantidad=Count('id')).order_by()
     for fila in filas:
         clave = _CLAVES_POR_ESTADO.get(fila['estado'])
         if clave is not None:

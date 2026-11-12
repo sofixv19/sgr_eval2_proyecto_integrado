@@ -6,8 +6,8 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a href="{% url 'gestion:listado' %}" class="small">&larr; Volver al listado</a>
     <div class="deleg-card-botones">
-        {% if perms.gestion.change_actividad %}<a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
-        {% if perms.gestion.delete_actividad %}<a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
+        {% if puede_editar %}<a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
+        {% if puede_eliminar %}<a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
     </div>
 </div>
 
@@ -79,38 +79,87 @@
         <div>
             <span class="deleg-detalle-label">Validación</span>
             <p class="mb-0">
-                {% if actividad.validado %}
-                    <span class="badge-validacion badge-validacion-ok">Validado ✓</span>
-                    <span class="text-muted small ms-1">
-                        por {{ actividad.validado_por.nombre }} (Delegado)
-                        {% if actividad.fecha_validacion %}&middot; {{ actividad.fecha_validacion|date:"d/m/Y H:i" }}{% endif %}
-                    </span>
-                {% else %}
-                    <span class="badge-validacion badge-validacion-pendiente">Pendiente de validación</span>
+                {% include "gestion/includes/badge_validacion.html" %}
+                {% if actividad.validado_por %}
+                <span class="text-muted small ms-1">
+                    por {{ actividad.validado_por.nombre }} (Delegado)
+                    {% if actividad.fecha_validacion %}&middot; {{ actividad.fecha_validacion|date:"d/m/Y H:i" }}{% endif %}
+                </span>
                 {% endif %}
             </p>
+            {% if actividad.estado_validacion == "Rechazada" and actividad.observacion_validacion %}
+            <div class="alert alert-warning small mt-2 mb-0"><strong>Observación del Delegado:</strong> {{ actividad.observacion_validacion }}</div>
+            {% endif %}
         </div>
     </div>
+    <div class="deleg-detalle-item">
+        <div>
+            <span class="deleg-detalle-label">Registrada el</span>
+            <p class="mb-0">{{ actividad.fecha_registro|date:"d/m/Y H:i" }}</p>
+        </div>
+    </div>
+    {% if actividad.contacto or actividad.telefono_contacto %}
+    <div class="deleg-detalle-item">
+        <div>
+            <span class="deleg-detalle-label">Contacto</span>
+            <p class="mb-0">{{ actividad.contacto }} {{ actividad.telefono_contacto }}</p>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
-{% if not actividad.validado %}
-<div class="validacion-card">
-    <h2 class="h6 mb-2">Validar esta actividad</h2>
-    <p class="text-muted small mb-3">
-        Solo un Funcionario con rol <strong>Delegado</strong> puede validar, y no puede ser
-        quien registró la actividad (regla pedida por el profesor Ciceo tras la
-        retroalimentación de la Evaluación 1).
-    </p>
-    <form method="post" class="d-flex flex-wrap align-items-end gap-2">
-        {% csrf_token %}
-        <div>
-            {{ validacion_form.validado_por }}
-            {% for error in validacion_form.validado_por.errors %}
-                <div class="text-danger small mt-1">{{ error }}</div>
-            {% endfor %}
+<section class="validacion-card mt-4">
+    <h2 class="h6 mb-2">Evidencias ({{ evidencias|length }})</h2>
+    {% if evidencias %}
+    <div class="row g-3 mb-2">
+        {% for ev in evidencias %}
+        <div class="col-sm-6 col-lg-4">
+            <div class="border rounded p-2 h-100 bg-white">
+                {% if ev.es_imagen %}
+                <a href="{% url 'gestion:evidencia' ev.id %}" target="_blank"><img src="{% url 'gestion:evidencia' ev.id %}" alt="Evidencia {{ ev }}" class="img-fluid rounded mb-1" style="max-height:160px;object-fit:cover;width:100%"></a>
+                {% endif %}
+                <a href="{% url 'gestion:evidencia' ev.id %}" target="_blank" class="small fw-semibold">{{ ev }}</a>
+                <div class="text-muted small">{{ ev.descripcion }}</div>
+                <div class="text-muted small">Subida el {{ ev.fecha_carga|date:"d/m/Y H:i" }}</div>
+            </div>
         </div>
-        <button type="submit" name="validar" value="1" class="btn btn-institucional btn-sm">Marcar como validada</button>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted small">Todavía no hay evidencias para esta actividad.</p>
+    {% endif %}
+
+    {% if evidencia_form %}
+    <form method="post" enctype="multipart/form-data" class="row g-2 align-items-end mt-1">
+        {% csrf_token %}
+        <div class="col-md-5">
+            <label class="form-label small" for="{{ evidencia_form.archivo.id_for_label }}">Subir evidencia (JPG, PNG o PDF, máx. 5 MB)</label>
+            {{ evidencia_form.archivo }}
+            {% for e in evidencia_form.archivo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-5">
+            <label class="form-label small" for="{{ evidencia_form.descripcion.id_for_label }}">Descripción</label>
+            {{ evidencia_form.descripcion }}
+        </div>
+        <div class="col-md-2"><button type="submit" name="subir_evidencia" value="1" class="btn btn-institucional btn-sm w-100">Subir</button></div>
     </form>
-</div>
+    {% endif %}
+</section>
+
+{% if revision_form %}
+<section class="validacion-card mt-3">
+    <h2 class="h6 mb-2">Validar la actividad</h2>
+    <p class="text-muted small mb-3">Como Delegado de {{ actividad.delegacion }}, revise la evidencia. Solo las actividades
+        aprobadas suman al avance del funcionario; si la rechaza, el funcionario verá su observación y podrá corregirla.</p>
+    <form method="post">
+        {% csrf_token %}
+        {% for e in revision_form.non_field_errors %}<div class="alert alert-danger small py-2">{{ e }}</div>{% endfor %}
+        <div class="mb-2">{% for radio in revision_form.decision %}<div class="form-check">{{ radio.tag }} <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label></div>{% endfor %}
+            {% for e in revision_form.decision.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+        <div class="mb-2"><label class="form-label small">Observación</label>{{ revision_form.observacion }}
+            {% for e in revision_form.observacion.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+        <button type="submit" name="revisar" value="1" class="btn btn-institucional btn-sm">Guardar revisión</button>
+    </form>
+</section>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,28 @@
+{% load l10n %}
+{% if resultado.tiene_metas %}
+<div class="dash-metas">
+{% for fila in resultado.filas %}
+    <div class="dash-meta">
+        <div class="dash-meta-fraccion dash-tono-{{ fila.color }}"><strong>{{ fila.avance }}</strong><span>/{{ fila.meta.valor_objetivo }}</span></div>
+        <div class="flex-grow-1 min-w-0">
+            <div class="d-flex justify-content-between align-items-baseline gap-2">
+                <div class="fw-semibold text-truncate">{{ fila.meta.item_medible }}</div>
+                <span class="dash-pill dash-pill-{{ fila.color }} dash-pill-chica">{{ fila.cumplimiento }} %</span>
+            </div>
+            {% localize off %}
+            <div class="dash-barra dash-barra-{{ fila.color }} my-2" role="progressbar" aria-valuenow="{{ fila.cumplimiento }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="dash-barra-relleno" style="width: {{ fila.barra }}%"></div>
+            </div>
+            {% endlocalize %}
+            <div class="small text-muted">Actividades validadas · pondera {{ fila.meta.ponderador }} % · aporta {{ fila.ponderado }} puntos</div>
+        </div>
+    </div>
+{% endfor %}
+</div>
+<div class="dash-meta-total">
+    <span>Cumplimiento ponderado</span>
+    <span class="dash-pill dash-pill-{{ resultado.color }}">{{ resultado.cumplimiento }} %</span>
+</div>
+{% else %}
+<div class="dash-vacio">Todavía no tiene metas asignadas en el período vigente.</div>
+{% endif %}

@@ -172,11 +172,12 @@ class ConfigurarRolesTests(TestCase):
         self.assertTrue(all(p.startswith('view_') for p in permisos))
 
     def test_cp_rol_003_coordinador_gestiona_metas_pero_no_funcionarios(self):
-        """CP-ROL-003: El Coordinador puede crear metas, pero no funcionarios."""
+        """CP-ROL-003: El Coordinador crea delegaciones y Delegados, pero no asigna metas (eso lo hace el Delegado)."""
         coordinador = crear_usuario('coordinador.prueba', grupos=['Coordinador'])
         coordinador = User.objects.get(pk=coordinador.pk)  # recarga la caché de permisos
-        self.assertTrue(coordinador.has_perm('organizacion.add_metaproyecto'))
-        self.assertFalse(coordinador.has_perm('organizacion.add_funcionario'))
+        self.assertTrue(coordinador.has_perm('delegaciones.add_delegacion'))
+        self.assertTrue(coordinador.has_perm('organizacion.add_funcionario'))
+        self.assertFalse(coordinador.has_perm('organizacion.add_metaproyecto'))
         self.client.force_login(coordinador)
-        self.assertEqual(self.client.get(reverse('organizacion:meta_crear')).status_code, 200)
-        self.assertEqual(self.client.get(reverse('organizacion:funcionario_crear')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('organizacion:meta_crear')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('organizacion:funcionario_crear')).status_code, 200)

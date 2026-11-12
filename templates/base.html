@@ -7,7 +7,7 @@
     <title>{% block titulo %}SGR La Serena{% endblock %} · Municipalidad de La Serena</title>
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=7">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="site-body">
@@ -26,14 +26,24 @@
                     {% if user.is_authenticated %}
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'delegaciones:inicio' %}">Inicio</a>
+                            <a class="nav-link" href="{% url 'delegaciones:inicio' %}">{% if rol_usuario == "Funcionario" %}Mi panel{% elif rol_usuario == "Delegado" %}Mi delegación{% else %}Panel{% endif %}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'gestion:listado' %}">Actividades</a>
+                            <a class="nav-link" href="{% url 'gestion:listado' %}">{% if rol_usuario == "Funcionario" %}Mis actividades{% elif rol_usuario == "Delegado" %}Validar actividades{% else %}Actividades{% endif %}</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a>
-                        </li>
+                        {% if rol_usuario == "Funcionario" %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:crear' %}">Registrar actividad</a></li>
+                        {% elif rol_usuario == "Delegado" %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:listado' %}">Mis funcionarios</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:metas' %}">Metas</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:cargos' %}">Cargos</a></li>
+                        {% elif rol_usuario == "Coordinador" %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'delegaciones:listado' %}">Delegaciones</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:listado' %}">Delegados</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:periodos' %}">Períodos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a></li>
+                        {% elif rol_usuario == "Administrador" or rol_usuario == "Verificador" %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mantenedores</a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -41,14 +51,15 @@
                                 <li><a class="dropdown-item" href="{% url 'organizacion:listado' %}">Funcionarios</a></li>
                                 <li><a class="dropdown-item" href="{% url 'organizacion:cargos' %}">Cargos y funciones</a></li>
                                 <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Períodos de medición</a></li>
-                                <li><a class="dropdown-item" href="{% url 'organizacion:metas' %}">Metas institucionales</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:metas' %}">Metas de los funcionarios</a></li>
                                 <li><a class="dropdown-item" href="{% url 'gestion:categorias' %}">Categorías de actividad</a></li>
                             </ul>
                         </li>
+                        {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ user.get_username }}</a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><span class="dropdown-item-text small text-muted">Rol: {% for g in user.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% if user.is_superuser %}Superusuario{% else %}Sin rol{% endif %}{% endfor %}</span></li>
+                                <li><span class="dropdown-item-text small text-muted">Rol: {{ rol_usuario|default:"Sin rol" }}{% if perfil_usuario %}<br>{{ perfil_usuario.delegacion }}{% endif %}</span></li>
                                 {% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Panel de administración</a></li>{% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li>

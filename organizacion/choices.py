@@ -18,3 +18,17 @@ ROLES_SISTEMA = (
     ('Coordinador', 'Coordinador Estratégico'),
     ('Verificador', 'Verificador / Auditor'),
 )
+
+
+# Áreas de trabajo. El código de cada actividad se genera con la sigla del
+# área del cargo del funcionario (retroalimentación del profesor Caiceo,
+# Evaluación 2: "si yo estoy en territorial se crea un código TR").
+AREAS = (
+    ('TR', 'Territorial'),
+    ('SO', 'Social'),
+    ('OC', 'Organizaciones comunitarias'),
+    ('DI', 'Diserco'),
+    ('SE', 'Seguridad'),
+    ('AD', 'Administrativa'),
+    ('PC', 'Planificación y control'),
+)

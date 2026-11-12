@@ -7,6 +7,9 @@ from django.db.models import Sum
 
 from comun.validadores import nombre_repetido, normalizar_rut, validar_nombre, validar_texto_minimo
 
+from delegaciones.models import Delegacion
+from gestion.models import Categoria
+
 from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 UNIDADES = [
@@ -20,9 +23,10 @@ UNIDADES = [
 class CargoFuncionForm(forms.ModelForm):
     class Meta:
         model = CargoFuncion
-        fields = ['nombre_cargo', 'descripcion', 'active']
+        fields = ['nombre_cargo', 'area', 'descripcion', 'active']
         widgets = {
             'nombre_cargo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 100}),
+            'area': forms.Select(attrs={'class': 'form-select'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'maxlength': 500}),
             'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -58,13 +62,29 @@ class FuncionarioForm(forms.ModelForm):
             'rol': 'Solo puede existir un Delegado activo por delegación.',
         }
 
-    def __init__(self, *args, **kwargs):
+    # modo: 'admin' (todos los campos), 'coordinador' (crea y asigna
+    # Delegados a una delegación) o 'delegado' (crea funcionarios de SU
+    # delegación). Retroalimentación del profesor Caiceo, Evaluación 2.
+    def __init__(self, *args, modo='admin', delegacion=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.modo = modo
+        self.delegacion_fija = delegacion
         # Solo se ofrecen cargos vigentes (más el cargo actual al editar).
         cargos = CargoFuncion.objects.filter(active=True)
         if self.instance.pk:
             cargos = cargos | CargoFuncion.objects.filter(pk=self.instance.cargo_id)
         self.fields['cargo'].queryset = cargos.distinct()
+        delegaciones = Delegacion.objects.filter(activa=True)
+        if self.instance.pk:
+            delegaciones = delegaciones | Delegacion.objects.filter(pk=self.instance.delegacion_id)
+        self.fields['delegacion'].queryset = delegaciones.distinct()
+        if modo == 'delegado':
+            del self.fields['delegacion']
+            del self.fields['rol']
+        elif modo == 'coordinador':
+            del self.fields['rol']
+            self.fields['delegacion'].label = 'Delegación que tendrá a cargo'
+            self.fields['delegacion'].help_text = 'Cada delegación tiene un solo Delegado activo.'
 
     def clean_nombre(self):
         return validar_nombre(self.cleaned_data.get('nombre'), minimo=3, campo='nombre')
@@ -84,6 +104,13 @@ class FuncionarioForm(forms.ModelForm):
     def clean(self):
         datos = super().clean()
         delegacion, rol, activo = datos.get('delegacion'), datos.get('rol'), datos.get('activo')
+        if self.modo == 'delegado':
+            # El Delegado solo crea funcionarios de SU delegación.
+            self.instance.delegacion = delegacion = self.delegacion_fija
+            self.instance.rol = rol = 'Funcionario'
+        elif self.modo == 'coordinador':
+            # El Coordinador crea a los Delegados.
+            self.instance.rol = rol = 'Delegado'
         if delegacion and rol == 'Delegado' and activo:
             otro = (Funcionario.objects.filter(delegacion=delegacion, rol='Delegado', activo=True)
                     .exclude(pk=self.instance.pk).first())
@@ -208,3 +235,87 @@ class MetaProyectoForm(forms.ModelForm):
                     'No puede superar 100 % (RN-001).',
                 )
         return datos
+
+
+class MetaFuncionarioForm(forms.ModelForm):
+    """Meta que el Delegado asigna a un funcionario de su delegación.
+
+    Retroalimentación Eval 2: "¿quién hace la pega de asignar esas metas?
+    Usted como delegado". Cada meta mide una categoría de actividad: el
+    avance es la cantidad de actividades VALIDADAS de esa categoría en el
+    período. La suma de ponderadores de un funcionario en un período no
+    puede superar 100 % (RN-001).
+    """
+
+    class Meta:
+        model = MetaProyecto
+        fields = ['funcionario', 'periodo', 'categoria', 'valor_objetivo', 'ponderador']
+        widgets = {
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
+            'periodo': forms.Select(attrs={'class': 'form-select'}),
+            'categoria': forms.Select(attrs={'class': 'form-select'}),
+            'valor_objetivo': forms.TextInput(attrs={'class': 'form-control', 'inputmode': 'numeric'}),
+            'ponderador': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 100}),
+        }
+        labels = {
+            'categoria': 'Ítem a medir (categoría de actividad)',
+            'valor_objetivo': 'Meta del período (cantidad de actividades validadas)',
+            'ponderador': 'Ponderador (%)',
+        }
+        help_texts = {
+            'ponderador': 'Entre 1 y 100. La suma de las metas del funcionario en el período no puede superar 100 %.',
+        }
+
+    def __init__(self, *args, funcionarios=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        for campo in ('funcionario', 'periodo', 'categoria'):
+            self.fields[campo].required = True
+        consulta = funcionarios if funcionarios is not None else Funcionario.objects.all()
+        self.fields['funcionario'].queryset = consulta.filter(activo=True).exclude(rol='Delegado').select_related('delegacion')
+        periodos = Periodo.objects.exclude(estado=Periodo.Estado.CERRADO)
+        if self.instance.pk and self.instance.periodo_id:
+            periodos = periodos | Periodo.objects.filter(pk=self.instance.periodo_id)
+        self.fields['periodo'].queryset = periodos.distinct()
+        self.fields['categoria'].queryset = Categoria.objects.all()
+
+    def clean_valor_objetivo(self):
+        texto = (self.cleaned_data.get('valor_objetivo') or '').strip().replace(',', '.')
+        try:
+            valor = float(texto)
+        except ValueError:
+            raise forms.ValidationError('La meta debe ser un número (por ejemplo 20).')
+        if valor <= 0:
+            raise forms.ValidationError('La meta debe ser mayor que cero (RN-002).')
+        return texto
+
+    def clean_ponderador(self):
+        ponderador = self.cleaned_data.get('ponderador')
+        if ponderador is None or not 1 <= ponderador <= 100:
+            raise forms.ValidationError('El ponderador debe estar entre 1 y 100.')
+        return ponderador
+
+    def clean(self):
+        datos = super().clean()
+        funcionario, periodo, categoria = datos.get('funcionario'), datos.get('periodo'), datos.get('categoria')
+        ponderador = datos.get('ponderador')
+        if funcionario and periodo and categoria:
+            repetida = (MetaProyecto.objects.filter(funcionario=funcionario, periodo=periodo, categoria=categoria)
+                        .exclude(pk=self.instance.pk).exists())
+            if repetida:
+                self.add_error('categoria', 'Este funcionario ya tiene una meta para esa categoría en el período.')
+        if funcionario and periodo and ponderador:
+            otras = MetaProyecto.objects.filter(funcionario=funcionario, periodo=periodo).exclude(pk=self.instance.pk)
+            suma = (otras.aggregate(total=Sum('ponderador'))['total'] or 0) + ponderador
+            if suma > 100:
+                self.add_error('ponderador', f'Las metas de {funcionario.nombre} en {periodo} sumarían {suma} %. '
+                                             'No puede superar 100 % (RN-001).')
+        return datos
+
+    def save(self, commit=True):
+        meta = super().save(commit=False)
+        meta.cargo = meta.funcionario.cargo
+        meta.item_medible = meta.categoria.nombre
+        meta.unidad = 'Cantidad'
+        if commit:
+            meta.save()
+        return meta

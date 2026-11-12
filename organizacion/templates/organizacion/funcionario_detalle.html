@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load comun_tags %}
+
+{% block titulo %}{{ titulo_pagina }}{% endblock %}
+
+{% block contenido %}
+<a href="{{ volver_url }}" class="small">&larr; Volver al listado</a>
+
+<div class="form-card form-card-ancha mt-3">
+    <p class="text-uppercase small eyebrow mb-2">{{ object.get_rol_display }}</p>
+    <h1 class="h4 mb-4">{{ object.nombre }}</h1>
+    <dl class="row mb-0">
+        {% for titulo, campo in campos_detalle %}
+        <dt class="col-sm-4">{{ titulo }}</dt>
+        <dd class="col-sm-8">{{ object|atributo:campo }}</dd>
+        {% endfor %}
+    </dl>
+    {% if puede_gestionar %}
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <a href="{% url 'organizacion:funcionario_editar' object.pk %}" class="btn btn-outline-secondary">Modificar</a>
+        <form method="post" action="{% url 'organizacion:funcionario_nueva_clave' object.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary">{% if object.usuario %}Generar nueva contraseña{% else %}Crear cuenta de acceso{% endif %}</button>
+        </form>
+        {% if puede_eliminar %}<a href="{% url 'organizacion:funcionario_eliminar' object.pk %}" class="btn btn-outline-danger">Eliminar</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% if resultado %}
+<div class="form-card form-card-ancha mt-4">
+    <h2 class="h6 mb-3">Metas y cumplimiento del período vigente</h2>
+    {% include "gestion/includes/tabla_metas.html" with resultado=resultado %}
+</div>
+{% endif %}
+{% endblock %}

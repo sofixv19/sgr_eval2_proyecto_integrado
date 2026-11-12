@@ -15,7 +15,7 @@ from .models import Delegacion
 class DelegacionForm(forms.ModelForm):
     class Meta:
         model = Delegacion
-        fields = ['nombre', 'encargado', 'direccion', 'telefono', 'email', 'territorio', 'enfoque']
+        fields = ['nombre', 'encargado', 'direccion', 'telefono', 'email', 'territorio', 'enfoque', 'activa']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'encargado': forms.TextInput(attrs={'class': 'form-control'}),
@@ -24,6 +24,7 @@ class DelegacionForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'territorio': forms.TextInput(attrs={'class': 'form-control'}),
             'enfoque': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'activa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean_nombre(self):

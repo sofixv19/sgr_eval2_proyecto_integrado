@@ -11,6 +11,7 @@ urlpatterns = [
     path('<int:actividad_id>/', views.detalle, name='detalle'),
     path('<int:actividad_id>/editar/', views.editar, name='editar'),
     path('<int:actividad_id>/eliminar/', views.eliminar, name='eliminar'),
+    path('evidencias/<int:evidencia_id>/', views.evidencia, name='evidencia'),
     # Tabla maestra Categoría
     path('categorias/', views.CategoriaListado.as_view(), name='categorias'),
     path('categorias/nueva/', views.CategoriaCrear.as_view(), name='categoria_crear'),

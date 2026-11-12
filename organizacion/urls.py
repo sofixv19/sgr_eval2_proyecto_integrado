@@ -11,6 +11,7 @@ urlpatterns = [
     path('funcionarios/<int:pk>/', views.FuncionarioDetalle.as_view(), name='funcionario_detalle'),
     path('funcionarios/<int:pk>/editar/', views.FuncionarioEditar.as_view(), name='funcionario_editar'),
     path('funcionarios/<int:pk>/eliminar/', views.FuncionarioEliminar.as_view(), name='funcionario_eliminar'),
+    path('funcionarios/<int:pk>/nueva-clave/', views.nueva_clave, name='funcionario_nueva_clave'),
     # Cargos
     path('cargos/', views.CargoListado.as_view(), name='cargos'),
     path('cargos/nuevo/', views.CargoCrear.as_view(), name='cargo_crear'),

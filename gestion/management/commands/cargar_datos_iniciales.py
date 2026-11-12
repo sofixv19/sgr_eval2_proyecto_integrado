@@ -110,6 +110,9 @@ class Command(BaseCommand):
         self.stdout.write('Validando actividades de ejemplo (rol Delegado)...')
         validadas = self._validar_actividades_demo()
 
+        self.stdout.write('Asignando metas de ejemplo a cada funcionario (las asigna su Delegado)...')
+        self._metas_demo()
+
         self.stdout.write(self.style.SUCCESS(
             f'Listo: {delegaciones_creadas} delegaciones, '
             f'{funcionarios_creados} funcionarios, '
@@ -217,6 +220,28 @@ class Command(BaseCommand):
                 },
             )
         return Actividad.objects.count()
+
+    def _metas_demo(self):
+        """Dos metas por funcionario en el período abierto (60 % y 40 %), si
+        todavía no tiene: una de la categoría de sus actividades y otra de
+        Organizaciones Comunitarias. Así los paneles muestran cumplimiento."""
+        periodo = Periodo.objects.filter(estado=Periodo.Estado.ABIERTO).first()
+        if periodo is None:
+            return
+        comunitarias, _ = Categoria.objects.get_or_create(nombre='Organizaciones Comunitarias')
+        for funcionario in Funcionario.objects.filter(rol='Funcionario', activo=True):
+            if MetaProyecto.objects.filter(funcionario=funcionario, periodo=periodo).exists():
+                continue
+            primera = Actividad.objects.filter(funcionario=funcionario).select_related('categoria').first()
+            principal = primera.categoria if primera else comunitarias
+            metas = [(principal, '4', 60)]
+            if principal != comunitarias:
+                metas.append((comunitarias, '3', 40))
+            for categoria, objetivo, ponderador in metas:
+                MetaProyecto.objects.create(
+                    cargo=funcionario.cargo, funcionario=funcionario, periodo=periodo, categoria=categoria,
+                    item_medible=categoria.nombre, valor_objetivo=objetivo, unidad='Cantidad', ponderador=ponderador,
+                )
 
     def _validar_actividades_demo(self):
         """Marca como validada una actividad de ejemplo por cada delegación

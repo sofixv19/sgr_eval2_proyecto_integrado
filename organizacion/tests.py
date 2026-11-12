@@ -12,7 +12,7 @@ from comun.pruebas import iniciar_sesion_admin
 from delegaciones.models import Delegacion
 from gestion.models import Actividad, Categoria
 
-from .forms import CargoFuncionForm, FuncionarioForm, MetaProyectoForm, PeriodoForm
+from .forms import CargoFuncionForm, FuncionarioForm, MetaFuncionarioForm, PeriodoForm
 from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 
@@ -114,7 +114,7 @@ class CargoMantenedorTests(TestCase):
     def test_cp_car_001_crear_cargo_valido(self):
         """CP-CAR-001: Se crea un cargo con datos válidos y se redirige al listado."""
         respuesta = self.client.post(reverse('organizacion:cargo_crear'), {
-            'nombre_cargo': 'Inspector Territorial', 'descripcion': 'Fiscaliza en terreno', 'active': 'on',
+            'nombre_cargo': 'Inspector Territorial', 'area': 'TR', 'descripcion': 'Fiscaliza en terreno', 'active': 'on',
         })
         self.assertRedirects(respuesta, reverse('organizacion:cargos'))
         self.assertTrue(CargoFuncion.objects.filter(nombre_cargo='Inspector Territorial', active=True).exists())
@@ -133,7 +133,7 @@ class CargoMantenedorTests(TestCase):
     def test_cp_car_004_editar_vigencia(self):
         """CP-CAR-004: Se puede modificar un cargo y dejarlo como no vigente."""
         self.client.post(reverse('organizacion:cargo_editar', args=[self.cargo.pk]), {
-            'nombre_cargo': 'Gestor Social', 'descripcion': 'Atiende casos sociales',
+            'nombre_cargo': 'Gestor Social', 'area': 'SO', 'descripcion': 'Atiende casos sociales',
         })
         self.cargo.refresh_from_db()
         self.assertFalse(self.cargo.active)
@@ -175,11 +175,13 @@ class FuncionarioMantenedorTests(TestCase):
         return Funcionario.objects.create(**datos)
 
     def test_cp_fun_001_crear_funcionario_valido(self):
-        """CP-FUN-001: Se crea un funcionario; el RUT se normaliza y el correo se guarda en minúsculas."""
-        respuesta = self.client.post(reverse('organizacion:funcionario_crear'), self.datos)
-        self.assertRedirects(respuesta, reverse('organizacion:listado'))
+        """CP-FUN-001: Se crea un funcionario con su cuenta de acceso; el RUT se normaliza y el correo queda en minúsculas."""
+        respuesta = self.client.post(reverse('organizacion:funcionario_crear'), self.datos, follow=True)
         funcionario = Funcionario.objects.get(rut='12.345.678-5')
+        self.assertRedirects(respuesta, reverse('organizacion:funcionario_detalle', args=[funcionario.pk]))
         self.assertEqual(funcionario.email, 'ana.rojas@laserena.cl')
+        self.assertIsNotNone(funcionario.usuario)
+        self.assertContains(respuesta, 'Credenciales para entregar')
 
     def test_cp_fun_002_rut_con_dv_incorrecto(self):
         """CP-FUN-002: El formulario rechaza un RUT con dígito verificador incorrecto."""
@@ -261,68 +263,78 @@ class FuncionarioMantenedorTests(TestCase):
 
 
 class MetaMantenedorTests(TestCase):
-    """Unidades: MetaProyectoForm (reglas RN-001 y RN-002) y vistas del mantenedor de Metas."""
+    """Unidades: MetaFuncionarioForm (reglas RN-001 y RN-002) y vistas del mantenedor de Metas.
+    Desde la revisión de la Evaluación 2 la meta se asigna a un funcionario y mide una categoría."""
 
     def setUp(self):
         iniciar_sesion_admin(self.client)
         self.cargo = CargoFuncion.objects.create(nombre_cargo='Encargado de Delegación')
+        self.funcionario = Funcionario.objects.create(
+            nombre='Ana Rojas', rut='12.345.678-5', email='ana.meta@laserena.cl',
+            delegacion=_delegacion(), cargo=self.cargo)
+        self.categoria = Categoria.objects.create(nombre='Social')
+        self.otra_categoria = Categoria.objects.create(nombre='Seguridad')
         Periodo.objects.all().delete()  # la migración 0005 crea un período inicial
         self.periodo = Periodo.objects.create(
             nombre='Segundo semestre 2026', fecha_inicio=datetime.date(2026, 7, 1),
             fecha_fin=datetime.date(2026, 12, 31), estado='Abierto',
         )
         self.datos = {
-            'cargo': self.cargo.pk, 'periodo': self.periodo.pk, 'item_medible': 'Actividades registradas por mes',
-            'valor_objetivo': '20', 'unidad': 'Cantidad', 'ponderador': 40,
+            'funcionario': self.funcionario.pk, 'periodo': self.periodo.pk, 'categoria': self.categoria.pk,
+            'valor_objetivo': '20', 'ponderador': 40,
         }
 
+    def _meta(self, ponderador, categoria=None, periodo=None):
+        return MetaProyecto.objects.create(
+            cargo=self.cargo, funcionario=self.funcionario, periodo=periodo or self.periodo,
+            categoria=categoria or self.otra_categoria, item_medible='Meta A', valor_objetivo='10', ponderador=ponderador)
+
     def test_cp_met_001_crear_meta_valida(self):
-        """CP-MET-001: Se crea una meta válida y se redirige al listado."""
+        """CP-MET-001: Se asigna una meta válida a un funcionario; el cargo y el ítem se completan solos."""
         respuesta = self.client.post(reverse('organizacion:meta_crear'), self.datos)
         self.assertRedirects(respuesta, reverse('organizacion:metas'))
-        self.assertEqual(MetaProyecto.objects.get().ponderador, 40)
+        meta = MetaProyecto.objects.get()
+        self.assertEqual((meta.ponderador, meta.cargo, meta.item_medible), (40, self.cargo, 'Social'))
 
     def test_cp_met_002_valor_objetivo_cero_o_texto(self):
-        """CP-MET-002: El valor objetivo debe ser un número mayor que cero (RN-002)."""
+        """CP-MET-002: La meta debe ser un número mayor que cero (RN-002)."""
         for valor in ['0', '-5', 'veinte', '']:
             with self.subTest(valor=valor):
-                form = MetaProyectoForm(data={**self.datos, 'valor_objetivo': valor})
+                form = MetaFuncionarioForm(data={**self.datos, 'valor_objetivo': valor})
                 self.assertFalse(form.is_valid())
                 self.assertIn('valor_objetivo', form.errors)
 
     def test_cp_met_003_porcentaje_mayor_a_100(self):
-        """CP-MET-003: Si la unidad es Porcentaje, el valor objetivo no puede superar 100."""
-        form = MetaProyectoForm(data={**self.datos, 'unidad': 'Porcentaje', 'valor_objetivo': '120'})
+        """CP-MET-003: Un funcionario no puede tener dos metas de la misma categoría en el mismo período."""
+        self._meta(30, categoria=self.categoria)
+        form = MetaFuncionarioForm(data=self.datos)
         self.assertFalse(form.is_valid())
-        self.assertIn('valor_objetivo', form.errors)
+        self.assertIn('categoria', form.errors)
 
     def test_cp_met_004_ponderador_fuera_de_rango(self):
         """CP-MET-004: El ponderador debe estar entre 1 y 100."""
         for ponderador in [0, 101, -10]:
             with self.subTest(ponderador=ponderador):
-                form = MetaProyectoForm(data={**self.datos, 'ponderador': ponderador})
+                form = MetaFuncionarioForm(data={**self.datos, 'ponderador': ponderador})
                 self.assertFalse(form.is_valid())
                 self.assertIn('ponderador', form.errors)
 
     def test_cp_met_005_suma_de_ponderadores_supera_100(self):
-        """CP-MET-005: La suma de ponderadores de un cargo en un período no puede superar 100 % (RN-001)."""
-        MetaProyecto.objects.create(
-            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=70)
-        form = MetaProyectoForm(data={**self.datos, 'ponderador': 40})
+        """CP-MET-005: La suma de ponderadores de un funcionario en un período no puede superar 100 % (RN-001)."""
+        self._meta(70)
+        form = MetaFuncionarioForm(data={**self.datos, 'ponderador': 40})
         self.assertFalse(form.is_valid())
         self.assertIn('110 %', str(form.errors['ponderador']))
 
     def test_cp_met_006_editar_no_cuenta_su_propio_ponderador(self):
         """CP-MET-006: Al editar una meta, su propio ponderador anterior no se suma dos veces."""
-        meta = MetaProyecto.objects.create(
-            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=90)
-        form = MetaProyectoForm(data={**self.datos, 'item_medible': 'Meta A', 'ponderador': 100}, instance=meta)
+        meta = self._meta(90, categoria=self.categoria)
+        form = MetaFuncionarioForm(data={**self.datos, 'ponderador': 100}, instance=meta)
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_cp_met_007_editar_y_eliminar_meta(self):
         """CP-MET-007: Una meta se modifica y luego se elimina desde el mantenedor."""
-        meta = MetaProyecto.objects.create(
-            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=10)
+        meta = self._meta(10, categoria=self.categoria)
         self.client.post(reverse('organizacion:meta_editar', args=[meta.pk]), {**self.datos, 'ponderador': 30})
         meta.refresh_from_db()
         self.assertEqual(meta.ponderador, 30)
@@ -330,20 +342,19 @@ class MetaMantenedorTests(TestCase):
         self.assertFalse(MetaProyecto.objects.filter(pk=meta.pk).exists())
 
     def test_cp_met_008_mismo_cargo_otro_periodo(self):
-        """CP-MET-008: Los ponderadores se suman por período: en otro período el mismo cargo parte desde cero."""
-        MetaProyecto.objects.create(
-            cargo=self.cargo, periodo=self.periodo, item_medible='Meta A', valor_objetivo='10', ponderador=90)
+        """CP-MET-008: Los ponderadores se suman por período: en otro período el funcionario parte desde cero."""
+        self._meta(90)
         otro = Periodo.objects.create(nombre='Primer semestre 2027', fecha_inicio=datetime.date(2027, 1, 1),
                                       fecha_fin=datetime.date(2027, 6, 30))
-        form = MetaProyectoForm(data={**self.datos, 'periodo': otro.pk, 'ponderador': 60})
+        form = MetaFuncionarioForm(data={**self.datos, 'periodo': otro.pk, 'ponderador': 60})
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_cp_met_009_periodo_obligatorio_y_no_cerrado(self):
         """CP-MET-009: El período es obligatorio y no se pueden crear metas en un período Cerrado."""
-        self.assertIn('periodo', MetaProyectoForm(data={**self.datos, 'periodo': ''}).errors)
+        self.assertIn('periodo', MetaFuncionarioForm(data={**self.datos, 'periodo': ''}).errors)
         cerrado = Periodo.objects.create(nombre='Primer semestre 2026', fecha_inicio=datetime.date(2026, 1, 1),
                                          fecha_fin=datetime.date(2026, 6, 30), estado='Cerrado')
-        self.assertNotIn(cerrado, MetaProyectoForm().fields['periodo'].queryset)
+        self.assertNotIn(cerrado, MetaFuncionarioForm().fields['periodo'].queryset)
 
 
 class PeriodoMantenedorTests(TestCase):

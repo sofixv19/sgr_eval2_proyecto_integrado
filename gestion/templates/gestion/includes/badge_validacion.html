@@ -1,0 +1,7 @@
+{% if actividad.estado_validacion == "Validada" %}
+    <span class="badge-validacion badge-validacion-ok">Validada ✓</span>
+{% elif actividad.estado_validacion == "Rechazada" %}
+    <span class="badge-validacion badge-validacion-rechazada">Rechazada ✗</span>
+{% else %}
+    <span class="badge-validacion badge-validacion-pendiente">Pendiente de validación</span>
+{% endif %}
