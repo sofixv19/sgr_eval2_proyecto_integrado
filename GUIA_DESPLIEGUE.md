@@ -207,6 +207,14 @@ sudo systemctl restart sgr
 python manage.py test                          # en la 2.0 deben pasar 156 pruebas
 ```
 
+Para dejar los datos de demostración limpios (por ejemplo, antes de mostrar el sistema), se ejecuta una sola vez:
+
+```bash
+python manage.py reiniciar_demo --confirmar
+```
+
+Borra todo lo creado probando (actividades, funcionarios, delegaciones extra, etc.) y vuelve a cargar el equipo de ejemplo. **No cambia las contraseñas** de las cuentas demo.
+
 El número de versión aparece en el pie de la página (por ejemplo, `v2.0.0`). Así se comprueba que el servidor quedó actualizado.
 
 ## Errores comunes

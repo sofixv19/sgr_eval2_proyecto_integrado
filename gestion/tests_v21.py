@@ -2,15 +2,22 @@
 Pruebas de la versión 2.1 — alcance mínimo de la Guía SGR (sección 13.2):
 agenda colectiva (CP-AGE), auditoría (CP-AUD), exportación (CP-EXP),
 períodos cerrados (CP-PCE), filtros (CP-FIL) y alertas/actividad reciente
-(CP-ALE).
+(CP-ALE). Versión 2.1.2: reinicio de los datos de demostración (CP-DEM).
 """
 import datetime
+import shutil
+import tempfile
+from io import StringIO
 
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.management import CommandError, call_command
+from django.test import TestCase
 from django.urls import reverse
 
 from comun.models import RegistroAuditoria
-from organizacion.models import Periodo
+from delegaciones.models import Delegacion
+from organizacion.models import CargoFuncion, Funcionario, Periodo
 
 from .alertas import actividad_reciente, alertas_delegacion
 from .forms import ActividadForm, CompromisoForm
@@ -269,3 +276,37 @@ class FiltrosYAlertasTests(EscenarioBase):
         respuesta = self.client.get(reverse('delegaciones:inicio') + f'?periodo={anterior.pk}')
         self.assertEqual(respuesta.context['periodo'], anterior)
         self.assertEqual(respuesta.context['total'], 1)
+
+
+class ReinicioDemoTests(TestCase):
+    """Versión 2.1.2: datos de demostración limpios (Guía, sección 15: datos ficticios de demostración)."""
+
+    def setUp(self):
+        self._media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self._media, ignore_errors=True)
+
+    def test_cp_dem_001_reinicio_deja_solo_el_equipo_de_ejemplo(self):
+        """CP-DEM-001: reiniciar_demo borra los datos de prueba, deja el equipo de ejemplo y no cambia las contraseñas demo."""
+        with self.settings(MEDIA_ROOT=self._media):
+            call_command('configurar_roles', verbosity=0)
+            call_command('cargar_datos_iniciales', stdout=StringIO())
+            delegado = User.objects.create_user('delegado.rural', password='ClaveDemo2026!')
+            basura = Delegacion.objects.create(nombre='Delegación de prueba', encargado='x', direccion='x',
+                                               telefono='1', email='x@x.cl', territorio='x', enfoque='x')
+            Funcionario.objects.create(nombre='Prueba Sofía', rut='22.222.222-2', email='prueba@x.cl',
+                                       delegacion=basura, rol='Funcionario', cargo=CargoFuncion.objects.first(),
+                                       usuario=User.objects.create_user('prueba.sofia', password='OtraClave2026!'))
+            with self.assertRaises(CommandError):
+                call_command('reiniciar_demo')
+            call_command('reiniciar_demo', '--confirmar', stdout=StringIO())
+
+            self.assertEqual(Funcionario.objects.count(), 5)
+            self.assertFalse(Delegacion.objects.filter(nombre='Delegación de prueba').exists())
+            self.assertFalse(User.objects.filter(username='prueba.sofia').exists())
+            delegado.refresh_from_db()
+            self.assertTrue(delegado.check_password('ClaveDemo2026!'))
+            self.assertEqual(delegado.funcionario.email, 'c.araya.delegado@laserena.cl')
+            self.assertTrue(Actividad.objects.filter(estado_validacion='Validada').exists())
+            self.assertTrue(Actividad.objects.filter(evidencias__isnull=False, validado=False).exists())
+            self.assertEqual(list(RegistroAuditoria.objects.values_list('accion', flat=True)),
+                             ['Reinicio de demostración'])

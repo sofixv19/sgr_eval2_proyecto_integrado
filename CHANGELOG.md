@@ -6,15 +6,38 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [2.1.2](#212--datos-de-demostración-limpios) | 12-11-2026 | Ajuste tras revisión del equipo | 175 |
 | [2.1.1](#211--menú-más-simple) | 12-11-2026 | Ajuste tras revisión del equipo | 174 |
 | [2.1.0](#210--alcance-mínimo-completo-de-la-guía-sgr) | 12-11-2026 | Guía SGR (MVP completo) + Nuevos Requerimientos | 174 |
 | [2.0.0](#200--nuevos-requerimientos-octubre-2026) | 12-11-2026 | Guía SGR + Nuevos Requerimientos (octubre 2026) | 156 |
 | [1.1.0](#110--correcciones-de-la-revisión-de-la-evaluación-2) | 05-11-2026 | Guía SGR + retroalimentación del profesor | 140 |
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
+
+---
+
+## 2.1.2 — Datos de demostración limpios
+
+### Cambiado
+- **Equipo de ejemplo más pequeño y coherente** (`cargar_datos_iniciales`):
+  - **Rural:** Delegado C. Araya (`delegado.rural`), F. Contreras (`funcionario.rural`) y L. Tapia.
+  - **Centro:** Delegado S. Pizarro y J. Herrera.
+  - Las otras cuatro delegaciones quedan sin equipo.
+  - Se quitaron los tres funcionarios de la Evaluación 1 con rol "Coordinador" dentro de una delegación. El Coordinador es un rol transversal (`coordinador.sgr`).
+- `data/actividades.json` tiene 7 actividades del nuevo equipo. Las realizadas quedan validadas por su Delegado, y las pendientes traen un PDF de evidencia ficticio para poder mostrar la validación.
+- Los compromisos de ejemplo se reparten entre los funcionarios de la delegación, para que se vea el resumen por responsable.
+
+### Agregado
+- Comando **`reiniciar_demo --confirmar`**:
+  - Borra lo creado probando el sistema (actividades, evidencias, compromisos, metas, felicitaciones, ausencias, funcionarios y cuentas de prueba, delegaciones extra y períodos de prueba).
+  - Vuelve a cargar el equipo de ejemplo.
+  - Conserva las 5 cuentas demo **con su contraseña**.
+  - Deja en la auditoría un registro del reinicio.
+  - Es solo para el ambiente de demostración.
+- Prueba CP-DEM-001.
 
 ---
 

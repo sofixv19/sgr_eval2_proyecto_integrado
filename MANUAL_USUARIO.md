@@ -1,4 +1,4 @@
-# Manual breve de usuario — SGR La Serena (versión 2.1.1)
+# Manual breve de usuario — SGR La Serena (versión 2.1.2)
 
 **Dirección:** http://184.194.243.125:8000 (Firefox, Edge o Chrome).
 
@@ -15,6 +15,11 @@ Al entrar se pide usuario y contraseña. Después de 5 intentos fallidos la cuen
 | `verificador.sgr` | Verificador | Todo, solo lectura |
 
 Todos los datos son ficticios, marcados "(ejemplo)". La contraseña de demostración la entrega el equipo.
+
+**Equipo de ejemplo:**
+- **Rural:** el Delegado C. Araya y los funcionarios F. Contreras y L. Tapia.
+- **Centro:** el Delegado S. Pizarro y el funcionario J. Herrera.
+- Las otras cuatro delegaciones parten sin equipo.
 
 ---
 

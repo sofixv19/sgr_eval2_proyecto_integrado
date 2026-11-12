@@ -16,10 +16,11 @@ import json
 from pathlib import Path
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 
 from delegaciones.models import Delegacion, OrganizacionComunitaria
-from gestion.models import Actividad, Categoria, Compromiso
+from gestion.models import Actividad, Categoria, Compromiso, Evidencia
 from organizacion.models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 # ---------------------------------------------------------------------------
@@ -43,50 +44,59 @@ METAS_SEED = [
      'valor_objetivo': '15', 'unidad': 'Cantidad', 'ponderador': 25},
 ]
 
-# Funcionarios: se usan los mismos nombres de ejemplo que ya existían en
-# data/actividades.json (Evaluación 1 de Sofía), ahora convertidos en
-# entidades reales (Funcionario) con cargo y delegación, en vez de texto
-# libre. Tres de ellos coinciden con el/la encargado/a real de su
-# delegación (ver data/delegaciones.json), por lo que se les asigna el
-# cargo "Encargado de Delegación".
+# Equipo de demostración (versión 2.1.2). Es pequeño a propósito: dos
+# delegaciones con su equipo completo bastan para mostrar cada rol.
+# - Rural: un Delegado y dos funcionarios (validación, reasignación en la
+#   agenda y resumen por responsable).
+# - Centro: un Delegado y un funcionario (muestra que una delegación no ve
+#   lo de la otra).
+# Las otras cuatro delegaciones quedan sin equipo, listas para usarse.
+# Todos los datos son ficticios, marcados "(ejemplo)".
 FUNCIONARIOS_SEED = [
-    {'nombre': 'F. Contreras (ejemplo)', 'delegacion': 'Rural',
-     'cargo': 'Encargado de Infraestructura', 'rut': '11.111.111-1',
-     'email': 'f.contreras.ejemplo@laserena.cl'},
-    {'nombre': 'P. Rojas (ejemplo)', 'delegacion': 'La Pampa',
-     'cargo': 'Gestor Social', 'rut': '12.222.222-5',
-     'email': 'p.rojas.ejemplo@laserena.cl'},
-    {'nombre': 'J. Herrera (ejemplo)', 'delegacion': 'Centro',
-     'cargo': 'Inspector Territorial', 'rut': '13.333.333-9',
-     'email': 'j.herrera.ejemplo@laserena.cl'},
-    {'nombre': 'M. Soto (ejemplo)', 'delegacion': 'Las Compañías',
-     'cargo': 'Encargado Comunitario', 'rut': '14.444.444-2',
-     'email': 'm.soto.ejemplo@laserena.cl'},
-    {'nombre': 'R. Fuenzalida (ejemplo)', 'delegacion': 'Avenida del Mar',
-     'cargo': 'Encargado de Delegación', 'rut': '15.555.555-6',
-     'email': 'r.fuenzalida.ejemplo@laserena.cl', 'rol': 'Coordinador'},
-    {'nombre': 'E. Villanueva (ejemplo)', 'delegacion': 'La Antena - La Florida',
-     'cargo': 'Encargado de Delegación', 'rut': '16.666.666-K',
-     'email': 'e.villanueva.ejemplo@laserena.cl', 'rol': 'Coordinador'},
-    {'nombre': 'M. Barraza (ejemplo)', 'delegacion': 'Rural',
-     'cargo': 'Encargado de Delegación', 'rut': '17.777.777-3',
-     'email': 'm.barraza.ejemplo@laserena.cl', 'rol': 'Coordinador'},
-
-    # --- Delegados: rol agregado tras la retroalimentación del profesor
-    # Ciceo (Evaluación 1). El Delegado es quien valida las actividades
-    # registradas por el Funcionario; no puede ser la misma persona. Se
-    # siembra un Delegado por cada delegación que ya tiene actividades de
-    # ejemplo, para poder demostrar la validación en los datos de prueba.
     {'nombre': 'C. Araya (Delegado, ejemplo)', 'delegacion': 'Rural',
      'cargo': 'Encargado de Delegación', 'rut': '18.888.888-7',
      'email': 'c.araya.delegado@laserena.cl', 'rol': 'Delegado'},
-    {'nombre': 'N. Ortiz (Delegado, ejemplo)', 'delegacion': 'La Pampa',
-     'cargo': 'Encargado de Delegación', 'rut': '19.999.999-0',
-     'email': 'n.ortiz.delegado@laserena.cl', 'rol': 'Delegado'},
+    {'nombre': 'F. Contreras (ejemplo)', 'delegacion': 'Rural',
+     'cargo': 'Encargado de Infraestructura', 'rut': '11.111.111-1',
+     'email': 'f.contreras.ejemplo@laserena.cl'},
+    {'nombre': 'L. Tapia (ejemplo)', 'delegacion': 'Rural',
+     'cargo': 'Gestor Social', 'rut': '21.111.111-9',
+     'email': 'l.tapia.ejemplo@laserena.cl'},
     {'nombre': 'S. Pizarro (Delegado, ejemplo)', 'delegacion': 'Centro',
      'cargo': 'Encargado de Delegación', 'rut': '20.000.000-5',
      'email': 's.pizarro.delegado@laserena.cl', 'rol': 'Delegado'},
+    {'nombre': 'J. Herrera (ejemplo)', 'delegacion': 'Centro',
+     'cargo': 'Inspector Territorial', 'rut': '13.333.333-9',
+     'email': 'j.herrera.ejemplo@laserena.cl'},
 ]
+
+
+def _pdf_ejemplo(texto):
+    """PDF mínimo de una página con un texto, sin librerías externas."""
+    texto = texto.encode('latin-1', 'replace').decode('latin-1')
+    texto = texto.replace('\\', ' ').replace('(', '[').replace(')', ']')[:90]
+    contenido = (f'BT /F1 18 Tf 50 760 Td (Evidencia de ejemplo - SGR La Serena) Tj ET\n'
+                 f'BT /F1 11 Tf 50 730 Td ({texto}) Tj ET\n'
+                 f'BT /F1 11 Tf 50 710 Td (Documento ficticio para la demostracion.) Tj ET').encode('latin-1')
+    objetos = [
+        b'<< /Type /Catalog /Pages 2 0 R >>',
+        b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R '
+        b'/Resources << /Font << /F1 5 0 R >> >> >>',
+        b'<< /Length ' + str(len(contenido)).encode() + b' >>\nstream\n' + contenido + b'\nendstream',
+        b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    ]
+    salida = bytearray(b'%PDF-1.4\n')
+    posiciones = []
+    for numero, cuerpo in enumerate(objetos, start=1):
+        posiciones.append(len(salida))
+        salida += f'{numero} 0 obj\n'.encode() + cuerpo + b'\nendobj\n'
+    inicio_xref = len(salida)
+    salida += f'xref\n0 {len(objetos) + 1}\n0000000000 65535 f \n'.encode()
+    for posicion in posiciones:
+        salida += f'{posicion:010d} 00000 n \n'.encode()
+    salida += f'trailer\n<< /Size {len(objetos) + 1} /Root 1 0 R >>\nstartxref\n{inicio_xref}\n%%EOF\n'.encode()
+    return bytes(salida)
 
 
 class Command(BaseCommand):
@@ -109,6 +119,9 @@ class Command(BaseCommand):
 
         self.stdout.write('Validando actividades de ejemplo (rol Delegado)...')
         validadas = self._validar_actividades_demo()
+
+        self.stdout.write('Adjuntando evidencias de ejemplo a las actividades pendientes...')
+        self.stdout.write(f'  {self._evidencias_demo()} evidencias nuevas.')
 
         self.stdout.write('Asignando metas de ejemplo a cada funcionario (las asigna su Delegado)...')
         self._metas_demo()
@@ -186,6 +199,7 @@ class Command(BaseCommand):
                     'delegacion': delegacion,
                     'cargo': cargo,
                     'rol': item.get('rol', 'Funcionario'),
+                    'activo': True,
                 },
             )
         return Funcionario.objects.count()
@@ -233,6 +247,19 @@ class Command(BaseCommand):
                 actividad.save(update_fields=['version_reglas'])
         return Actividad.objects.count()
 
+    def _evidencias_demo(self):
+        """Un PDF de ejemplo en cada actividad pendiente que aún no tiene
+        evidencia, para que el Delegado tenga algo que revisar y validar."""
+        creadas = 0
+        pendientes = Actividad.objects.filter(validado=False, evidencias__isnull=True, version_reglas='1.0')
+        for actividad in pendientes.select_related('funcionario__usuario'):
+            Evidencia.objects.create(
+                actividad=actividad, descripcion='Evidencia de ejemplo (PDF ficticio)',
+                subida_por=actividad.funcionario.usuario,
+                archivo=ContentFile(_pdf_ejemplo(f'{actividad.codigo}: {actividad.descripcion}'), name='ejemplo.pdf'))
+            creadas += 1
+        return creadas
+
     def _metas_demo(self):
         """Dos metas por funcionario en el período abierto (60 % y 40 %), si
         todavía no tiene: una de la categoría de sus actividades y otra de
@@ -256,8 +283,8 @@ class Command(BaseCommand):
                 )
 
     def _organizaciones_demo(self):
-        """Una Junta de Vecinos y dos organizaciones funcionales por delegación
-        (RF-039, versión 2.0). Son datos de ejemplo, no el registro oficial."""
+        """Una Junta de Vecinos y dos organizaciones funcionales por cada
+        delegación con equipo (RF-039, versión 2.0). Son datos de ejemplo, no el registro oficial."""
         tipos = OrganizacionComunitaria.Tipo
         ejemplos = [
             ('Junta de Vecinos {n} (ejemplo)', tipos.JUNTA_VECINOS, 85),
@@ -265,7 +292,7 @@ class Command(BaseCommand):
             ('Club Deportivo {n} (ejemplo)', tipos.DEPORTIVA, 40),
         ]
         creadas = 0
-        for delegacion in Delegacion.objects.all():
+        for delegacion in Delegacion.objects.filter(funcionarios__isnull=False).distinct():
             for plantilla, tipo, socios in ejemplos:
                 _, creada = OrganizacionComunitaria.objects.get_or_create(
                     delegacion=delegacion, nombre=plantilla.format(n=delegacion.nombre),
@@ -285,10 +312,11 @@ class Command(BaseCommand):
         ]
         creados = 0
         for delegacion in Delegacion.objects.all():
-            responsable = delegacion.funcionarios.filter(rol='Funcionario', activo=True).first()
-            if responsable is None or delegacion.compromisos.exists():
+            equipo = list(delegacion.funcionarios.filter(rol='Funcionario', activo=True).order_by('pk'))
+            if not equipo or delegacion.compromisos.exists():
                 continue
-            for solicitante, descripcion, dias, estado in ejemplos:
+            for numero, (solicitante, descripcion, dias, estado) in enumerate(ejemplos):
+                responsable = equipo[numero % len(equipo)]
                 Compromiso.objects.create(
                     delegacion=delegacion, solicitante=solicitante.format(n=delegacion.nombre),
                     organizacion=delegacion.organizaciones.filter(nombre=solicitante.format(n=delegacion.nombre)).first(),
@@ -301,26 +329,23 @@ class Command(BaseCommand):
         return creados
 
     def _validar_actividades_demo(self):
-        """Marca como validada una actividad de ejemplo por cada delegación
-        que ya cuenta con un Funcionario con rol 'Delegado' sembrado más
-        arriba, usando el mismo método marcar_validado() que se usaría desde
+        """El Delegado de cada delegación valida las actividades de ejemplo
+        ya realizadas de su equipo, usando el mismo método marcar_validado() que se usaría desde
         la interfaz real (así se demuestra la regla de negocio pedida por el
         profesor Ciceo también en los datos de prueba, no solo en el código).
         """
         validadas = 0
         delegados = Funcionario.objects.filter(rol='Delegado').select_related('delegacion')
         for delegado in delegados:
-            actividad = (
-                Actividad.objects.filter(delegacion=delegado.delegacion, validado=False)
+            pendientes = (
+                Actividad.objects.filter(delegacion=delegado.delegacion, validado=False, estado='Realizado')
                 .exclude(funcionario=delegado)
                 .order_by('codigo')
-                .first()
             )
-            if actividad is None:
-                continue
-            try:
-                actividad.marcar_validado(delegado)
-                validadas += 1
-            except ValueError as error:
-                self.stdout.write(self.style.WARNING(f'  No se pudo validar {actividad.codigo}: {error}'))
+            for actividad in pendientes:
+                try:
+                    actividad.marcar_validado(delegado)
+                    validadas += 1
+                except ValueError as error:
+                    self.stdout.write(self.style.WARNING(f'  No se pudo validar {actividad.codigo}: {error}'))
         return validadas

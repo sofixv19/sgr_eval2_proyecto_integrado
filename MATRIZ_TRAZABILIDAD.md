@@ -6,7 +6,7 @@ Es la matriz que exige la Guía SGR (sección 15.1). Cada historia de usuario se
 - los casos de prueba automatizados y su resultado,
 - la ruta de la página donde se ve.
 
-Los resultados salen de la corrida real de `python plan_pruebas.py`, guardada en `resultados_pruebas.csv`: **174 casos, 174 aprobados**. Los casos marcados con `*` incluyen todos los casos de ese grupo.
+Los resultados salen de la corrida real de `python plan_pruebas.py`, guardada en `resultados_pruebas.csv`: **175 casos, 175 aprobados** (el caso CP-DEM-001 prueba los datos de demostración y no corresponde a una HU). Los casos marcados con `*` incluyen todos los casos de ese grupo.
 
 > **Responsable**: completar con el integrante que presenta cada historia (Sofía Veliz, Elías Medina, Ignacio Sepúlveda o Diego Villalobos). Diego es el responsable de las pruebas CP-PER, CP-MET, CP-ACT y CP-VLD.
 
