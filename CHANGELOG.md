@@ -6,14 +6,23 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [2.1.1](#211--menú-más-simple) | 12-11-2026 | Ajuste tras revisión del equipo | 174 |
 | [2.1.0](#210--alcance-mínimo-completo-de-la-guía-sgr) | 12-11-2026 | Guía SGR (MVP completo) + Nuevos Requerimientos | 174 |
 | [2.0.0](#200--nuevos-requerimientos-octubre-2026) | 12-11-2026 | Guía SGR + Nuevos Requerimientos (octubre 2026) | 156 |
 | [1.1.0](#110--correcciones-de-la-revisión-de-la-evaluación-2) | 05-11-2026 | Guía SGR + retroalimentación del profesor | 140 |
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
+
+---
+
+## 2.1.1 — Menú más simple
+
+### Quitado
+- Página **"Resumen de gestión"** (`/gestion/resumen/`), de la versión 1.0. Solo contaba las actividades por estado, y eso ya lo muestran los paneles de cada rol. Se quitó del menú del Coordinador, del Administrador y del Verificador.
+- El **resumen colectivo por responsable** de la Agenda **se mantiene**, porque lo exige RF-021 / HU-14.
 
 ---
 

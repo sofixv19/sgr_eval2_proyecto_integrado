@@ -58,13 +58,11 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Períodos de medición</a></li>
                                 <li><a class="dropdown-item" href="{% url 'delegaciones:organizaciones' %}">Organizaciones comunitarias</a></li>
-                                <li><a class="dropdown-item" href="{% url 'gestion:resumen' %}">Resumen de gestión</a></li>
                                 <li><a class="dropdown-item" href="{% url 'comun:auditoria' %}">Auditoría</a></li>
                             </ul>
                         </li>
                         {% elif rol_usuario == "Administrador" or rol_usuario == "Verificador" %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'comun:auditoria' %}">Auditoría</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mantenedores</a>

@@ -1,4 +1,4 @@
-# Manual breve de usuario — SGR La Serena (versión 2.1)
+# Manual breve de usuario — SGR La Serena (versión 2.1.1)
 
 **Dirección:** http://184.194.243.125:8000 (Firefox, Edge o Chrome).
 
@@ -73,7 +73,7 @@ Solo las actividades aprobadas que suman puntaje cuentan para la meta. El Delega
 - **Delegados**: crear al Delegado de cada delegación.
 - **Más**:
   - Períodos de medición (abrir y cerrar; un período cerrado ya no se puede modificar).
-  - Organizaciones, resumen de gestión y **auditoría**.
+  - Organizaciones comunitarias y **auditoría**.
 
 ## 4. Administrador y Verificador
 

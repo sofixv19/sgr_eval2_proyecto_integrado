@@ -33,7 +33,7 @@ que quede trazable de principio a fin (requerimiento → código → prueba).
 | CU-10 | Modificar una actividad | Funcionario Operativo (dueño) | `gestion:editar` | ✅ CRUD real | `test_editar_actividad_mediante_formulario` |
 | CU-11 | Eliminar una actividad | Administrador | `gestion:eliminar` (con confirmación) | ✅ CRUD real | `test_eliminar_actividad_mediante_formulario`, `test_eliminar_muestra_confirmacion_antes_de_borrar` |
 | CU-12 | **Validar una actividad registrada por un Funcionario** | **Delegado** (nunca el mismo Funcionario) | Formulario de validación dentro de `gestion:detalle` (`ValidacionForm`) | ✅ Nuevo — regla de negocio del profesor Ciceo | `ActividadValidacionTests.*` (modelo), `ActividadValidacionVistaTests.*` (vista) |
-| CU-13 | Ver resumen de gestión (semáforo por estado) | Visitante / Coordinador | `gestion:resumen` (`/gestion/resumen/`) | ✅ Completo | — (manual, Evaluación 2) |
+| CU-13 | Ver resumen de gestión (semáforo por estado) | Coordinador | Panel de coordinación (`/`) | ✅ Completo — desde la versión 2.1.1 se ve en los paneles; se retiró la página aparte `/gestion/resumen/` | — (manual, Evaluación 2) |
 | CU-14 | Listar funcionarios, con búsqueda por nombre/cargo/delegación | Visitante | `organizacion:listado` (`/organizacion/funcionarios/`) | ✅ Completo | — (manual, Evaluación 2) |
 | CU-15 | Administrar catálogo completo (cargos, metas, funcionarios, categorías, delegaciones, actividades) | Administrador | Django Admin (`/admin/`) | ✅ Completo, incl. acción masiva "Marcar como validadas" | — (cubierto indirectamente por las pruebas de modelo) |
 | CU-16 | Autenticarse en el sistema | Todos los roles | `cuentas:login` (`/cuentas/ingresar/`) | ✅ Completo (v1.0) | `CP-ACC-*`, `CP-LOGIN-*` |

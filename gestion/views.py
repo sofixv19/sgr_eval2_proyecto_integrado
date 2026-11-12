@@ -25,7 +25,6 @@ from .forms import (
     ActividadForm, CategoriaForm, EvidenciaForm, RevisionForm, inicio_ventana_registro, ingresos_de_hoy,
 )
 from .models import Actividad, Categoria, Compromiso, Evidencia
-from .services import grados_donut, resumen_por_estado
 
 
 def _actividad_visible(request, actividad_id):
@@ -205,27 +204,6 @@ def evidencia(request, evidencia_id):
     except FileNotFoundError:
         raise Http404('El archivo de la evidencia no está disponible.')
     return FileResponse(archivo, as_attachment=False, filename=str(evidencia))
-
-
-@permission_required('gestion.view_actividad', raise_exception=True)
-def resumen(request):
-    """Vista tipo 'semáforo': totaliza las actividades visibles por estado."""
-
-    conteo, total = resumen_por_estado(filtrar_actividades(request.user, Actividad.objects.all()))
-
-    if total > 0:
-        porcentaje_realizado = round((conteo['realizado'] / total) * 100, 1)
-    else:
-        porcentaje_realizado = 0
-
-    contexto = {
-        'titulo_pagina': 'Resumen de gestión',
-        'conteo': conteo,
-        'total': total,
-        'porcentaje_realizado': porcentaje_realizado,
-        'donut_grados': grados_donut(conteo, total),
-    }
-    return render(request, 'gestion/resumen.html', contexto)
 
 
 # ---------------------------------------------------------------------------
