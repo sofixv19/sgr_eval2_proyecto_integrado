@@ -1,0 +1,15 @@
+{% if alertas %}
+<section class="mb-4" aria-label="Alertas">
+    <h2 class="h6 text-uppercase small eyebrow mb-2">Alertas ({{ alertas|length }})</h2>
+    <div class="dash-alertas">
+        {% for a in alertas|slice:":6" %}
+        <div class="dash-alerta dash-alerta-{{ a.nivel }}">
+            <span class="dash-alerta-icono">{% include "includes/icono.html" with nombre="alerta" %}</span>
+            <div class="flex-grow-1">{{ a.motivo }}<div class="small text-muted">{{ a.responsable }}{% if a.fecha %} · {{ a.fecha|date:"d/m/Y" }}{% endif %}</div></div>
+            <a href="{{ a.enlace }}" class="small text-nowrap">{{ a.texto_enlace }} &rarr;</a>
+        </div>
+        {% endfor %}
+        {% if alertas|length > 6 %}<div class="small text-muted">y {{ alertas|length|add:"-6" }} más.</div>{% endif %}
+    </div>
+</section>
+{% endif %}

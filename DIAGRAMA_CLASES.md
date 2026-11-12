@@ -291,3 +291,41 @@ classDiagram
 | Funcionario → Reconocimiento / Ausencia | Composición | Una felicitación o una ausencia no tiene sentido sin el funcionario al que pertenece (CASCADE). |
 | Delegado → Reconocimiento / Ausencia | Asociación | El Delegado es quien las registra (`registrado_por`), igual que con la Validación. |
 | GestorIndicadores → Reconocimiento / Ausencia | Dependencia | Los usa para calcular el cumplimiento (+10 / −20) y la meta esperada, pero no los almacena. |
+
+## Ampliación de la versión 2.1 (alcance mínimo de la Guía SGR)
+
+Las clases de la agenda colectiva y de la auditoría ya están **implementadas**. Detalle de los campos en `MODELO_DATOS.md`.
+
+```mermaid
+classDiagram
+    class Compromiso {
+        +codigo: AC-0001
+        +origen: INT / EXT
+        +estado: Ingresado / Pendiente / En proceso / Realizado
+        +fecha_compromiso
+        +cambiar_estado(nuevo, usuario, observacion)
+        +reasignar(responsable, usuario, motivo)
+        +vencido() bool
+        +proximo_a_vencer() bool
+    }
+    class CambioCompromiso {
+        +campo
+        +valor_anterior
+        +valor_nuevo
+        +observacion
+        +fecha
+    }
+    class RegistroAuditoria {
+        +fecha
+        +accion
+        +entidad
+        +cambios: JSON
+        +ip
+    }
+    Delegacion "1" --> "*" Compromiso
+    Funcionario "1" --> "*" Compromiso : responsable
+    Compromiso "1" --> "*" CambioCompromiso : historial
+    Actividad "0..1" --> "*" Compromiso : origina
+    Compromiso "0..1" --> "*" Actividad : se cumple con
+    User "1" --> "*" RegistroAuditoria
+```

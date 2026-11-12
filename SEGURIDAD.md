@@ -28,7 +28,7 @@ la medida de lo ya implementado):
 | Funcionario Operativo | Registrar y actualizar sus propias actividades (CRUD público). |
 | **Delegado** | Lo mismo que el Funcionario Operativo, **más**: validar actividades de su delegación — nunca las que él mismo registró (única acción con control de autorización aplicado a nivel de datos). |
 | Coordinador Estratégico | Rol reservado en el catálogo para supervisión de varias delegaciones; sin funciones adicionales implementadas aún en el código (ver `CRONOGRAMA.md`, Sprint 5). |
-| Verificador / Auditor | Rol reservado para auditoría; sin funciones adicionales implementadas aún. |
+| Verificador / Auditor | Solo lectura de todo el sistema, incluida la auditoría (versión 2.1). |
 | Administrador (staff Django) | Control total desde Django Admin: catálogos, cargos, metas, usuarios, y acción masiva "Marcar como validadas". |
 
 ## 2.1.5.11 — Amenazas comunes y medidas de mitigación
@@ -60,3 +60,16 @@ la medida de lo ya implementado):
 - Protección CSRF activa por defecto en todos los formularios del
   proyecto.
 - Referencia general: OWASP Top 10 como checklist de revisión.
+
+
+## Auditoría de operaciones críticas (versión 2.1 — RF-036, RNF-008, HU-30)
+
+- **Qué se registra**:
+  - Altas, modificaciones y eliminaciones de todas las tablas del SGR.
+  - Validaciones y rechazos de evidencia.
+  - Inicios de sesión, correctos y fallidos.
+  - **Accesos denegados (403)**, con la ruta que se intentó abrir.
+- **Qué guarda cada evento**: usuario, IP, fecha, entidad, identificador, valor anterior y valor nuevo (`comun/auditoria.py`).
+- **Protección**: el modelo `RegistroAuditoria` rechaza cualquier modificación o eliminación (`save()` y `delete()` lanzan `PermissionDenied`). En Django Admin está en solo lectura incluso para el Administrador.
+- **Acceso**: lo consultan solo el Administrador, el Coordinador y el Verificador, en `/auditoria/`. Un Funcionario recibe 403, y ese intento también queda registrado (CP-AUD-003 y CP-AUD-004).
+- **Períodos cerrados** (RN-013): sus resultados no se alteran. Reabrir un período queda registrado en la auditoría.

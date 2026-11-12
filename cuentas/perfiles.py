@@ -92,6 +92,13 @@ def filtrar_funcionarios(usuario, consulta):
     return consulta.none()
 
 
+def filtrar_compromisos(usuario, consulta):
+    """Agenda colectiva (RF-016): el Funcionario y el Delegado ven los
+    compromisos de toda su delegación, porque la agenda es compartida por el
+    equipo. Administrador, Coordinador y Verificador ven todas."""
+    return filtrar_organizaciones(usuario, consulta)
+
+
 def filtrar_organizaciones(usuario, consulta):
     """Organizaciones comunitarias (v2.0): cada delegación ve las de su territorio."""
     rol = rol_de(usuario)

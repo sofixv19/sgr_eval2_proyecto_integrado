@@ -127,6 +127,11 @@ class Actividad(models.Model):
         help_text='Se calcula al guardar según las reglas de la versión 2.0.',
     )
     motivo_sin_puntaje = models.CharField('Motivo por el que no suma', max_length=200, blank=True, editable=False)
+    compromiso = models.ForeignKey(
+        'gestion.Compromiso', on_delete=models.SET_NULL, null=True, blank=True, related_name='actividades',
+        verbose_name='Compromiso de la agenda que cumple',
+        help_text='Si la actividad cumple un compromiso de la agenda colectiva (RF-020).',
+    )
     version_reglas = models.CharField(
         'Versión de reglas', max_length=5, default='2.0', editable=False,
         help_text='Versión de los requerimientos vigente al registrar la actividad. '
@@ -270,8 +275,15 @@ class Actividad(models.Model):
                                  'estado_validacion', 'observacion_validacion'])
 
     @property
+    def periodo_cerrado(self):
+        """Período Cerrado al que pertenece la actividad (CA-10): sus
+        resultados ya no se pueden alterar sin reabrir el período."""
+        from organizacion.models import Periodo
+        return Periodo.cerrado_que_contiene(self.fecha)
+
+    @property
     def editable_por_funcionario(self):
-        return self.estado_validacion != self.EstadoValidacion.VALIDADA
+        return self.estado_validacion != self.EstadoValidacion.VALIDADA and self.periodo_cerrado is None
 
 
 EXTENSIONES_EVIDENCIA = ('.jpg', '.jpeg', '.png', '.pdf')
@@ -320,3 +332,172 @@ class Evidencia(models.Model):
     @property
     def es_imagen(self):
         return os.path.splitext(self.archivo.name)[1].lower() in ('.jpg', '.jpeg', '.png')
+
+
+# ---------------------------------------------------------------------------
+# Agenda colectiva o "tubo de trabajo" (Guía SGR 4.2, RF-016 a RF-021)
+# ---------------------------------------------------------------------------
+class Compromiso(models.Model):
+    """Compromiso futuro adquirido con un vecino u organización, visible
+    para el equipo de la delegación (agenda colectiva)."""
+
+    class Estado(models.TextChoices):
+        INGRESADO = 'Ingresado', 'Ingresado'
+        PENDIENTE = 'Pendiente', 'Pendiente'
+        EN_PROCESO = 'En proceso', 'En proceso'
+        REALIZADO = 'Realizado', 'Realizado'
+
+    class Origen(models.TextChoices):
+        EXTERNO = 'EXT', 'Externo (vecino u organización)'
+        INTERNO = 'INT', 'Interno (municipio)'
+
+    # Transiciones permitidas (RF-018). Reabrir un compromiso realizado
+    # (Realizado -> En proceso) solo lo puede hacer el Delegado o el Administrador.
+    TRANSICIONES = {
+        Estado.INGRESADO: [Estado.PENDIENTE, Estado.EN_PROCESO, Estado.REALIZADO],
+        Estado.PENDIENTE: [Estado.EN_PROCESO, Estado.REALIZADO],
+        Estado.EN_PROCESO: [Estado.PENDIENTE, Estado.REALIZADO],
+        Estado.REALIZADO: [Estado.EN_PROCESO],
+    }
+
+    codigo = models.CharField('Código', max_length=20, unique=True, blank=True, editable=False)
+    delegacion = models.ForeignKey(Delegacion, on_delete=models.PROTECT, related_name='compromisos',
+                                   verbose_name='Delegación')
+    origen = models.CharField('Origen', max_length=3, choices=Origen.choices, default=Origen.EXTERNO)
+    solicitante = models.CharField('Solicitante', max_length=150)
+    organizacion = models.ForeignKey(
+        'delegaciones.OrganizacionComunitaria', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='compromisos', verbose_name='Organización solicitante',
+    )
+    territorio = models.CharField('Territorio / sector', max_length=120)
+    descripcion = models.TextField('Actividad, solicitud o problema')
+    responsable = models.ForeignKey(Funcionario, on_delete=models.PROTECT, related_name='compromisos',
+                                    verbose_name='Responsable')
+    area_apoyo = models.CharField('Área o persona de apoyo', max_length=120, blank=True)
+    fecha_solicitud = models.DateField('Fecha de la solicitud', default=timezone.localdate)
+    fecha_compromiso = models.DateField('Fecha comprometida')
+    estado = models.CharField('Estado', max_length=20, choices=Estado.choices, default=Estado.INGRESADO)
+    observacion = models.TextField('Avance u observaciones', blank=True)
+    fecha_cierre = models.DateField('Fecha de cierre', null=True, blank=True, editable=False)
+    actividad_origen = models.ForeignKey(
+        'gestion.Actividad', on_delete=models.SET_NULL, null=True, blank=True, related_name='compromisos_generados',
+        verbose_name='Actividad que lo originó',
+    )
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='compromisos_creados', verbose_name='Registrado por')
+    creado = models.DateTimeField('Fecha de registro', default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = 'Compromiso (agenda colectiva)'
+        verbose_name_plural = 'Agenda colectiva'
+        ordering = ['fecha_compromiso', 'codigo']
+
+    def __str__(self):
+        return f'{self.codigo} · {self.solicitante}'
+
+    def get_absolute_url(self):
+        return reverse('gestion:compromiso_detalle', args=[self.pk])
+
+    def save(self, *args, **kwargs):
+        if not self.codigo:
+            with transaction.atomic():
+                numeros = [int(c[3:]) for c in Compromiso.objects.filter(codigo__startswith='AC-')
+                           .values_list('codigo', flat=True) if c[3:].isdigit()]
+                self.codigo = f'AC-{(max(numeros) + 1) if numeros else 1:04d}'
+                return super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
+
+    # ------------------------------------------------------------ plazos (RF-019)
+    @property
+    def esta_cerrado(self):
+        return self.estado == self.Estado.REALIZADO
+
+    @property
+    def dias_restantes(self):
+        return (self.fecha_compromiso - timezone.localdate()).days
+
+    @property
+    def vencido(self):
+        return not self.esta_cerrado and self.dias_restantes < 0
+
+    @property
+    def proximo_a_vencer(self):
+        dias = getattr(settings, 'SGR_DIAS_AVISO_COMPROMISO', 3)
+        return not self.esta_cerrado and 0 <= self.dias_restantes <= dias
+
+    @property
+    def fuera_de_plazo(self):
+        return self.esta_cerrado and self.fecha_cierre is not None and self.fecha_cierre > self.fecha_compromiso
+
+    @property
+    def situacion(self):
+        """Texto y color para destacar el compromiso en la agenda."""
+        if self.vencido:
+            return 'rojo', f'Vencido hace {-self.dias_restantes} día{"s" if self.dias_restantes != -1 else ""}'
+        if self.proximo_a_vencer:
+            if self.dias_restantes == 0:
+                return 'ambar', 'Vence hoy'
+            return 'ambar', f'Vence en {self.dias_restantes} día{"s" if self.dias_restantes != 1 else ""}'
+        if self.fuera_de_plazo:
+            return 'ambar', 'Realizado fuera de plazo'
+        if self.esta_cerrado:
+            return 'verde', 'Realizado'
+        return 'gris', f'Faltan {self.dias_restantes} días'
+
+    def estados_siguientes(self, puede_reabrir=False):
+        siguientes = list(self.TRANSICIONES.get(self.estado, []))
+        if self.estado == self.Estado.REALIZADO and not puede_reabrir:
+            return []
+        return siguientes
+
+    def cambiar_estado(self, nuevo, usuario, observacion, puede_reabrir=False):
+        """Cambio de estado controlado (RF-018): guarda estado anterior, nuevo,
+        autor, fecha y observación."""
+        if nuevo not in self.estados_siguientes(puede_reabrir):
+            raise ValidationError(f'No se puede pasar de "{self.estado}" a "{nuevo}".')
+        if not (observacion or '').strip():
+            raise ValidationError('Indique una observación del avance.')
+        anterior = self.estado
+        self.estado = nuevo
+        self.fecha_cierre = timezone.localdate() if nuevo == self.Estado.REALIZADO else None
+        self.observacion = observacion.strip()
+        self.save(update_fields=['estado', 'fecha_cierre', 'observacion'])
+        return CambioCompromiso.objects.create(
+            compromiso=self, campo='Estado', valor_anterior=anterior, valor_nuevo=nuevo,
+            observacion=observacion.strip(), autor=usuario,
+        )
+
+    def reasignar(self, nuevo_responsable, usuario, motivo):
+        """Reasignación por ausencia u otro motivo (HU-15): conserva responsable
+        anterior, nuevo, autor, fecha y motivo."""
+        if not (motivo or '').strip():
+            raise ValidationError('Indique el motivo de la reasignación.')
+        anterior = self.responsable
+        self.responsable = nuevo_responsable
+        self.save(update_fields=['responsable'])
+        return CambioCompromiso.objects.create(
+            compromiso=self, campo='Responsable', valor_anterior=anterior.nombre,
+            valor_nuevo=nuevo_responsable.nombre, observacion=motivo.strip(), autor=usuario,
+        )
+
+
+class CambioCompromiso(models.Model):
+    """Historial de un compromiso: cambios de estado y reasignaciones (RF-018)."""
+
+    compromiso = models.ForeignKey(Compromiso, on_delete=models.CASCADE, related_name='cambios',
+                                   verbose_name='Compromiso')
+    campo = models.CharField('Qué cambió', max_length=20)
+    valor_anterior = models.CharField('Valor anterior', max_length=150, blank=True)
+    valor_nuevo = models.CharField('Valor nuevo', max_length=150)
+    observacion = models.TextField('Observación')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                              related_name='cambios_compromisos', verbose_name='Autor')
+    fecha = models.DateTimeField('Fecha', default=timezone.now)
+
+    class Meta:
+        verbose_name = 'Cambio de compromiso'
+        verbose_name_plural = 'Historial de compromisos'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f'{self.compromiso.codigo}: {self.campo} {self.valor_anterior} → {self.valor_nuevo}'

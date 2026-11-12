@@ -7,7 +7,7 @@
     <title>{% block titulo %}SGR La Serena{% endblock %} · Municipalidad de La Serena</title>
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=20">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=21">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="site-body">
@@ -33,7 +33,9 @@
                         </li>
                         {% if rol_usuario == "Funcionario" %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'gestion:crear' %}">Registrar actividad</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
                         {% elif rol_usuario == "Delegado" %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mi equipo</a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -50,11 +52,20 @@
                         {% elif rol_usuario == "Coordinador" %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'delegaciones:listado' %}">Delegaciones</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:listado' %}">Delegados</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:periodos' %}">Períodos</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'delegaciones:organizaciones' %}">Organizaciones</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Más</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Períodos de medición</a></li>
+                                <li><a class="dropdown-item" href="{% url 'delegaciones:organizaciones' %}">Organizaciones comunitarias</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestion:resumen' %}">Resumen de gestión</a></li>
+                                <li><a class="dropdown-item" href="{% url 'comun:auditoria' %}">Auditoría</a></li>
+                            </ul>
+                        </li>
                         {% elif rol_usuario == "Administrador" or rol_usuario == "Verificador" %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'comun:auditoria' %}">Auditoría</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mantenedores</a>
                             <ul class="dropdown-menu dropdown-menu-end">

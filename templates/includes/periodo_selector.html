@@ -1,0 +1,8 @@
+{% comment %}Selector de período (RF-008/RF-028): permite consultar períodos anteriores.{% endcomment %}
+<form method="get" class="periodo-selector">
+    <label for="periodo-sel" class="visually-hidden">Período</label>
+    <select id="periodo-sel" name="periodo" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for p in periodos %}<option value="{{ p.pk }}" {% if periodo and p.pk == periodo.pk %}selected{% endif %}>{{ p }}{% if p.estado == "Cerrado" %} (cerrado){% endif %}</option>{% endfor %}
+    </select>
+    <noscript><button class="btn btn-sm btn-light">Ver</button></noscript>
+</form>

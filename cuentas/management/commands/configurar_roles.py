@@ -29,6 +29,8 @@ TABLAS_MAESTRAS = [
 TRANSACCIONALES = [
     ('gestion', 'actividad'), ('gestion', 'evidencia'),
     ('organizacion', 'reconocimiento'), ('organizacion', 'ausencia'),   # v2.0
+    ('gestion', 'compromiso'), ('gestion', 'cambiocompromiso'),        # v2.1 agenda colectiva
+    ('comun', 'registroauditoria'),                                    # v2.1 auditoría
 ]
 TODAS = TABLAS_MAESTRAS + TRANSACCIONALES
 
@@ -45,6 +47,9 @@ GRUPOS = {
     'Administrador': {
         **{t: ['view', 'add', 'change', 'delete'] for t in TODAS},
         ('gestion', 'actividad'): ['view', 'add', 'change', 'delete', 'validar'],
+        # La auditoría es de solo lectura incluso para el Administrador (HU-30).
+        ('comun', 'registroauditoria'): ['view'],
+        ('gestion', 'cambiocompromiso'): ['view'],
     },
     'Coordinador': {
         ('delegaciones', 'delegacion'): ['view', 'add', 'change'],
@@ -58,6 +63,9 @@ GRUPOS = {
         ('delegaciones', 'organizacioncomunitaria'): ['view', 'add', 'change'],
         ('organizacion', 'reconocimiento'): ['view'],
         ('organizacion', 'ausencia'): ['view'],
+        ('gestion', 'compromiso'): ['view'],
+        ('gestion', 'cambiocompromiso'): ['view'],
+        ('comun', 'registroauditoria'): ['view'],
     },
     'Delegado': {
         ('delegaciones', 'delegacion'): ['view'],
@@ -72,6 +80,9 @@ GRUPOS = {
         ('delegaciones', 'organizacioncomunitaria'): ['view', 'add', 'change'],
         ('organizacion', 'reconocimiento'): ['view', 'add', 'change', 'delete'],
         ('organizacion', 'ausencia'): ['view', 'add', 'change', 'delete'],
+        # v2.1: agenda colectiva de su delegación (crear, actualizar, reasignar, eliminar)
+        ('gestion', 'compromiso'): ['view', 'add', 'change', 'delete'],
+        ('gestion', 'cambiocompromiso'): ['view'],
     },
     'Funcionario': {
         ('gestion', 'categoria'): ['view'],
@@ -80,6 +91,8 @@ GRUPOS = {
         ('delegaciones', 'organizacioncomunitaria'): ['view'],
         ('organizacion', 'reconocimiento'): ['view'],
         ('organizacion', 'ausencia'): ['view'],
+        ('gestion', 'compromiso'): ['view', 'add', 'change'],
+        ('gestion', 'cambiocompromiso'): ['view'],
     },
     'Verificador': {t: ['view'] for t in TODAS},
 }

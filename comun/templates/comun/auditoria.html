@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block titulo %}Auditoría{% endblock %}
+{% block contenido %}
+<div class="mb-4">
+    <p class="text-uppercase small eyebrow mb-2">Trazabilidad · solo lectura</p>
+    <h1 class="h2 mb-1">Auditoría de operaciones</h1>
+    <p class="text-muted mb-0">Quién cambió qué dato y cuándo: altas, modificaciones, eliminaciones, validaciones, inicios de sesión y accesos denegados. Este historial no se puede modificar ni eliminar.</p>
+</div>
+
+<form method="get" class="dash-card mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Acción</label>
+            <select name="accion" class="form-select form-select-sm"><option value="">Todas</option>{% for a in acciones %}<option value="{{ a }}" {% if filtros.accion == a %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Entidad</label>
+            <select name="entidad" class="form-select form-select-sm"><option value="">Todas</option>{% for e in entidades %}<option value="{{ e }}" {% if filtros.entidad == e %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Usuario</label>
+            <input type="text" name="usuario" value="{{ filtros.usuario }}" class="form-control form-control-sm"></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ filtros.desde }}" class="form-control form-control-sm"></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ filtros.hasta }}" class="form-control form-control-sm"></div>
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Registro</label>
+            <input type="text" name="q" value="{{ filtros.q }}" class="form-control form-control-sm" placeholder="Código, nombre o ID"></div>
+        <div class="col-md-2 col-12 d-flex gap-2"><button class="btn btn-sm btn-institucional flex-grow-1">Filtrar</button><a href="{% url 'comun:auditoria' %}" class="btn btn-sm btn-outline-secondary">Limpiar</a></div>
+    </div>
+</form>
+
+<div class="dash-card">
+    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">{{ pagina.paginator.count }} evento{{ pagina.paginator.count|pluralize }}</h2><div class="dash-card-sub">Del más reciente al más antiguo</div></div></div>
+    <div class="table-responsive">
+    <table class="table align-top mb-0 dash-tabla">
+        <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Registro</th><th>Valor anterior → valor nuevo</th></tr></thead>
+        <tbody>
+        {% for r in pagina %}
+        <tr>
+            <td class="text-nowrap small">{{ r.fecha|date:"d/m/Y H:i:s" }}</td>
+            <td class="small">{{ r.usuario_texto }}{% if r.ip %}<div class="text-muted">{{ r.ip }}</div>{% endif %}</td>
+            <td><span class="estado-compromiso estado-{% if r.accion == 'Alta' or r.accion == 'Validación' or r.accion == 'Inicio de sesión' %}realizado{% elif r.accion == 'Modificación' %}en-proceso{% else %}pendiente{% endif %}">{{ r.accion }}</span></td>
+            <td class="small">{{ r.entidad }}</td>
+            <td class="small">{{ r.objeto }}{% if r.objeto_id %} <span class="text-muted">(#{{ r.objeto_id }})</span>{% endif %}{% if r.detalle %}<div class="text-muted">{{ r.detalle }}</div>{% endif %}</td>
+            <td class="small">
+                {% if r.accion == "Alta" or r.accion == "Eliminación" %}
+                {% if r.cambios %}
+                <details><summary>{{ r.cambios|length }} dato{{ r.cambios|length|pluralize }} {% if r.accion == "Alta" %}registrados{% else %}eliminados{% endif %}</summary>
+                {% for campo, valores in r.cambios.items %}<div><strong>{{ campo }}</strong>: {% if r.accion == "Alta" %}{{ valores.1|truncatechars:60 }}{% else %}{{ valores.0|truncatechars:60 }}{% endif %}</div>{% endfor %}
+                </details>
+                {% else %}<span class="text-muted">—</span>{% endif %}
+                {% else %}
+                {% for campo, valores in r.cambios.items %}
+                <div><strong>{{ campo }}</strong>: <span class="text-danger text-decoration-line-through">{{ valores.0|default:"(vacío)"|truncatechars:60 }}</span> → <span class="text-success">{{ valores.1|default:"(vacío)"|truncatechars:60 }}</span></div>
+                {% empty %}<span class="text-muted">—</span>{% endfor %}
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-muted text-center py-4">No hay eventos con esos filtros.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if pagina.has_other_pages %}
+    <nav class="d-flex justify-content-between align-items-center mt-3 small">
+        {% if pagina.has_previous %}<a href="?{{ parametros }}&pagina={{ pagina.previous_page_number }}">&larr; Más recientes</a>{% else %}<span></span>{% endif %}
+        <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+        {% if pagina.has_next %}<a href="?{{ parametros }}&pagina={{ pagina.next_page_number }}">Más antiguos &rarr;</a>{% else %}<span></span>{% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

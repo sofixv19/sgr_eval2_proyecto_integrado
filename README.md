@@ -1,12 +1,22 @@
 # SGR La Serena — Sistema de Gestión de Resultados
 
-> **Versión actual: 2.0.0** (Nuevos requerimientos, octubre 2026) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
+> **Versión actual: 2.1.0** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
 
 | Versión | Qué trae | Pruebas |
 |---|---|---|
-| **2.0.0** | Nuevos requerimientos de la Coordinación de Delegaciones: organizaciones comunitarias, reglas de puntaje (solicitante, nombre y teléfono, gestión previa), máximo 7 ingresos diarios, cierre semanal, tope de 120 % por ítem, felicitaciones y reclamos, y ausencias que ajustan el semáforo | 156 |
+| **2.1.0** | Completa el alcance mínimo de la Guía SGR: **agenda colectiva** con historial, **auditoría**, **exportación a Excel**, filtros por período y fechas, períodos cerrados protegidos, actividad reciente y **alertas** | 174 |
+| 2.0.0 | Nuevos requerimientos de la Coordinación de Delegaciones: organizaciones comunitarias, reglas de puntaje (solicitante, nombre y teléfono, gestión previa), máximo 7 ingresos diarios, cierre semanal, tope de 120 % por ítem, felicitaciones y reclamos, y ausencias que ajustan el semáforo | 156 |
 | 1.1.0 | Correcciones de la revisión de la Evaluación 2: ámbito por rol, cuentas ligadas a funcionarios, código automático por área, evidencias, validación del Delegado, metas y paneles por rol | 140 |
 | 1.0.0 | Evaluación 2 de Proyecto Integrado: login, mantenedores, roles y despliegue en AWS | 118 |
+
+### Novedades de la versión 2.1
+
+- **Agenda colectiva** (menú *Agenda*): compromisos con responsable, plazo, estados e historial, alertas de vencimiento, reasignación y resumen por responsable.
+- **Auditoría** (menú *Auditoría* o *Más → Auditoría*): quién cambió qué y cuándo, en solo lectura.
+- **Exportar a Excel** en Actividades, Agenda y Panel de coordinación.
+- **Paneles** con selector de período, alertas y actividad reciente de cada funcionario.
+- **Períodos cerrados**: no se pueden alterar sin reabrirlos.
+- Documentos nuevos: [`MANUAL_USUARIO.md`](MANUAL_USUARIO.md) y [`MATRIZ_TRAZABILIDAD.md`](MATRIZ_TRAZABILIDAD.md).
 
 ### Novedades de la versión 2.0
 
@@ -22,12 +32,12 @@
   - *Organizaciones comunitarias*: territoriales y funcionales.
 - **Las actividades anteriores a la 2.0 conservan su puntaje** (`version_reglas = "1.0"`).
 
-### Actualizar un servidor que ya tenía la versión 1.x
+### Actualizar un servidor que ya tenía una versión anterior
 
 ```bash
-python manage.py migrate                 # crea las tablas nuevas y marca las actividades antiguas como 1.0
+python manage.py migrate                 # tablas nuevas (2.0: organizaciones, felicitaciones, ausencias; 2.1: agenda y auditoría)
 python manage.py configurar_roles        # agrega los permisos nuevos a cada rol
-python manage.py cargar_datos_iniciales  # (opcional) organizaciones de ejemplo
+python manage.py cargar_datos_iniciales  # (opcional) organizaciones y compromisos de ejemplo
 python manage.py collectstatic --noinput
 sudo systemctl restart sgr
 ```
@@ -54,7 +64,7 @@ la base del proyecto del ramo de Programación Back End.
   - Categorías (`/gestion/categorias/`)
   - Períodos de medición (`/organizacion/periodos/`), que es la tabla `periodo` del MER de la Evaluación 1. Las metas ahora pertenecen a un cargo **y a un período**.
 - **Roles con permisos**: `python manage.py configurar_roles` crea los grupos Administrador, Coordinador, Delegado, Funcionario y Verificador. Con `--usuarios-demo --clave "..."` crea además un usuario de prueba por rol.
-- **118 pruebas unitarias** en la versión 1.0 (hoy son 156): `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
+- **118 pruebas unitarias** en la versión 1.0 (hoy son 174): `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
 - **Estándares** de construcción y de seguridad documentados en `ESTANDARES.md`. El estilo se revisa con `flake8`.
 
 ## Qué cambió respecto a la Evaluación 1
@@ -137,13 +147,20 @@ gestion/             # Aplicación 2: actividades / solicitudes registradas
   indicadores.py       #   Cumplimiento, semáforo, tope por ítem, felicitaciones y ausencias
   tests_roles.py       #   Pruebas de la versión 1.1 (CP-PERF, CP-COD, CP-EVI, CP-CUM)
   tests_v2.py          #   Pruebas de la versión 2.0 (CP-V2-001 a CP-V2-016)
+  views_agenda.py      #   Agenda colectiva (v2.1)
+  exportar.py          #   Exportación a Excel/CSV (v2.1)
+  alertas.py           #   Alertas y actividad reciente (v2.1)
+  tests_v21.py         #   Pruebas de la versión 2.1 (CP-AGE, CP-AUD, CP-EXP, CP-PCE, CP-FIL, CP-ALE)
+comun/               # Componentes comunes: mantenedores genéricos, validadores y auditoría (v2.1)
   management/commands/cargar_datos_iniciales.py  # Migra los JSON + siembra cargos/funcionarios
 data/                # JSON originales de la Evaluación 1 (fuente para el seed)
 static/              # Bootstrap local, CSS propio e imágenes
 templates/           # Plantilla base + formulario genérico + confirmación de borrado
 .env.example         # Plantilla de variables de entorno (copiar a .env)
 CHANGELOG.md         # Historial de versiones (1.0, 1.1, 2.0)
-REQUISITOS_V2.md     # Requerimientos por versión: RF-039 a RF-048 con trazabilidad
+REQUISITOS_V2.md     # Requerimientos por versión y cobertura de la Guía (RF-001 a RF-048)
+MATRIZ_TRAZABILIDAD.md  # HU → requisito → código → pruebas → resultado → evidencia
+MANUAL_USUARIO.md    # Manual breve de usuario por rol
 DIAGRAMA_CLASES.md   # Diagrama de clases (Mermaid + PNG), 13 clases, estructura de Eval. 1
 TESTING.md           # Plan de pruebas: automatizadas + manuales + rendimiento, con evidencia
 CASOS_DE_USO.md       # Matriz de trazabilidad: caso de uso -> ruta -> prueba
@@ -162,7 +179,7 @@ GUIA_DESPLIEGUE.md    # Paso a paso para correr con MySQL local y desplegar en A
 
 ## Pruebas automatizadas
 
-El proyecto incluye **156 pruebas** (`python manage.py test`) en la versión 2.0
+El proyecto incluye **174 pruebas** (`python manage.py test`) en la versión 2.1
 (41 en la primera versión de la Evaluación 2). Abarcan las cuatro
 apps: unitarias de modelo (slugs, unicidad, relaciones y restricciones de
 borrado), unitarias de la regla de validación (solo un Delegado valida, no

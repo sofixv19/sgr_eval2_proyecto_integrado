@@ -12,16 +12,19 @@ from django.db.models import Count, Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.dateparse import parse_date
 
 from comun.vistas import MantenedorCrear, MantenedorEditar, MantenedorEliminar, MantenedorListado
 from cuentas.perfiles import (
-    ADMINISTRADOR, DELEGADO, FUNCIONARIO, es_delegado_de, filtrar_actividades, perfil_de, rol_de,
+    ADMINISTRADOR, DELEGADO, FUNCIONARIO, es_delegado_de, filtrar_actividades, perfil_de, rol_de, ve_todo,
 )
+from delegaciones.models import Delegacion
+from organizacion.models import Funcionario, Periodo
 
 from .forms import (
     ActividadForm, CategoriaForm, EvidenciaForm, RevisionForm, inicio_ventana_registro, ingresos_de_hoy,
 )
-from .models import Actividad, Categoria, Evidencia
+from .models import Actividad, Categoria, Compromiso, Evidencia
 from .services import grados_donut, resumen_por_estado
 
 
@@ -40,24 +43,36 @@ def _es_duenio(request, actividad):
     return perfil is not None and perfil.pk == actividad.funcionario_id
 
 
-@permission_required('gestion.view_actividad', raise_exception=True)
-def listado(request):
-    """Actividades según el rol: el Funcionario ve solo las suyas, el
-    Delegado las de su delegación y el Coordinador/Administrador todas.
-    Filtros: estado (?estado=), validación (?validacion=) y texto (?q=)."""
-
-    actividades = filtrar_actividades(
-        request.user, Actividad.objects.select_related('delegacion', 'categoria', 'funcionario'),
-    )
-
-    estado_seleccionado = request.GET.get('estado')
-    if estado_seleccionado in Actividad.Estado.values:
-        actividades = actividades.filter(estado=estado_seleccionado)
-
-    validacion = request.GET.get('validacion')
-    if validacion in Actividad.EstadoValidacion.values:
-        actividades = actividades.filter(estado_validacion=validacion)
-
+def filtrar_listado_actividades(request, actividades):
+    """Filtros del listado (RF-032 / HU-29), compartidos con la exportación:
+    estado, validación, delegación, funcionario, ítem (categoría), período,
+    rango de fechas y texto. Devuelve (consulta, filtros aplicados)."""
+    filtros = {}
+    valor = request.GET.get('estado')
+    if valor in Actividad.Estado.values:
+        actividades = actividades.filter(estado=valor)
+        filtros['estado'] = valor
+    valor = request.GET.get('validacion')
+    if valor in Actividad.EstadoValidacion.values:
+        actividades = actividades.filter(estado_validacion=valor)
+        filtros['validacion'] = valor
+    for campo, nombre in (('delegacion', 'delegacion_id'), ('funcionario', 'funcionario_id'),
+                          ('categoria', 'categoria_id')):
+        valor = request.GET.get(campo, '')
+        if valor.isdigit():
+            actividades = actividades.filter(**{nombre: int(valor)})
+            filtros[campo] = valor
+    valor = request.GET.get('periodo', '')
+    if valor.isdigit():
+        periodo = Periodo.objects.filter(pk=int(valor)).first()
+        if periodo:
+            actividades = actividades.filter(fecha__range=(periodo.fecha_inicio, periodo.fecha_fin))
+            filtros['periodo'] = valor
+    for campo, condicion in (('desde', 'fecha__gte'), ('hasta', 'fecha__lte')):
+        fecha = parse_date(request.GET.get(campo, '') or '')
+        if fecha:
+            actividades = actividades.filter(**{condicion: fecha})
+            filtros[campo] = fecha.isoformat()
     query = request.GET.get('q', '').strip()
     if query:
         actividades = actividades.filter(
@@ -67,6 +82,19 @@ def listado(request):
             | Q(categoria__nombre__icontains=query)
             | Q(funcionario__nombre__icontains=query)
         )
+        filtros['q'] = query
+    return actividades, filtros
+
+
+@permission_required('gestion.view_actividad', raise_exception=True)
+def listado(request):
+    """Actividades según el rol: el Funcionario ve solo las suyas, el
+    Delegado las de su delegación y el Coordinador/Administrador todas."""
+
+    base = filtrar_actividades(
+        request.user, Actividad.objects.select_related('delegacion', 'categoria', 'funcionario'),
+    )
+    actividades, filtros = filtrar_listado_actividades(request, base)
 
     rol = rol_de(request.user)
     titulos = {FUNCIONARIO: 'Mis actividades', DELEGADO: 'Actividades de mi delegación'}
@@ -75,11 +103,19 @@ def listado(request):
         'actividades': actividades.annotate(total_evidencias=Count('evidencias')),
         'estados': Actividad.Estado.values,
         'estados_validacion': Actividad.EstadoValidacion.choices,
-        'estado_seleccionado': estado_seleccionado,
-        'validacion_seleccionada': validacion,
-        'query': query,
+        'estado_seleccionado': filtros.get('estado'),
+        'validacion_seleccionada': filtros.get('validacion'),
+        'query': filtros.get('q', ''),
+        'filtros': filtros,
         'total': actividades.count(),
         'puede_registrar': _puede_registrar(request.user),
+        # Filtros adicionales (RF-032)
+        'opciones_delegacion': Delegacion.objects.all() if ve_todo(request.user) else None,
+        'opciones_funcionario': (Funcionario.objects.filter(pk__in=base.values('funcionario_id')).order_by('nombre')
+                                 if rol != FUNCIONARIO else None),
+        'opciones_categoria': Categoria.objects.all(),
+        'opciones_periodo': Periodo.objects.all(),
+        'query_string': request.GET.urlencode(),
     }
     return render(request, 'gestion/listado.html', contexto)
 
@@ -103,10 +139,12 @@ def detalle(request, actividad_id):
     actividad = _actividad_visible(request, actividad_id)
     duenio = _es_duenio(request, actividad)
     puede_subir = duenio and actividad.editable_por_funcionario
+    periodo_cerrado = actividad.periodo_cerrado
     puede_revisar = (request.user.has_perm('gestion.validar_actividad')
                      and es_delegado_de(request.user, actividad.delegacion_id)
                      and not duenio
-                     and actividad.estado_validacion != Actividad.EstadoValidacion.VALIDADA)
+                     and actividad.estado_validacion != Actividad.EstadoValidacion.VALIDADA
+                     and periodo_cerrado is None)
 
     evidencia_form = EvidenciaForm() if puede_subir else None
     revision_form = RevisionForm(actividad=actividad) if puede_revisar else None
@@ -143,10 +181,15 @@ def detalle(request, actividad_id):
         'evidencias': actividad.evidencias.all(),
         'evidencia_form': evidencia_form,
         'revision_form': revision_form,
-        'puede_editar': duenio and actividad.editable_por_funcionario or rol_de(request.user) == ADMINISTRADOR,
-        'puede_eliminar': request.user.has_perm('gestion.delete_actividad') and (
+        'periodo_cerrado': periodo_cerrado,
+        'puede_editar': periodo_cerrado is None and (
+            duenio and actividad.editable_por_funcionario or rol_de(request.user) == ADMINISTRADOR),
+        'puede_eliminar': periodo_cerrado is None and request.user.has_perm('gestion.delete_actividad') and (
             rol_de(request.user) == ADMINISTRADOR
             or (duenio and actividad.estado_validacion == Actividad.EstadoValidacion.PENDIENTE)),
+        # RF-009: la actividad puede originar un compromiso futuro en la agenda colectiva.
+        'puede_agendar': duenio and request.user.has_perm('gestion.add_compromiso'),
+        'compromisos_generados': actividad.compromisos_generados.all(),
     }
     return render(request, 'gestion/detalle.html', contexto)
 
@@ -198,14 +241,36 @@ def crear(request):
     es_admin = rol_de(request.user) == ADMINISTRADOR and perfil_de(request.user) is None
     funcionario = None if es_admin else perfil_de(request.user)
 
+    # RF-020: la actividad puede cumplir un compromiso de la agenda colectiva
+    # del que el funcionario es responsable (una sola actividad por compromiso).
+    compromiso = None
+    id_compromiso = request.POST.get('compromiso') or request.GET.get('compromiso', '')
+    if str(id_compromiso).isdigit() and funcionario is not None:
+        compromiso = (Compromiso.objects.filter(pk=int(id_compromiso), responsable=funcionario)
+                      .exclude(actividades__isnull=False).first())
+    inicial = {}
+    if compromiso:
+        inicial = {'descripcion': '', 'solicitud_problema': compromiso.descripcion, 'contacto': compromiso.solicitante,
+                   'organizacion': compromiso.organizacion_id,
+                   'tipo_solicitante': (Actividad.TipoSolicitante.ORGANIZACION if compromiso.organizacion_id
+                                        else Actividad.TipoSolicitante.VECINO)}
+
     if request.method == 'POST':
         form = ActividadForm(request.POST, request.FILES, funcionario=funcionario, elegir_funcionario=es_admin)
         if form.is_valid():
             actividad = form.save(usuario=request.user)
-            messages.success(request, f'Actividad registrada con el código {actividad.codigo}.')
+            mensaje = f'Actividad registrada con el código {actividad.codigo}.'
+            if compromiso:
+                actividad.compromiso = compromiso
+                actividad.save(update_fields=['compromiso'])
+                if not compromiso.esta_cerrado:
+                    compromiso.cambiar_estado(Compromiso.Estado.REALIZADO, request.user,
+                                              f'Cumplido con la actividad {actividad.codigo}.', puede_reabrir=False)
+                mensaje += f' El compromiso {compromiso.codigo} quedó Realizado.'
+            messages.success(request, mensaje)
             return redirect('gestion:detalle', actividad_id=actividad.id)
     else:
-        form = ActividadForm(funcionario=funcionario, elegir_funcionario=es_admin)
+        form = ActividadForm(initial=inicial, funcionario=funcionario, elegir_funcionario=es_admin)
 
     contexto = {
         'titulo_pagina': 'Registrar actividad',
@@ -217,6 +282,7 @@ def crear(request):
         'inicio_ventana': inicio_ventana_registro(),
         'ingresos_hoy': ingresos_de_hoy(funcionario) if funcionario else None,
         'max_ingresos': settings.SGR_MAX_INGRESOS_DIARIOS,
+        'compromiso': compromiso,
     }
     return render(request, 'gestion/form.html', contexto)
 
@@ -225,6 +291,8 @@ def crear(request):
 def editar(request, actividad_id):
     actividad = _actividad_visible(request, actividad_id)
     es_admin = rol_de(request.user) == ADMINISTRADOR
+    if actividad.periodo_cerrado is not None:
+        raise PermissionDenied(f'El período {actividad.periodo_cerrado} está cerrado: reábralo para corregir (RN-013).')
     if not es_admin and not (_es_duenio(request, actividad) and actividad.editable_por_funcionario):
         raise PermissionDenied('Solo el funcionario que registró la actividad puede modificarla, y solo si no está validada.')
 
@@ -250,6 +318,8 @@ def editar(request, actividad_id):
 @permission_required('gestion.delete_actividad', raise_exception=True)
 def eliminar(request, actividad_id):
     actividad = _actividad_visible(request, actividad_id)
+    if actividad.periodo_cerrado is not None:
+        raise PermissionDenied(f'El período {actividad.periodo_cerrado} está cerrado: reábralo para corregir (RN-013).')
     if rol_de(request.user) != ADMINISTRADOR and not (
             _es_duenio(request, actividad) and actividad.estado_validacion == Actividad.EstadoValidacion.PENDIENTE):
         raise PermissionDenied('No puede eliminar esta actividad.')

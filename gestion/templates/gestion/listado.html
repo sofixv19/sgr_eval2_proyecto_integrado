@@ -24,20 +24,46 @@
     </a>
     {% else %}<span></span>{% endif %}
 
-    <form method="get" class="d-flex gap-2 buscador-form" role="search">
-        {% if estado_seleccionado %}<input type="hidden" name="estado" value="{{ estado_seleccionado }}">{% endif %}
-        <select name="validacion" class="form-select form-select-sm" aria-label="Filtrar por validación" onchange="this.form.submit()">
-            <option value="">Toda validación</option>
-            {% for valor, texto in estados_validacion %}<option value="{{ valor }}" {% if validacion_seleccionada == valor %}selected{% endif %}>{{ texto }}</option>{% endfor %}
-        </select>
-        <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm"
-               placeholder="Buscar por código, descripción, delegación o categoría...">
-        <button type="submit" class="btn btn-outline-secondary btn-sm text-nowrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            Buscar
-        </button>
-    </form>
+    <div class="d-flex gap-2">
+        <a href="{% url 'gestion:exportar_actividades' %}?{{ query_string }}" class="btn btn-outline-secondary btn-sm">Exportar a Excel (CSV)</a>
+    </div>
 </div>
+
+<details class="dash-card mb-3 filtros-avanzados" {% if filtros %}open{% endif %}>
+    <summary class="fw-semibold">Buscar y filtrar{% if filtros %} <span class="badge-version">{{ filtros|length }} filtro{{ filtros|length|pluralize }}</span>{% endif %}</summary>
+    <form method="get" class="row g-2 align-items-end mt-2">
+        {% if estado_seleccionado %}<input type="hidden" name="estado" value="{{ estado_seleccionado }}">{% endif %}
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Validación</label>
+            <select name="validacion" class="form-select form-select-sm"><option value="">Toda validación</option>
+            {% for valor, texto in estados_validacion %}<option value="{{ valor }}" {% if validacion_seleccionada == valor %}selected{% endif %}>{{ texto }}</option>{% endfor %}</select></div>
+        {% if opciones_delegacion %}
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Delegación</label>
+            <select name="delegacion" class="form-select form-select-sm"><option value="">Todas</option>
+            {% for d in opciones_delegacion %}<option value="{{ d.pk }}" {% if filtros.delegacion == d.pk|stringformat:"s" %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div>
+        {% endif %}
+        {% if opciones_funcionario %}
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Funcionario</label>
+            <select name="funcionario" class="form-select form-select-sm"><option value="">Todos</option>
+            {% for f in opciones_funcionario %}<option value="{{ f.pk }}" {% if filtros.funcionario == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nombre }}</option>{% endfor %}</select></div>
+        {% endif %}
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Ítem / categoría</label>
+            <select name="categoria" class="form-select form-select-sm"><option value="">Todos</option>
+            {% for c in opciones_categoria %}<option value="{{ c.pk }}" {% if filtros.categoria == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Período</label>
+            <select name="periodo" class="form-select form-select-sm"><option value="">Todos</option>
+            {% for p in opciones_periodo %}<option value="{{ p.pk }}" {% if filtros.periodo == p.pk|stringformat:"s" %}selected{% endif %}>{{ p }}</option>{% endfor %}</select></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ filtros.desde }}" class="form-control form-control-sm"></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ filtros.hasta }}" class="form-control form-control-sm"></div>
+        <div class="col-md-3 col-12"><label class="form-label small mb-1">Texto</label>
+            <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm" placeholder="Código, descripción, funcionario..."></div>
+        <div class="col-md-2 col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-institucional flex-grow-1">Filtrar</button>
+            <a href="{% url 'gestion:listado' %}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+        </div>
+    </form>
+</details>
 
 <div class="filtro-bar mb-4">
     <div class="filtro-bar-label">

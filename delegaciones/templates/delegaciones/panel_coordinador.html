@@ -15,12 +15,17 @@
             </div>
         </div>
     </div>
-    <div class="dash-banner-acciones">
+    <div class="dash-banner-acciones flex-column align-items-end">
+        {% include "includes/periodo_selector.html" %}
+        <div class="d-flex flex-wrap gap-2 justify-content-end">
         {% if perms.delegaciones.add_delegacion %}<a href="{% url 'delegaciones:crear' %}" class="btn btn-light fw-semibold">+ Crear delegación</a>{% endif %}
         {% if perms.organizacion.add_funcionario %}<a href="{% url 'organizacion:funcionario_crear' %}" class="btn btn-outline-light">{% if rol_usuario == "Coordinador" %}Crear Delegado{% else %}Agregar funcionario{% endif %}</a>{% endif %}
-        <a href="{% url 'gestion:listado' %}" class="btn btn-outline-light">Ver actividades</a>
+        <a href="{% url 'gestion:exportar_cumplimiento' %}{% if periodo %}?periodo={{ periodo.pk }}{% endif %}" class="btn btn-outline-light">Exportar cumplimiento</a>
+        </div>
     </div>
 </section>
+
+{% include "includes/alertas.html" %}
 
 {% if sin_delegado %}
 <div class="dash-aviso mb-4">Delegaciones activas sin Delegado asignado: {% for d in sin_delegado %}<strong>{{ d }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}. Use <em>Crear Delegado</em> para asignarles uno.</div>
@@ -41,10 +46,10 @@
 </div>
 
 <div class="dash-card">
-    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Cumplimiento por delegación</h2><div class="dash-card-sub">Verde: al día · Ámbar: sobre 60 % de lo esperado · Rojo: bajo eso</div></div></div>
+    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Cumplimiento por delegación</h2><div class="dash-card-sub">Verde: al día · Ámbar: sobre 60 % de lo esperado · Rojo: bajo eso · Umbral colectivo mínimo: {{ umbral_colectivo }} % ({{ bajo_umbral|length }} bajo el umbral)</div></div></div>
     <div class="table-responsive">
     <table class="table align-middle mb-0 dash-tabla">
-        <thead><tr><th>Delegación</th><th>Delegado</th><th class="text-end">Funcionarios</th><th class="text-end">Actividades</th><th class="text-end">Por validar</th><th style="min-width: 190px">Cumplimiento</th><th class="text-end">Acciones</th></tr></thead>
+        <thead><tr><th>Delegación</th><th>Delegado</th><th class="text-end">Funcionarios</th><th class="text-end">Actividades</th><th class="text-end">Por validar</th><th class="text-end">Compromisos vencidos</th><th style="min-width: 190px">Cumplimiento</th><th class="text-end">Acciones</th></tr></thead>
         <tbody>
         {% for f in filas %}
         <tr{% if not f.delegacion.activa %} class="text-muted"{% endif %}>
@@ -53,6 +58,7 @@
             <td class="text-end">{{ f.funcionarios }}</td>
             <td class="text-end">{{ f.actividades }}</td>
             <td class="text-end">{{ f.pendientes }}</td>
+            <td class="text-end">{% if f.vencidos %}<a href="{% url 'gestion:agenda' %}?situacion=vencidos&delegacion={{ f.delegacion.pk }}" class="text-danger fw-semibold">{{ f.vencidos }}</a>{% else %}0{% endif %}</td>
             <td>{% if f.color == "gris" %}<span class="dash-pill dash-pill-gris dash-pill-chica">Sin metas</span>{% else %}
                 <div class="d-flex align-items-center gap-2">{% localize off %}<div class="dash-barra dash-barra-{{ f.color }} flex-grow-1"><div class="dash-barra-relleno" style="width: {{ f.barra }}%"></div></div>{% endlocalize %}<span class="dash-pill dash-pill-{{ f.color }} dash-pill-chica">{{ f.porcentaje }} %</span></div>{% endif %}</td>
             <td class="text-end text-nowrap">

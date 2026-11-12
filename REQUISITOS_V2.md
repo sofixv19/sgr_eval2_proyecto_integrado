@@ -5,7 +5,9 @@ Este documento separa los requerimientos según la versión del sistema en que e
 | Versión de requerimientos | Fuente | Requisitos | Versión del sistema |
 |---|---|---|---|
 | **1.0** | *Guía Proyecto Software SGR* (documento maestro del caso) | RF-001 a RF-038, RNF-001 en adelante, HU-01 a HU-27 | 1.0.0 y 1.1.0 |
-| **2.0** | *Nuevos Requerimientos — Octubre 2026* | **RF-039 a RF-048**, RN-V2-01 a RN-V2-04, HU-V2-01 a HU-V2-05 | **2.0.0** |
+| **2.0** | *Nuevos Requerimientos — Octubre 2026* | **RF-039 a RF-048**, RN-V2-01 a RN-V2-04, HU-V2-01 a HU-V2-05 | **2.0.0** y 2.1.0 |
+
+La versión 2.1.0 del sistema no agrega requerimientos nuevos: **completa los requerimientos 1.0** del alcance mínimo de la Guía que faltaban (agenda colectiva, auditoría, exportación, filtros y alertas). El estado de cada uno está en la sección 4.
 
 Los requisitos 1.0 siguen vigentes en la versión 2.0, salvo los que la 2.0 **reemplaza** de forma explícita (marcados con ⟳ en la tabla de cambios).
 
@@ -75,3 +77,63 @@ La **regla 6** ("no ingresar solo para generar puntaje") es una indicación de c
 | *Descriptor de funciones* (Word) | Referencia para los cargos y áreas. No cambia el modelo: los cargos y su área ya existen en `CargoFuncion` desde la 1.1. |
 | *Matriz SGR de una delegación* (Excel) | **Solo referencia, no se trabaja** (indicación del profesor). De ahí se tomaron los valores de felicitaciones (+10, máx. 3) y reclamos (−20). |
 | *Base de datos de JJVV "sin verificar"* (Excel) | **En espera**: no se importa hasta que esté verificada. El catálogo de organizaciones (RF-039) ya tiene los mismos campos (domicilio, socios activos, fecha de constitución, N° de personalidad jurídica) para cargarla después. |
+
+---
+
+## 4. Cobertura de los requisitos 1.0 de la Guía SGR (al cierre de la versión 2.1)
+
+Estados:
+- ✅ **implementado y probado**
+- 🟡 **parcial**: se indica qué falta
+- ⛔ **fuera del alcance de esta entrega**: limitación declarada, como pide la sección 15.3 de la Guía
+
+| ID | Requisito | Estado | Dónde / observación |
+|---|---|---|---|
+| RF-001 | Administrar delegaciones (crear, modificar, activar/desactivar) | ✅ | `delegaciones/` |
+| RF-002 | Usuarios y roles | ✅ | Funcionario ligado a su cuenta; 5 roles con permisos (`configurar_roles`) |
+| RF-003 | Cargos y funciones con ítems medidos | 🟡 | Cargos con área. Los ítems se asignan como metas por funcionario y período, no como plantilla del cargo |
+| RF-004 | Catálogo de actividades y servicios | 🟡 | Catálogo de categorías (ítems) y de organizaciones. Sin tipos/subtipos de atención social |
+| RF-005 | Períodos de medición | ✅ | Calcula días y valida fechas; estados Planificado/Abierto/Cerrado |
+| RF-006 | Ponderaciones | ✅ | RN-001: la suma por funcionario y período no supera 100 % |
+| RF-007 | Metas y umbrales | ✅ | Metas por período; umbrales `SGR_TOPE_ITEM`, `SGR_TOPE_CUMPLIMIENTO`, `SGR_UMBRAL_AMBAR` y `SGR_UMBRAL_COLECTIVO` |
+| RF-008 | Ficha personal con períodos anteriores | ✅ | Panel del funcionario con selector de período (2.1) |
+| RF-009 | Registrar actividades (con relación a la agenda) | ✅ | Actividad → "Agregar a la agenda colectiva" (2.1) |
+| RF-010 | Validar campos | ✅ | Formularios con validaciones del servidor |
+| RF-011 | Código único de evidencia | ✅ | TR-0001, SO-…, inmutable |
+| RF-012 | Asociar evidencia | ✅ | Foto o PDF de hasta 5 MB, con fecha y autor |
+| RF-013 | Validar evidencia | ✅ | Lo hace el Delegado (indicación del profesor): aprueba o rechaza con observación |
+| RF-014 | Puntuar solo lo validado | ✅ | Y además solo lo puntuable según las reglas 2.0 |
+| RF-015 | Atención social de hasta 3 gestiones | ⛔ | No implementado (HU-03, prioridad P2) |
+| RF-016 | Crear compromisos en la agenda colectiva | ✅ | 2.1 |
+| RF-017 | Asignar compromiso (solicitante, territorio, responsable, apoyo, fecha) | ✅ | 2.1 |
+| RF-018 | Estados con historial | ✅ | 2.1, `CambioCompromiso` |
+| RF-019 | Control de plazos | ✅ | Próximos, vencidos y realizados fuera de plazo (2.1) |
+| RF-020 | Relacionar agenda y medición | ✅ | La actividad que cumple el compromiso suma una sola vez al validarse (2.1) |
+| RF-021 | Resumen colectivo | ✅ | Por responsable y estado (2.1) |
+| RF-022 | Avance actual | ✅ | `gestion/indicadores.py` |
+| RF-023 | % de cumplimiento | ✅ | avance / meta × 100 |
+| RF-024 | Cumplimiento ponderado con máximo | ✅ | Tope de 120 % por ítem y 150 % total |
+| RF-025 | Incentivos y penalizaciones | ✅ | Felicitaciones y reclamos (2.0) |
+| RF-026 | Meta esperada al día | ✅ | Descuenta ausencias (2.0) |
+| RF-027 | Semáforo con umbrales configurables | ✅ | `SGR_UMBRAL_AMBAR` (2.1) |
+| RF-028 | Tablero personal | ✅ | Con período, evidencias, compromisos y alertas |
+| RF-029 | Tablero de delegación | ✅ | Panel del Delegado y del Coordinador |
+| RF-030 | Actividad reciente | ✅ | 2.1 |
+| RF-031 | Vista global por cargos | 🟡 | La vista global es por delegación y funcionario, no agrupada por cargo |
+| RF-032 | Buscar y filtrar | ✅ | Delegación, funcionario, ítem, período, estado, validación y fechas (2.1) |
+| RF-033 | Exportar informes | ✅ | CSV para Excel (2.1) |
+| RF-034 | Trabajo simultáneo | ✅ | Transacciones de la base de datos; código correlativo atómico |
+| RF-035 | Comentarios en registros | 🟡 | Observaciones en la validación y en el historial de compromisos; sin conversación en hilo |
+| RF-036 | Trazabilidad | ✅ | Auditoría (2.1) |
+| RF-037 | Alertas | ✅ | En los paneles (2.1); sin la opción "marcar como revisada" (HU-31, P2) |
+| RF-038 | Versionar parámetros | ✅ | Metas por período, períodos cerrados y `version_reglas` por actividad |
+
+**Resumen**: de 38 requisitos, 33 están completos, 4 parciales y 1 fuera de alcance (RF-015, prioridad P2). Los 7 puntos del **alcance mínimo (MVP)** de la sección 13.2 de la Guía están cubiertos:
+
+1. Autenticación y autorización por rol y delegación.
+2. Administración de usuarios, cargos, catálogos, períodos, metas y ponderaciones.
+3. Actividades con código, evidencia y validación.
+4. Agenda colectiva con historial.
+5. Cálculos y semáforo.
+6. Paneles con filtros y detalle.
+7. Exportación y auditoría.

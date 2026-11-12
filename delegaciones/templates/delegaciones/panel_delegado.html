@@ -15,12 +15,17 @@
             </div>
         </div>
     </div>
-    <div class="dash-banner-acciones">
-        <a href="{% url 'gestion:listado' %}?validacion=Pendiente" class="btn btn-light fw-semibold">Validar actividades</a>
-        <a href="{% url 'organizacion:listado' %}" class="btn btn-outline-light">Mis funcionarios</a>
-        <a href="{% url 'organizacion:metas' %}" class="btn btn-outline-light">Asignar metas</a>
+    <div class="dash-banner-acciones flex-column align-items-end">
+        {% include "includes/periodo_selector.html" %}
+        <div class="d-flex flex-wrap gap-2 justify-content-end">
+            <a href="{% url 'gestion:listado' %}?validacion=Pendiente" class="btn btn-light fw-semibold">Validar actividades</a>
+            <a href="{% url 'gestion:agenda' %}" class="btn btn-outline-light">Agenda ({{ compromisos_abiertos }} abiertos)</a>
+            <a href="{% url 'organizacion:metas' %}" class="btn btn-outline-light">Asignar metas</a>
+        </div>
     </div>
 </section>
+
+{% include "includes/alertas.html" %}
 
 <div class="row g-3 mb-4">
     <div class="col-xl-5">
@@ -65,7 +70,8 @@
                     <div class="dash-avatar dash-avatar-chico">{{ r.funcionario.nombre|slice:":1"|upper }}</div>
                     <div class="flex-grow-1 min-w-0">
                         <div class="d-flex justify-content-between gap-2"><a href="{% url 'organizacion:funcionario_detalle' r.funcionario.pk %}" class="fw-semibold text-truncate">{{ r.funcionario.nombre }}</a>{% if r.tiene_metas %}<span class="dash-pill dash-pill-{{ r.color }} dash-pill-chica">{{ r.cumplimiento }} %</span>{% else %}<span class="dash-pill dash-pill-gris dash-pill-chica">Sin metas</span>{% endif %}</div>
-                        <div class="small text-muted mb-1">{{ r.funcionario.cargo.nombre_cargo }}</div>
+                        <div class="small text-muted">{{ r.funcionario.cargo.nombre_cargo }}</div>
+                        <div class="dash-reciente mb-1">{% if r.reciente.ultimo_ingreso %}Último ingreso {{ r.reciente.ultimo_ingreso|date:"d/m" }}{% if r.reciente.inactivo %} · <span class="dash-reciente-alerta">hace {{ r.reciente.dias_sin_ingreso }} días</span>{% endif %}{% else %}<span class="dash-reciente-alerta">Sin ingresos</span>{% endif %} · {{ r.reciente.registros }} registro{{ r.reciente.registros|pluralize }} · {{ r.reciente.promedio_diario }} por día</div>
                         {% localize off %}<div class="dash-barra dash-barra-{{ r.color }}"><div class="dash-barra-relleno" style="width: {{ r.barra }}%"></div></div>{% endlocalize %}
                     </div>
                 </li>

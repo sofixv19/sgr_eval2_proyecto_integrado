@@ -50,8 +50,18 @@ que quede trazable de principio a fin (requerimiento → código → prueba).
 | CU-22 | Registrar ausencias del equipo (ajustan el semáforo) | **Delegado** | `organizacion:ausencias` (`/organizacion/ausencias/`) | RF-047 | `CP-V2-011`, `CP-V2-014`, `CP-V2-015` |
 | CU-23 | Gestionar organizaciones comunitarias territoriales y funcionales | Delegado / Coordinador / Administrador | `delegaciones:organizaciones` (`/organizaciones/`) | RF-039 | `CP-V2-006`, `CP-V2-016` |
 
+### Casos de uso de la versión 2.1 (alcance mínimo de la Guía)
+
+| # | Caso de uso | Actor(es) | Implementado en (ruta) | Requisito | Prueba automatizada |
+|---|---|---|---|---|---|
+| CU-24 | Registrar y dar seguimiento a compromisos en la agenda colectiva (estados, plazos, reasignación) | Funcionario / Delegado | `gestion:agenda` (`/gestion/agenda/`) | RF-016 a RF-021 | `CP-AGE-001` a `CP-AGE-007` |
+| CU-25 | Consultar la auditoría (quién cambió qué y cuándo) | Administrador / Coordinador / Verificador | `comun:auditoria` (`/auditoria/`) | RF-036 | `CP-AUD-001` a `CP-AUD-004` |
+| CU-26 | Exportar informes a Excel | Todos, según su ámbito | `gestion:exportar_*` | RF-033 | `CP-EXP-001`, `CP-EXP-002` |
+| CU-27 | Filtrar actividades y consultar períodos anteriores en los paneles | Todos, según su ámbito | `gestion:listado`, `delegaciones:inicio?periodo=` | RF-008, RF-032 | `CP-FIL-001`, `CP-ALE-003` |
+
 ## Limitaciones conocidas (declaradas, no ocultas)
 
 - Las limitaciones CU-16 y CU-17 de la versión 1.0 (no había login por rol) quedaron **resueltas en la versión 1.1**.
-- No hay bitácora general de auditoría (quién cambió qué y cuándo). Solo quedan registrados quién validó (`validado_por`, `fecha_validacion`) y quién registró felicitaciones y ausencias (`registrado_por`).
+- La bitácora general de auditoría ya existe (versión 2.1, CU-25).
+- No está implementada la atención social de hasta 3 gestiones por persona (RF-015, prioridad P2).
 - La regla 6 de los Nuevos requerimientos ("no ingresar solo para generar puntaje") no se puede verificar de forma automática. La apoyan las reglas de puntaje y la validación del Delegado.

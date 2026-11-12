@@ -32,6 +32,17 @@ efectivamente implementada y verificada con pruebas automatizadas):
 
 `puntuable` y `motivo_sin_puntaje` no los escribe el usuario: se calculan al guardar con las reglas de la versión indicada en `version_reglas`. Las actividades que ya existían al migrar quedaron como `"1.0"`, así que su puntaje no cambia (ver `REQUISITOS_V2.md`, RF-048).
 
+### Cambios del modelo en la versión 2.1 (alcance mínimo de la Guía)
+
+| Entidad | Campos clave | Relación |
+|---|---|---|
+| `Compromiso` (**nueva**, agenda colectiva) | `codigo` (AC-0001), `origen` (INT/EXT), `solicitante`, `territorio`, `descripcion`, `area_apoyo`, `fecha_solicitud`, `fecha_compromiso`, `estado` (Ingresado/Pendiente/En proceso/Realizado), `observacion`, `fecha_cierre` | FK → `Delegacion` (PROTECT), FK → `Funcionario` como `responsable` (PROTECT), FK → `OrganizacionComunitaria` (SET_NULL), FK → `Actividad` como `actividad_origen` (SET_NULL) |
+| `CambioCompromiso` (**nueva**, historial) | `campo` (Estado/Responsable), `valor_anterior`, `valor_nuevo`, `observacion`, `fecha` | FK → `Compromiso` (CASCADE), FK → `User` como `autor` |
+| `RegistroAuditoria` (**nueva**, app `comun`) | `fecha`, `usuario_texto`, `accion`, `entidad`, `objeto_id`, `objeto`, `cambios` (JSON: valor anterior → valor nuevo), `detalle`, `ip` | FK → `User` (SET_NULL). No se puede modificar ni eliminar |
+| `Actividad` (campo **nuevo**) | `compromiso` | FK → `Compromiso` (SET_NULL): el compromiso que la actividad cumple |
+
+El campo `cambios` de la auditoría es un **dato semiestructurado** (JSON), porque cada tabla tiene campos distintos. Se guarda dentro de la base relacional, como se describe en la sección 2.1.4.9.
+
 Las restricciones de borrado (`on_delete`) se eligieron según el
 significado real de cada relación:
 

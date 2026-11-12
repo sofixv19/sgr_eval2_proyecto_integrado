@@ -15,18 +15,16 @@
             </div>
         </div>
     </div>
-    <div class="dash-banner-acciones">
-        <a href="{% url 'gestion:crear' %}" class="btn btn-light fw-semibold">+ Registrar actividad</a>
-        <a href="{% url 'gestion:listado' %}" class="btn btn-outline-light">Ver mis actividades</a>
+    <div class="dash-banner-acciones flex-column align-items-end">
+        {% include "includes/periodo_selector.html" %}
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'gestion:crear' %}" class="btn btn-light fw-semibold">+ Registrar actividad</a>
+            <a href="{% url 'gestion:agenda' %}" class="btn btn-outline-light">Agenda</a>
+        </div>
     </div>
 </section>
 
-{% if rechazadas %}
-<div class="dash-aviso mb-4">
-    <strong>Tiene actividades rechazadas por su Delegado.</strong> Revise la observación y suba una nueva evidencia:
-    {% for a in rechazadas %}<a href="{% url 'gestion:detalle' a.id %}" class="ms-1">{{ a.codigo }}</a>{% if not forloop.last %},{% endif %}{% endfor %}
-</div>
-{% endif %}
+{% include "includes/alertas.html" %}
 
 <div class="row g-3 mb-4">
     <div class="col-xl-5">
@@ -55,6 +53,14 @@
     </div>
     <div class="col-lg-5">
         <div class="dash-card h-100">
+            {% if compromisos %}
+            <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Mis compromisos abiertos</h2><div class="dash-card-sub">Agenda colectiva</div></div><a href="{% url 'gestion:agenda' %}?responsable={{ perfil.pk }}" class="dash-link">Ver agenda →</a></div>
+            <ul class="dash-ranking mb-3">
+                {% for c in compromisos %}{% with sit=c.situacion %}
+                <li><div class="flex-grow-1 min-w-0"><div class="d-flex justify-content-between gap-2"><a href="{{ c.get_absolute_url }}" class="dash-codigo">{{ c.codigo }}</a><span class="dash-pill dash-pill-{{ sit.0 }} dash-pill-chica">{{ sit.1 }}</span></div><div class="small text-truncate mt-1">{{ c.descripcion }}</div></div></li>
+                {% endwith %}{% endfor %}
+            </ul>
+            {% endif %}
             <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Últimas actividades</h2><div class="dash-card-sub">Lo último que registró</div></div><a href="{% url 'gestion:listado' %}" class="dash-link">Ver todas →</a></div>
             <ul class="dash-timeline">
             {% for actividad in recientes %}

@@ -59,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'cuentas.middleware.LoginObligatorioMiddleware',
+    'comun.auditoria.AuditoriaMiddleware',   # v2.1: auditoría de operaciones (RF-036)
 ]
 
 # WhiteNoise sirve los archivos estáticos cuando DEBUG=False (producción en
@@ -177,7 +178,7 @@ SGR_LOGIN_MINUTOS_BLOQUEO = config('SGR_LOGIN_MINUTOS_BLOQUEO', default=15, cast
 
 # Versión del sistema (ver CHANGELOG.md). 1.x = requerimientos de la Guía SGR;
 # 2.0 = Nuevos requerimientos de octubre 2026.
-SGR_VERSION = '2.0.0'
+SGR_VERSION = '2.1.0'
 
 # Reglas de negocio parametrizables (Guía SGR, sección 13.1)
 SGR_TOPE_CUMPLIMIENTO = config('SGR_TOPE_CUMPLIMIENTO', default=150, cast=int)   # % máximo del colaborador
@@ -189,6 +190,12 @@ SGR_MAX_INGRESOS_DIARIOS = config('SGR_MAX_INGRESOS_DIARIOS', default=7, cast=in
 SGR_PUNTOS_FELICITACION = 10      # cada felicitación suma 10 puntos (máx. 3 por período)
 SGR_MAX_FELICITACIONES = 3
 SGR_PUNTOS_RECLAMO = 20           # cada reclamo resta 20 puntos
+
+# Versión 2.1 — Alcance mínimo de la Guía SGR (agenda colectiva, alertas)
+SGR_DIAS_AVISO_COMPROMISO = config('SGR_DIAS_AVISO_COMPROMISO', default=3, cast=int)   # "próximo a vencer"
+SGR_DIAS_SIN_REGISTRO = config('SGR_DIAS_SIN_REGISTRO', default=5, cast=int)           # alerta de inactividad
+SGR_UMBRAL_COLECTIVO = config('SGR_UMBRAL_COLECTIVO', default=80, cast=int)             # RN-006
+SGR_UMBRAL_AMBAR = config('SGR_UMBRAL_AMBAR', default=60, cast=int)                     # RN-008: % de lo esperado
 
 # Evidencias subidas por los funcionarios. No se publican en una URL
 # abierta: se entregan con la vista gestion:evidencia, que revisa permisos.

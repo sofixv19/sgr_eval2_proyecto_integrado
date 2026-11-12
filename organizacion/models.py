@@ -76,6 +76,13 @@ class Periodo(models.Model):
     def __str__(self):
         return self.nombre
 
+    @classmethod
+    def cerrado_que_contiene(cls, fecha):
+        """Período Cerrado que incluye la fecha, o None (RN-013 / CA-10)."""
+        if fecha is None:
+            return None
+        return cls.objects.filter(estado=cls.Estado.CERRADO, fecha_inicio__lte=fecha, fecha_fin__gte=fecha).first()
+
 
 class Funcionario(models.Model):
     """Funcionario municipal, asociado a una delegación y a un cargo."""

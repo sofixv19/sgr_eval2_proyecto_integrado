@@ -1098,3 +1098,48 @@ a.dash-codigo:hover { background: var(--color-institucional); color: #fff; }
 .dash-ajustes > div { display: flex; justify-content: space-between; }
 .dash-ajuste-mas strong { color: #1f7a62; }
 .dash-ajuste-menos strong { color: #a52a38; }
+
+/* ---------------------------------------------------------------------
+   Versión 2.1 — Agenda colectiva, auditoría y alertas
+   --------------------------------------------------------------------- */
+.fila-compromiso.fila-rojo { background: #fdf1f2; }
+.fila-compromiso.fila-ambar { background: #fffaf0; }
+.estado-compromiso {
+  display: inline-block;
+  padding: .15rem .6rem;
+  border-radius: 6px;
+  font-size: .78rem;
+  font-weight: 700;
+  background: #efeff1;
+  color: #4a4a52;
+}
+.estado-compromiso.estado-pendiente { background: #fbf0d9; color: #8a5e00; }
+.estado-compromiso.estado-en-proceso { background: #e3eefc; color: #1d4f91; }
+.estado-compromiso.estado-realizado { background: #def1ec; color: #1f7a62; }
+.dash-alertas { display: grid; gap: .5rem; }
+.dash-alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .7rem 1rem;
+  border-radius: 10px;
+  background: #fff;
+  border-left: 4px solid var(--color-ambar);
+  box-shadow: var(--dash-sombra);
+  font-size: .9rem;
+}
+.dash-alerta-rojo { border-left-color: var(--color-rojo); }
+.dash-alerta-icono { color: var(--color-ambar); }
+.dash-alerta-rojo .dash-alerta-icono { color: var(--color-rojo); }
+.dash-alerta a { font-weight: 600; }
+.filtros-avanzados summary { cursor: pointer; }
+.filtros-avanzados[open] summary { margin-bottom: .25rem; }
+.periodo-selector select {
+  background-color: rgba(255, 255, 255, .16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, .35);
+  max-width: 260px;
+}
+.periodo-selector select option { color: var(--color-tinta); }
+.dash-reciente { font-size: .78rem; color: var(--dash-texto-suave); }
+.dash-reciente-alerta { color: #a52a38; font-weight: 600; }

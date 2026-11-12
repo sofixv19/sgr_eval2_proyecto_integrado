@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block titulo %}Agenda colectiva{% endblock %}
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <p class="text-uppercase small eyebrow mb-2">Tubo de trabajo{% if perfil_usuario %} · {{ perfil_usuario.delegacion }}{% endif %}</p>
+        <h1 class="h2 mb-1">Agenda colectiva</h1>
+        <p class="text-muted mb-0">Compromisos adquiridos con vecinos y organizaciones, visibles para todo el equipo.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% if puede_crear %}<a href="{% url 'gestion:compromiso_crear' %}" class="btn btn-institucional">+ Nuevo compromiso</a>{% endif %}
+        <a href="{% url 'gestion:agenda_exportar' %}?{{ query_string }}" class="btn btn-outline-secondary">Exportar a Excel (CSV)</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-4"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="actividades" %}</div><div><div class="dash-stat-valor">{{ total }}</div><div class="dash-stat-etiqueta">Compromisos en la lista</div></div></div></div>
+    <div class="col-4"><a class="text-reset text-decoration-none" href="?situacion=proximos"><div class="dash-stat dash-tono-ambar"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="reloj" %}</div><div><div class="dash-stat-valor">{{ proximos }}</div><div class="dash-stat-etiqueta">Próximos a vencer</div></div></div></a></div>
+    <div class="col-4"><a class="text-reset text-decoration-none" href="?situacion=vencidos"><div class="dash-stat dash-tono-rojo"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="alerta" %}</div><div><div class="dash-stat-valor">{{ vencidos }}</div><div class="dash-stat-etiqueta">Vencidos sin realizar</div></div></div></a></div>
+</div>
+
+<form method="get" class="dash-card mb-4">
+    <div class="row g-2 align-items-end">
+        {% if delegaciones %}
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Delegación</label>
+            <select name="delegacion" class="form-select form-select-sm"><option value="">Todas</option>{% for d in delegaciones %}<option value="{{ d.pk }}" {% if filtros.delegacion == d.pk|stringformat:"s" %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div>
+        {% endif %}
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Responsable</label>
+            <select name="responsable" class="form-select form-select-sm"><option value="">Todos</option>{% for r in responsables %}<option value="{{ r.pk }}" {% if filtros.responsable == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.nombre }}</option>{% endfor %}</select></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Estado</label>
+            <select name="estado" class="form-select form-select-sm"><option value="">Todos</option>{% for e in estados %}<option value="{{ e }}" {% if filtros.estado == e %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Situación</label>
+            <select name="situacion" class="form-select form-select-sm"><option value="">Todas</option>{% for v, t in situaciones %}<option value="{{ v }}" {% if filtros.situacion == v %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Territorio</label>
+            <input type="text" name="territorio" value="{{ filtros.territorio }}" class="form-control form-control-sm" placeholder="Sector"></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ filtros.desde }}" class="form-control form-control-sm"></div>
+        <div class="col-md-2 col-6"><label class="form-label small mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ filtros.hasta }}" class="form-control form-control-sm"></div>
+        <div class="col-md-3 col-12"><label class="form-label small mb-1">Buscar</label>
+            <input type="text" name="q" value="{{ filtros.q }}" class="form-control form-control-sm" placeholder="Código, solicitante o texto"></div>
+        <div class="col-md-2 col-12 d-flex gap-2">
+            <button class="btn btn-sm btn-institucional flex-grow-1">Filtrar</button>
+            <a href="{% url 'gestion:agenda' %}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+        </div>
+    </div>
+</form>
+
+<div class="dash-card mb-4">
+    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Compromisos</h2><div class="dash-card-sub">Ordenados por fecha comprometida · amarillo: próximo a vencer · rojo: vencido</div></div></div>
+    <div class="table-responsive">
+    <table class="table align-middle mb-0 dash-tabla">
+        <thead><tr><th>Código</th><th>Fecha comprometida</th><th>Solicitante</th><th>Compromiso</th><th>Territorio</th><th>Responsable</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for c in compromisos %}
+        {% with sit=c.situacion %}
+        <tr class="fila-compromiso fila-{{ sit.0 }}">
+            <td><a href="{{ c.get_absolute_url }}" class="dash-codigo">{{ c.codigo }}</a></td>
+            <td class="text-nowrap">{{ c.fecha_compromiso|date:"d/m/Y" }}<br><span class="dash-pill dash-pill-{{ sit.0 }} dash-pill-chica">{{ sit.1 }}</span></td>
+            <td>{{ c.solicitante }}{% if c.organizacion %}<div class="small text-muted">{{ c.organizacion }}</div>{% endif %}</td>
+            <td>{{ c.descripcion|truncatechars:90 }}</td>
+            <td>{{ c.territorio }}</td>
+            <td>{{ c.responsable.nombre }}{% if delegaciones %}<div class="small text-muted">{{ c.delegacion }}</div>{% endif %}</td>
+            <td><span class="estado-compromiso estado-{{ c.estado|slugify }}">{{ c.estado }}</span></td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="7" class="text-muted py-4 text-center">No hay compromisos que coincidan con los filtros.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="dash-card">
+    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Resumen colectivo por responsable</h2><div class="dash-card-sub">Calculado sobre la misma lista filtrada de arriba</div></div></div>
+    <div class="table-responsive">
+    <table class="table align-middle mb-0 dash-tabla">
+        <thead><tr><th>Responsable</th><th class="text-end">Ingresado</th><th class="text-end">Pendiente</th><th class="text-end">En proceso</th><th class="text-end">Realizado</th><th class="text-end">Total</th><th class="text-end">Vencidos</th><th style="min-width:180px">% realizado</th></tr></thead>
+        <tbody>
+        {% for f in resumen %}
+        <tr>
+            <td>{{ f.responsable.nombre }}</td>
+            <td class="text-end">{{ f.ingresado }}</td><td class="text-end">{{ f.pendiente }}</td><td class="text-end">{{ f.en_proceso }}</td><td class="text-end">{{ f.realizado }}</td>
+            <td class="text-end fw-semibold">{{ f.total }}</td>
+            <td class="text-end">{% if f.vencidos %}<span class="text-danger fw-semibold">{{ f.vencidos }}</span>{% else %}0{% endif %}</td>
+            <td>{% load l10n %}{% localize off %}<div class="d-flex align-items-center gap-2"><div class="dash-barra dash-barra-verde flex-grow-1"><div class="dash-barra-relleno" style="width: {{ f.pct_realizado }}%"></div></div>{% endlocalize %}<span class="small text-nowrap">{{ f.pct_realizado }} % · pend. {{ f.pct_pendiente }} %</span></div></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-muted py-3 text-center">Sin datos.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}

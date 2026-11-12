@@ -17,4 +17,5 @@ urlpatterns = [
     path('', include('delegaciones.urls')),
     path('gestion/', include('gestion.urls')),
     path('organizacion/', include('organizacion.urls')),
+    path('auditoria/', include('comun.urls')),   # v2.1: auditoría (RF-036)
 ]

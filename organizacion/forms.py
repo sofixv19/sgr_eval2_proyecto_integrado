@@ -355,6 +355,8 @@ class ReconocimientoForm(_FormDelEquipo):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['tipo'].choices = Reconocimiento.Tipo.choices   # sin la opción vacía "---------"
+        # RN-013: no se agregan ajustes a un período cerrado.
+        self.fields['periodo'].queryset = Periodo.objects.exclude(estado=Periodo.Estado.CERRADO)
         if not self.instance.pk and not self.initial.get('periodo'):
             vigente = Periodo.objects.filter(estado=Periodo.Estado.ABIERTO).first()
             if vigente:
@@ -397,6 +399,8 @@ class AusenciaForm(_FormDelEquipo):
         desde, hasta, funcionario = datos.get('desde'), datos.get('hasta'), datos.get('funcionario')
         if desde and hasta and hasta < desde:
             self.add_error('hasta', 'La fecha de término no puede ser anterior a la de inicio.')
+        elif desde and hasta and (Periodo.cerrado_que_contiene(desde) or Periodo.cerrado_que_contiene(hasta)):
+            raise forms.ValidationError('Esas fechas caen en un período cerrado y ya no se pueden ajustar (RN-013).')
         elif desde and hasta and funcionario:
             cruce = Ausencia.objects.filter(funcionario=funcionario, desde__lte=hasta, hasta__gte=desde)
             if cruce.exclude(pk=self.instance.pk).exists():

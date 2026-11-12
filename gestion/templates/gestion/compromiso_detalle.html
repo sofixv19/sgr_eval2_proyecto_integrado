@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block titulo %}{{ compromiso.codigo }}{% endblock %}
+{% block contenido %}
+{% with sit=compromiso.situacion %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <a href="{% url 'gestion:agenda' %}" class="small">&larr; Volver a la agenda</a>
+    <div class="d-flex gap-2">
+        {% if puede_registrar_actividad %}<a href="{% url 'gestion:crear' %}?compromiso={{ compromiso.pk }}" class="btn btn-sm btn-institucional">Registrar la actividad que lo cumple</a>{% endif %}
+        {% if puede_editar %}<a href="{% url 'gestion:compromiso_editar' compromiso.pk %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
+        {% if puede_eliminar %}<a href="{% url 'gestion:compromiso_eliminar' compromiso.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
+    </div>
+</div>
+
+<div class="dash-card mt-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <p class="text-uppercase small eyebrow mb-1">Agenda colectiva · {{ compromiso.delegacion }}</p>
+            <h1 class="h3 mb-1">{{ compromiso.codigo }} · {{ compromiso.solicitante }}</h1>
+            <span class="estado-compromiso estado-{{ compromiso.estado|slugify }}">{{ compromiso.estado }}</span>
+            <span class="dash-pill dash-pill-{{ sit.0 }} dash-pill-chica ms-1">{{ sit.1 }}</span>
+        </div>
+    </div>
+    <p class="mb-3">{{ compromiso.descripcion }}</p>
+    <div class="row g-3 small">
+        <div class="col-md-3 col-6"><div class="text-muted">Origen</div>{{ compromiso.get_origen_display }}</div>
+        <div class="col-md-3 col-6"><div class="text-muted">Organización</div>{{ compromiso.organizacion|default:"—" }}</div>
+        <div class="col-md-3 col-6"><div class="text-muted">Territorio</div>{{ compromiso.territorio }}</div>
+        <div class="col-md-3 col-6"><div class="text-muted">Responsable</div>{{ compromiso.responsable.nombre }}</div>
+        <div class="col-md-3 col-6"><div class="text-muted">Área de apoyo</div>{{ compromiso.area_apoyo|default:"—" }}</div>
+        <div class="col-md-3 col-6"><div class="text-muted">Solicitado el</div>{{ compromiso.fecha_solicitud|date:"d/m/Y" }}</div>
+        <div class="col-md-3 col-6"><div class="text-muted">Comprometido para</div><strong>{{ compromiso.fecha_compromiso|date:"d/m/Y" }}</strong></div>
+        <div class="col-md-3 col-6"><div class="text-muted">Cerrado el</div>{{ compromiso.fecha_cierre|date:"d/m/Y"|default:"—" }}</div>
+    </div>
+    {% if compromiso.observacion %}<div class="alert alert-light border small mt-3 mb-0"><strong>Último avance:</strong> {{ compromiso.observacion }}</div>{% endif %}
+    {% if compromiso.actividad_origen %}<p class="small mt-3 mb-0">Se originó en la actividad <a href="{% url 'gestion:detalle' compromiso.actividad_origen.pk %}">{{ compromiso.actividad_origen.codigo }}</a>.</p>{% endif %}
+    {% for a in actividades %}<p class="small mt-2 mb-0">Cumplido con la actividad <a href="{% url 'gestion:detalle' a.pk %}">{{ a.codigo }}</a> ({{ a.get_estado_validacion_display }}).</p>{% endfor %}
+</div>
+
+<div class="row g-3">
+    {% if estado_form or reasignar_form %}
+    <div class="col-lg-5">
+        {% if estado_form %}
+        <form method="post" class="dash-card mb-3">
+            {% csrf_token %}<input type="hidden" name="accion" value="estado">
+            <h2 class="dash-card-titulo mb-3">Actualizar estado</h2>
+            <div class="mb-2">{{ estado_form.estado.label_tag }} {{ estado_form.estado }}</div>
+            <div class="mb-3">{{ estado_form.observacion.label_tag }} {{ estado_form.observacion }}{% for e in estado_form.observacion.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <button class="btn btn-institucional">Guardar cambio</button>
+        </form>
+        {% endif %}
+        {% if reasignar_form %}
+        <form method="post" class="dash-card">
+            {% csrf_token %}<input type="hidden" name="accion" value="reasignar">
+            <h2 class="dash-card-titulo mb-1">Reasignar responsable</h2>
+            <p class="small text-muted">Por ejemplo, si el responsable está con licencia o vacaciones.</p>
+            <div class="mb-2">{{ reasignar_form.responsable.label_tag }} {{ reasignar_form.responsable }}</div>
+            <div class="mb-3">{{ reasignar_form.motivo.label_tag }} {{ reasignar_form.motivo }}{% for e in reasignar_form.motivo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <button class="btn btn-outline-secondary">Reasignar</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+    <div class="{% if estado_form or reasignar_form %}col-lg-7{% else %}col-12{% endif %}">
+        <div class="dash-card h-100">
+            <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Historial</h2><div class="dash-card-sub">Estado anterior, nuevo, autor, fecha y observación</div></div></div>
+            <ul class="dash-timeline">
+                {% for cambio in cambios %}
+                <li class="dash-timeline-{% if cambio.valor_nuevo == 'Realizado' %}validada{% else %}pendiente{% endif %}">
+                    <div class="dash-timeline-fila"><span class="fw-semibold">{{ cambio.campo }}: {{ cambio.valor_anterior }} &rarr; {{ cambio.valor_nuevo }}</span><span class="small text-muted text-nowrap">{{ cambio.fecha|date:"d/m/Y H:i" }}</span></div>
+                    <div class="small">{{ cambio.observacion }}</div>
+                    <div class="small text-muted">por {{ cambio.autor.get_full_name|default:cambio.autor.username }}</div>
+                </li>
+                {% empty %}
+                <li class="dash-vacio">Registrado el {{ compromiso.creado|date:"d/m/Y H:i" }}{% if compromiso.creado_por %} por {{ compromiso.creado_por.get_full_name|default:compromiso.creado_por.username }}{% endif %}. Aún no tiene cambios.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}

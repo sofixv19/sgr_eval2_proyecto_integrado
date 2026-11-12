@@ -19,9 +19,9 @@ from django.utils import timezone
 
 from comun.validadores import nombre_repetido, validar_nombre, validar_telefono
 from delegaciones.models import OrganizacionComunitaria
-from organizacion.models import Funcionario
+from organizacion.models import Funcionario, Periodo
 
-from .models import Actividad, Categoria, Evidencia, validar_archivo_evidencia
+from .models import Actividad, Categoria, Compromiso, Evidencia, validar_archivo_evidencia
 
 
 def inicio_ventana_registro(hoy=None):
@@ -124,6 +124,10 @@ class ActividadForm(forms.ModelForm):
         hoy = timezone.localdate()
         if fecha > hoy:
             raise forms.ValidationError('La fecha de la actividad no puede ser futura.')
+        cerrado = Periodo.cerrado_que_contiene(fecha)
+        if cerrado is not None:
+            raise forms.ValidationError(f'El período {cerrado} está cerrado: no se pueden registrar ni mover '
+                                        'actividades a esas fechas (RN-013).')
         if not self.instance.pk or fecha != self.instance.fecha:
             inicio = inicio_ventana_registro(hoy)
             if fecha < inicio:
@@ -202,6 +206,9 @@ class RevisionForm(forms.Form):
 
     def clean(self):
         datos = super().clean()
+        if self.actividad is not None and self.actividad.periodo_cerrado is not None:
+            raise forms.ValidationError(f'El período {self.actividad.periodo_cerrado} está cerrado: '
+                                        'la validación ya no se puede cambiar (RN-013).')
         if datos.get('decision') == 'rechazar' and not (datos.get('observacion') or '').strip():
             self.add_error('observacion', 'Indique el motivo del rechazo para que el funcionario pueda corregir.')
         if datos.get('decision') == 'aprobar' and self.actividad and not self.actividad.evidencias.exists():
@@ -228,3 +235,91 @@ class CategoriaForm(forms.ModelForm):
 
     def clean_descripcion(self):
         return (self.cleaned_data.get('descripcion') or '').strip()
+
+
+# ---------------------------------------------------------------------------
+# Agenda colectiva (RF-016 a RF-019)
+# ---------------------------------------------------------------------------
+class CompromisoForm(forms.ModelForm):
+    class Meta:
+        model = Compromiso
+        fields = ['origen', 'solicitante', 'organizacion', 'territorio', 'descripcion', 'responsable', 'area_apoyo',
+                  'fecha_solicitud', 'fecha_compromiso']
+        widgets = {
+            'origen': forms.Select(attrs={'class': 'form-select'}),
+            'solicitante': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 150,
+                                                  'placeholder': 'Nombre del vecino, dirigente u oficina'}),
+            'organizacion': forms.Select(attrs={'class': 'form-select'}),
+            'territorio': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120,
+                                                 'placeholder': 'Ej.: sector Las Rojas alto'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'responsable': forms.Select(attrs={'class': 'form-select'}),
+            'area_apoyo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120,
+                                                 'placeholder': 'Ej.: Diserco, Social, Organizaciones comunitarias'}),
+            'fecha_solicitud': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'fecha_compromiso': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+        }
+        help_texts = {'fecha_compromiso': 'Fecha en que el equipo se compromete a cumplir.'}
+
+    def __init__(self, *args, delegacion=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.delegacion = delegacion or getattr(self.instance, 'delegacion', None)
+        equipo = Funcionario.objects.filter(activo=True, rol__in=['Funcionario', 'Delegado'])
+        organizaciones = OrganizacionComunitaria.objects.filter(activa=True)
+        if self.delegacion is not None:
+            equipo = equipo.filter(delegacion=self.delegacion)
+            organizaciones = organizaciones.filter(delegacion=self.delegacion)
+        else:
+            # Administrador sin delegación propia: elige la delegación.
+            from delegaciones.models import Delegacion
+            self.fields['delegacion'] = forms.ModelChoiceField(
+                label='Delegación', queryset=Delegacion.objects.filter(activa=True),
+                widget=forms.Select(attrs={'class': 'form-select'}))
+            self.order_fields(['delegacion'])
+        self.fields['responsable'].queryset = equipo.select_related('cargo')
+        self.fields['responsable'].label_from_instance = lambda f: f'{f.nombre} · {f.cargo.nombre_cargo}'
+        self.fields['organizacion'].queryset = organizaciones
+        if self.instance.pk:
+            # El responsable se cambia con "Reasignar" para que quede en el historial.
+            del self.fields['responsable']
+
+    def clean_solicitante(self):
+        return validar_nombre(self.cleaned_data.get('solicitante'), minimo=3, campo='solicitante')
+
+    def clean(self):
+        datos = super().clean()
+        solicitud, compromiso = datos.get('fecha_solicitud'), datos.get('fecha_compromiso')
+        if solicitud and solicitud > timezone.localdate():
+            self.add_error('fecha_solicitud', 'La fecha de la solicitud no puede ser futura.')
+        if solicitud and compromiso and compromiso < solicitud:
+            self.add_error('fecha_compromiso', 'La fecha comprometida no puede ser anterior a la solicitud.')
+        delegacion = datos.get('delegacion') or self.delegacion
+        responsable = datos.get('responsable')
+        if delegacion and responsable and responsable.delegacion_id != delegacion.pk:
+            self.add_error('responsable', 'El responsable debe pertenecer a la delegación del compromiso.')
+        if delegacion is not None:
+            self.instance.delegacion = delegacion
+        return datos
+
+
+class CambioEstadoCompromisoForm(forms.Form):
+    estado = forms.ChoiceField(label='Nuevo estado', widget=forms.Select(attrs={'class': 'form-select'}))
+    observacion = forms.CharField(label='Observación del avance',
+                                  widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}))
+
+    def __init__(self, *args, compromiso=None, puede_reabrir=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['estado'].choices = [(e, e) for e in compromiso.estados_siguientes(puede_reabrir)]
+
+
+class ReasignarCompromisoForm(forms.Form):
+    responsable = forms.ModelChoiceField(label='Nuevo responsable', queryset=Funcionario.objects.none(),
+                                         widget=forms.Select(attrs={'class': 'form-select'}))
+    motivo = forms.CharField(label='Motivo', widget=forms.TextInput(
+        attrs={'class': 'form-control', 'maxlength': 200, 'placeholder': 'Ej.: licencia médica'}))
+
+    def __init__(self, *args, compromiso=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['responsable'].queryset = (Funcionario.objects.filter(
+            delegacion=compromiso.delegacion, activo=True, rol__in=['Funcionario', 'Delegado'])
+            .exclude(pk=compromiso.responsable_id))

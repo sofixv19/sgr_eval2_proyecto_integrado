@@ -27,8 +27,12 @@
     </div>
     {% endif %}
 
+    {% if compromiso %}
+    <div class="alert alert-success small mb-4">Esta actividad cumple el compromiso <strong>{{ compromiso.codigo }}</strong> de la agenda colectiva ({{ compromiso.solicitante }}). Al guardarla, el compromiso queda <em>Realizado</em>.</div>
+    {% endif %}
     <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
+        {% if compromiso %}<input type="hidden" name="compromiso" value="{{ compromiso.pk }}">{% endif %}
 
         {% for field in form %}
         <div class="mb-3">

@@ -6,6 +6,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a href="{% url 'gestion:listado' %}" class="small">&larr; Volver al listado</a>
     <div class="deleg-card-botones">
+        {% if puede_agendar %}<a href="{% url 'gestion:compromiso_crear' %}?actividad={{ actividad.id }}" class="btn btn-sm btn-outline-secondary">Agregar a la agenda colectiva</a>{% endif %}
         {% if puede_editar %}<a href="{% url 'gestion:editar' actividad.id %}" class="btn btn-sm btn-outline-secondary">Modificar</a>{% endif %}
         {% if puede_eliminar %}<a href="{% url 'gestion:eliminar' actividad.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>{% endif %}
     </div>
@@ -125,6 +126,16 @@
     </div>
     {% endif %}
 </div>
+
+{% if periodo_cerrado %}
+<div class="alert alert-secondary small mt-4 mb-0"><strong>Período cerrado:</strong> esta actividad pertenece a {{ periodo_cerrado }}, que está cerrado. Sus datos y su validación ya no se pueden modificar salvo que el período se reabra (queda registrado en la auditoría).</div>
+{% endif %}
+{% if actividad.compromiso or compromisos_generados %}
+<div class="alert alert-light border small mt-4 mb-0">
+    {% if actividad.compromiso %}Cumple el compromiso <a href="{{ actividad.compromiso.get_absolute_url }}">{{ actividad.compromiso.codigo }}</a> de la agenda colectiva.{% endif %}
+    {% for c in compromisos_generados %}{% if forloop.first %} Originó en la agenda: {% endif %}<a href="{{ c.get_absolute_url }}">{{ c.codigo }}</a> ({{ c.estado }}){% if not forloop.last %}, {% endif %}{% endfor %}
+</div>
+{% endif %}
 
 <section class="validacion-card mt-4">
     <h2 class="h6 mb-2">Evidencias ({{ evidencias|length }})</h2>

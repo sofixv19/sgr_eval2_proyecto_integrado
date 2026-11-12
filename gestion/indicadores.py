@@ -80,9 +80,11 @@ MENSAJES_SEMAFORO = {
 
 
 def semaforo(cumplimiento, esperado):
+    """Verde si alcanza lo esperado; ámbar desde el umbral (60 % de lo
+    esperado por defecto, SGR_UMBRAL_AMBAR); rojo bajo eso (RN-008, RF-027)."""
     if esperado <= 0 or cumplimiento >= esperado:
         return 'verde'
-    if cumplimiento >= esperado * 0.6:
+    if cumplimiento >= esperado * getattr(settings, 'SGR_UMBRAL_AMBAR', 60) / 100:
         return 'ambar'
     return 'rojo'
 

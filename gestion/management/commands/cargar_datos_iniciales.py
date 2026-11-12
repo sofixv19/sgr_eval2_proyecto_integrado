@@ -19,7 +19,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from delegaciones.models import Delegacion, OrganizacionComunitaria
-from gestion.models import Actividad, Categoria
+from gestion.models import Actividad, Categoria, Compromiso
 from organizacion.models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
 # ---------------------------------------------------------------------------
@@ -116,6 +116,9 @@ class Command(BaseCommand):
         self.stdout.write('Cargando organizaciones comunitarias de ejemplo (versión 2.0)...')
         organizaciones = self._organizaciones_demo()
         self.stdout.write(f'  {organizaciones} organizaciones nuevas.')
+
+        self.stdout.write('Cargando compromisos de ejemplo en la agenda colectiva (versión 2.1)...')
+        self.stdout.write(f'  {self._compromisos_demo()} compromisos nuevos.')
 
         self.stdout.write(self.style.SUCCESS(
             f'Listo: {delegaciones_creadas} delegaciones, '
@@ -270,6 +273,32 @@ class Command(BaseCommand):
                 )
                 creadas += int(creada)
         return creadas
+
+    def _compromisos_demo(self):
+        """Tres compromisos por delegación para mostrar la agenda: uno vencido,
+        uno próximo a vencer y uno realizado (RF-016 a RF-019)."""
+        hoy = datetime.date.today()
+        ejemplos = [
+            ('Junta de Vecinos {n} (ejemplo)', 'Poda de árboles en la plaza principal', -3, 'Pendiente'),
+            ('Club de Adulto Mayor {n} (ejemplo)', 'Taller de alfabetización digital', 2, 'En proceso'),
+            ('Vecina del sector (ejemplo)', 'Retiro de microbasural en el pasaje', 10, 'Realizado'),
+        ]
+        creados = 0
+        for delegacion in Delegacion.objects.all():
+            responsable = delegacion.funcionarios.filter(rol='Funcionario', activo=True).first()
+            if responsable is None or delegacion.compromisos.exists():
+                continue
+            for solicitante, descripcion, dias, estado in ejemplos:
+                Compromiso.objects.create(
+                    delegacion=delegacion, solicitante=solicitante.format(n=delegacion.nombre),
+                    organizacion=delegacion.organizaciones.filter(nombre=solicitante.format(n=delegacion.nombre)).first(),
+                    territorio=f'Sector {delegacion.nombre}', descripcion=descripcion, responsable=responsable,
+                    area_apoyo='Diserco', fecha_solicitud=hoy - datetime.timedelta(days=7),
+                    fecha_compromiso=hoy + datetime.timedelta(days=dias), estado=estado,
+                    fecha_cierre=hoy if estado == 'Realizado' else None,
+                    observacion='Dato de ejemplo para la demostración.')
+                creados += 1
+        return creados
 
     def _validar_actividades_demo(self):
         """Marca como validada una actividad de ejemplo por cada delegación

@@ -45,7 +45,8 @@ python plan_pruebas.py
 |---|---|---|---|
 | 1.0.0 | CP-ACC, CP-LOGIN, CP-ROL, CP-DEL, CP-FUN, CP-CAR, CP-MET, CP-PER, CP-ACT, CP-VLD, etc. | `*/tests.py` | 118 |
 | 1.1.0 | CP-PERF-001 a 010, CP-COD-001 a 003, CP-EVI-001 a 005 y CP-CUM-001 a 004 | `gestion/tests_roles.py` | 140 |
-| **2.0.0** | **CP-V2-001 a CP-V2-016** | `gestion/tests_v2.py` | **156** |
+| 2.0.0 | CP-V2-001 a CP-V2-016 | `gestion/tests_v2.py` | 156 |
+| **2.1.0** | **CP-AGE-001 a 007, CP-AUD-001 a 004, CP-EXP-001 y 002, CP-PCE-001, CP-FIL-001, CP-ALE-001 a 003** | `gestion/tests_v21.py` | **174** |
 
 En la versión 2.0 se **actualizaron** dos casos de la 1.x porque su regla cambió:
 
@@ -73,7 +74,30 @@ En la versión 2.0 se **actualizaron** dos casos de la 1.x porque su regla cambi
 | CP-V2-015 | RF-047 | Ausencias sin fechas al revés ni cruzadas |
 | CP-V2-016 | RF-039 | Organizaciones por delegación, territoriales y funcionales |
 
-Resultado de la corrida de la versión 2.0: **156 pruebas, 0 fallos** (`resultados_pruebas.csv`). Además, `flake8` reporta 0 observaciones.
+### Casos de la versión 2.1 (alcance mínimo de la Guía)
+
+| Caso | Requisito | Qué verifica |
+|---|---|---|
+| CP-AGE-001 | RF-016 | Código AC-0001; la agenda la ve el equipo de la delegación y no otra (404) |
+| CP-AGE-002 | RF-017 | Responsable y fecha comprometida obligatorios; fecha no anterior a la solicitud |
+| CP-AGE-003 | RF-018 | Transiciones controladas e historial (anterior, nuevo, autor y observación) |
+| CP-AGE-004 | RF-019 | Vencidos, próximos a vencer y realizados fuera de plazo; filtro de vencidos |
+| CP-AGE-005 | RF-021 | El resumen por responsable coincide con el detalle filtrado |
+| CP-AGE-006 | HU-15 | Solo el Delegado reasigna, con motivo en el historial |
+| CP-AGE-007 | RF-020 | La actividad que cumple un compromiso lo cierra una sola vez |
+| CP-AUD-001 | RF-036 | La auditoría guarda usuario, acción, valor anterior y valor nuevo |
+| CP-AUD-002 | RF-036 | La validación y el rechazo quedan registrados |
+| CP-AUD-003 | RNF-008 | El historial no se modifica ni se elimina; el Funcionario no lo ve (403) |
+| CP-AUD-004 | HU-26 | Un acceso denegado queda registrado |
+| CP-EXP-001 | RF-033 | El CSV respeta el ámbito y los filtros, e incluye la fecha de generación |
+| CP-EXP-002 | RF-033 | Exportación del cumplimiento (con la fórmula) y de la agenda |
+| CP-PCE-001 | RN-013 / CA-10 | En un período cerrado no se registra, edita, elimina ni valida |
+| CP-FIL-001 | RF-032 | Filtros por funcionario y fechas; los filtros se conservan |
+| CP-ALE-001 | RF-030 | Último ingreso, días sin ingreso, registros y promedio diario |
+| CP-ALE-002 | RF-037 | Alertas del Delegado (compromisos vencidos y funcionarios sin registros) |
+| CP-ALE-003 | RF-008 | El panel muestra un período anterior |
+
+Resultado de la corrida de la versión 2.1: **174 pruebas, 0 fallos** (`resultados_pruebas.csv`). Además, `flake8` reporta 0 observaciones. La relación de cada historia con sus casos está en `MATRIZ_TRAZABILIDAD.md`.
 
 ## 2.1.6.14 — Herramientas automatizadas y manuales
 

@@ -11,18 +11,23 @@ from django.contrib.auth.decorators import permission_required
 from django.db.models import Count, ProtectedError, Q, RestrictedError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from comun.vistas import MantenedorCrear, MantenedorEditar, MantenedorEliminar, MantenedorListado
 from cuentas.perfiles import (
     ADMINISTRADOR, COORDINADOR, DELEGADO, FUNCIONARIO, VERIFICADOR, filtrar_organizaciones, perfil_de, rol_de,
 )
+from gestion.alertas import (
+    actividad_reciente, alertas_coordinacion, alertas_delegacion, alertas_funcionario, periodo_elegido,
+)
 from gestion.indicadores import (
-    MENSAJES_SEMAFORO, cumplimiento_delegacion, cumplimiento_funcionario, periodo_vigente, porcentaje_esperado,
+    MENSAJES_SEMAFORO, cumplimiento_delegacion, cumplimiento_funcionario, porcentaje_esperado,
     semaforo,
 )
 from gestion.forms import ingresos_de_hoy
-from gestion.models import Actividad
+from gestion.models import Actividad, Compromiso
+from organizacion.models import Periodo
 from gestion.services import grados_donut, resumen_por_estado
 
 from .forms import DelegacionForm, OrganizacionForm
@@ -65,13 +70,26 @@ def inicio(request):
     return portada_general(request)
 
 
+def _actividades_del_periodo(consulta, periodo):
+    if periodo is None:
+        return consulta
+    return consulta.filter(fecha__range=(periodo.fecha_inicio, periodo.fecha_fin))
+
+
 def panel_funcionario(request, perfil):
-    actividades = Actividad.objects.filter(funcionario=perfil).select_related('categoria')
+    periodo = periodo_elegido(request)
+    actividades = _actividades_del_periodo(
+        Actividad.objects.filter(funcionario=perfil).select_related('categoria'), periodo)
+    resultado = cumplimiento_funcionario(perfil, periodo)
     contexto = {
         'titulo_pagina': 'Mi panel',
         'perfil': perfil,
-        'resultado': cumplimiento_funcionario(perfil),
-        'periodo': periodo_vigente(),
+        'resultado': resultado,
+        'periodo': periodo,
+        'periodos': Periodo.objects.all(),
+        'alertas': alertas_funcionario(perfil, resultado),
+        'compromisos': (Compromiso.objects.filter(responsable=perfil)
+                        .exclude(estado=Compromiso.Estado.REALIZADO).order_by('fecha_compromiso')[:5]),
         'recientes': actividades.order_by('-fecha', '-fecha_registro')[:6],
         'rechazadas': actividades.filter(estado_validacion=Actividad.EstadoValidacion.RECHAZADA),
         'sin_evidencia': actividades.filter(evidencias__isnull=True)
@@ -82,7 +100,6 @@ def panel_funcionario(request, perfil):
         'ingresos_hoy': ingresos_de_hoy(perfil),
         'max_ingresos': settings.SGR_MAX_INGRESOS_DIARIOS,
     }
-    resultado = contexto['resultado']
     if resultado.dias_ausencia:
         contexto['nota_ausencia'] = (f'Meta esperada ajustada por {resultado.dias_ausencia} '
                                      f'día{"s" if resultado.dias_ausencia != 1 else ""} de ausencia.')
@@ -91,22 +108,30 @@ def panel_funcionario(request, perfil):
 
 def panel_delegado(request, perfil):
     delegacion = perfil.delegacion
-    actividades = Actividad.objects.filter(delegacion=delegacion).select_related('funcionario', 'categoria')
+    periodo = periodo_elegido(request)
+    actividades = _actividades_del_periodo(
+        Actividad.objects.filter(delegacion=delegacion).select_related('funcionario', 'categoria'), periodo)
     por_validar = (actividades.exclude(estado_validacion=Actividad.EstadoValidacion.VALIDADA)
                    .filter(evidencias__isnull=False).distinct())
-    porcentaje, color, detalle = cumplimiento_delegacion(delegacion)
+    porcentaje, color, detalle = cumplimiento_delegacion(delegacion, periodo)
+    for r in detalle:
+        r.reciente = actividad_reciente(r.funcionario, periodo)   # RF-030
     contexto = {
         'titulo_pagina': f'Panel de {delegacion}',
         'perfil': perfil,
         'delegacion': delegacion,
-        'periodo': periodo_vigente(),
+        'periodo': periodo,
+        'periodos': Periodo.objects.all(),
+        'alertas': alertas_delegacion(delegacion, detalle),
+        'compromisos_abiertos': Compromiso.objects.filter(delegacion=delegacion)
+        .exclude(estado=Compromiso.Estado.REALIZADO).count(),
         'por_validar': por_validar[:10],
         'total_por_validar': por_validar.count(),
         'porcentaje': porcentaje,
         'color': color,
         'barra': min(porcentaje, 100),
         'mensaje': MENSAJES_SEMAFORO.get(color, ''),
-        'esperado': porcentaje_esperado(periodo_vigente()),
+        'esperado': porcentaje_esperado(periodo),
         'detalle': detalle,
         'total_actividades': actividades.count(),
     }
@@ -116,7 +141,7 @@ def panel_delegado(request, perfil):
 def panel_coordinador(request):
     """El Coordinador gestiona las delegaciones y ve su cumplimiento: "me
     acabo de meter y usted lleva un 20 % de cumplimiento, ¿qué pasa?"."""
-    periodo = periodo_vigente()
+    periodo = periodo_elegido(request)
     filas = []
     for delegacion in Delegacion.objects.all():
         porcentaje, color, detalle = cumplimiento_delegacion(delegacion, periodo)
@@ -127,12 +152,16 @@ def panel_coordinador(request):
             'color': color,
             'barra': min(porcentaje, 100),
             'funcionarios': len(detalle),
-            'actividades': delegacion.actividades.count(),
-            'pendientes': delegacion.actividades.exclude(estado_validacion=Actividad.EstadoValidacion.VALIDADA).count(),
+            'actividades': _actividades_del_periodo(delegacion.actividades.all(), periodo).count(),
+            'pendientes': _actividades_del_periodo(delegacion.actividades.all(), periodo)
+            .exclude(estado_validacion=Actividad.EstadoValidacion.VALIDADA).count(),
+            'vencidos': delegacion.compromisos.exclude(estado=Compromiso.Estado.REALIZADO)
+            .filter(fecha_compromiso__lt=timezone.localdate()).count(),
         })
     contexto = {
         'titulo_pagina': 'Panel de coordinación',
         'periodo': periodo,
+        'periodos': Periodo.objects.all(),
         'esperado': porcentaje_esperado(periodo),
         'filas': filas,
         'sin_delegado': [f['delegacion'] for f in filas if f['delegado'] is None and f['delegacion'].activa],
@@ -145,6 +174,9 @@ def panel_coordinador(request):
     contexto['color_promedio'] = semaforo(contexto['promedio'], contexto['esperado']) if con_metas else 'gris'
     contexto['barra_promedio'] = min(contexto['promedio'], 100)
     contexto['mensaje_promedio'] = MENSAJES_SEMAFORO[contexto['color_promedio']]
+    contexto['alertas'], contexto['umbral_colectivo'] = alertas_coordinacion(filas)
+    contexto['bajo_umbral'] = [f for f in filas if f['delegacion'].activa and f['color'] != 'gris'
+                               and f['porcentaje'] < contexto['umbral_colectivo']]
     return render(request, 'delegaciones/panel_coordinador.html', contexto)
 
 
