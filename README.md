@@ -1,10 +1,11 @@
 # SGR La Serena — Sistema de Gestión de Resultados
 
-> **Versión actual: 2.1.2** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
+> **Versión actual: 2.2.0** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
 
 | Versión | Qué trae | Pruebas |
 |---|---|---|
-| **2.1.2** | Datos de demostración limpios: equipo de ejemplo pequeño y coherente, y comando `reiniciar_demo` para borrar lo creado probando | 175 |
+| **2.2.0** | Interfaz más ordenada: todos los paneles con el mismo orden (indicadores → accesos rápidos "Registrar" y "Consultar" → cumplimiento y avisos → detalle) | 175 |
+| 2.1.2 | Datos de demostración limpios: equipo de ejemplo pequeño y coherente, y comando `reiniciar_demo` para borrar lo creado probando | 175 |
 | 2.1.1 | Se retira la página "Resumen de gestión", que repetía lo que ya muestran los paneles | 174 |
 | 2.1.0 | Completa el alcance mínimo de la Guía SGR: **agenda colectiva** con historial, **auditoría**, **exportación a Excel**, filtros por período y fechas, períodos cerrados protegidos, actividad reciente y **alertas** | 174 |
 | 2.0.0 | Nuevos requerimientos de la Coordinación de Delegaciones: organizaciones comunitarias, reglas de puntaje (solicitante, nombre y teléfono, gestión previa), máximo 7 ingresos diarios, cierre semanal, tope de 120 % por ítem, felicitaciones y reclamos, y ausencias que ajustan el semáforo | 156 |

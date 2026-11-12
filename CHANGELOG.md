@@ -6,16 +6,38 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [2.2.0](#220--interfaz-más-ordenada) | 12-11-2026 | Revisión visual del equipo | 175 |
 | [2.1.2](#212--datos-de-demostración-limpios) | 12-11-2026 | Ajuste tras revisión del equipo | 175 |
 | [2.1.1](#211--menú-más-simple) | 12-11-2026 | Ajuste tras revisión del equipo | 174 |
 | [2.1.0](#210--alcance-mínimo-completo-de-la-guía-sgr) | 12-11-2026 | Guía SGR (MVP completo) + Nuevos Requerimientos | 174 |
 | [2.0.0](#200--nuevos-requerimientos-octubre-2026) | 12-11-2026 | Guía SGR + Nuevos Requerimientos (octubre 2026) | 156 |
 | [1.1.0](#110--correcciones-de-la-revisión-de-la-evaluación-2) | 05-11-2026 | Guía SGR + retroalimentación del profesor | 140 |
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
+
+---
+
+## 2.2.0 — Interfaz más ordenada
+
+El equipo encontró los paneles difíciles de leer. Ahora los tres paneles (Funcionario, Delegado y Coordinador/Administrador/Verificador) siguen el mismo orden.
+
+### Cambiado
+1. **Encabezado** con el nombre, los datos clave y el selector de período. Los botones salen del encabezado.
+2. **Indicadores**: cuatro tarjetas compactas en una sola fila.
+3. **Accesos rápidos**, en dos tarjetas:
+   - **Registrar y gestionar**: lo que el rol puede hacer, como botones grandes.
+   - **Consultar información**: lo que puede revisar, como una grilla de botones.
+   - Cada rol ve solo sus opciones. El Verificador ve "Descargar informes", porque es de solo lectura.
+4. **Cumplimiento y Avisos** lado a lado. Los avisos están en una tarjeta compacta: se ven 4 y el resto se despliega con "Ver más".
+5. **Detalle**: metas, evidencias pendientes y tablas, igual que antes.
+
+### Otros cambios
+- El aviso amarillo de "delegaciones sin Delegado" pasó a la tabla de cumplimiento por delegación.
+- En el teléfono, todo queda en una columna.
+- Sin cambios de base de datos ni de permisos.
 
 ---
 

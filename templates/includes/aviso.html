@@ -1,0 +1,8 @@
+<li class="dash-aviso-item dash-aviso-{{ a.nivel }}">
+    <span class="dash-aviso-punto" aria-hidden="true"></span>
+    <div class="flex-grow-1 min-w-0">
+        <div class="dash-aviso-texto">{{ a.motivo }}</div>
+        <div class="small text-muted">{{ a.responsable }}{% if a.fecha %} · {{ a.fecha|date:"d/m/Y" }}{% endif %}</div>
+    </div>
+    <a href="{{ a.enlace }}" class="dash-link text-nowrap">{{ a.texto_enlace }} →</a>
+</li>

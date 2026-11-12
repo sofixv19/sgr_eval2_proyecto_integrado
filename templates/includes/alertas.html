@@ -1,15 +1,22 @@
-{% if alertas %}
-<section class="mb-4" aria-label="Alertas">
-    <h2 class="h6 text-uppercase small eyebrow mb-2">Alertas ({{ alertas|length }})</h2>
-    <div class="dash-alertas">
-        {% for a in alertas|slice:":6" %}
-        <div class="dash-alerta dash-alerta-{{ a.nivel }}">
-            <span class="dash-alerta-icono">{% include "includes/icono.html" with nombre="alerta" %}</span>
-            <div class="flex-grow-1">{{ a.motivo }}<div class="small text-muted">{{ a.responsable }}{% if a.fecha %} · {{ a.fecha|date:"d/m/Y" }}{% endif %}</div></div>
-            <a href="{{ a.enlace }}" class="small text-nowrap">{{ a.texto_enlace }} &rarr;</a>
-        </div>
-        {% endfor %}
-        {% if alertas|length > 6 %}<div class="small text-muted">y {{ alertas|length|add:"-6" }} más.</div>{% endif %}
+{% comment %}Avisos del panel (RF-037). Se muestran 4 y el resto se despliega.{% endcomment %}
+<section class="dash-card h-100 dash-avisos" aria-label="Avisos">
+    <div class="dash-card-cabecera">
+        <div><h2 class="dash-card-titulo">Avisos{% if alertas %} <span class="dash-contador">{{ alertas|length }}</span>{% endif %}</h2>
+        <div class="dash-card-sub">Lo que necesita su atención</div></div>
     </div>
+    {% if alertas %}
+    <ul class="dash-avisos-lista">
+        {% for a in alertas|slice:":4" %}{% include "includes/aviso.html" %}{% endfor %}
+    </ul>
+    {% if alertas|length > 4 %}
+    <details class="dash-avisos-mas">
+        <summary>Ver {{ alertas|length|add:"-4" }} aviso{{ alertas|length|add:"-4"|pluralize }} más</summary>
+        <ul class="dash-avisos-lista mt-2">
+            {% for a in alertas|slice:"4:" %}{% include "includes/aviso.html" %}{% endfor %}
+        </ul>
+    </details>
+    {% endif %}
+    {% else %}
+    <div class="dash-vacio">Todo en orden: no hay avisos.</div>
+    {% endif %}
 </section>
-{% endif %}

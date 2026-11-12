@@ -1,0 +1,78 @@
+{% comment %}
+Accesos rápidos del panel (versión 2.2): a la izquierda lo que el rol puede
+HACER y a la derecha lo que puede CONSULTAR. Cada rol ve solo sus opciones.
+{% endcomment %}
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <section class="dash-acceso h-100">
+            <div class="dash-acceso-icono dash-acceso-hacer">{% if rol_usuario == "Verificador" %}{% include "includes/icono.html" with nombre="descarga" %}{% else %}{% include "includes/icono.html" with nombre="lapiz" %}{% endif %}</div>
+            <h2 class="dash-acceso-titulo">{% if rol_usuario == "Verificador" %}Descargar informes{% else %}Registrar y gestionar{% endif %}</h2>
+            <p class="dash-acceso-texto">
+                {% if rol_usuario == "Funcionario" %}Registre su trabajo diario y los compromisos que toma con los vecinos.
+                {% elif rol_usuario == "Delegado" %}Revise el trabajo de su equipo y organice la delegación.
+                {% elif rol_usuario == "Coordinador" %}Administre las delegaciones, sus Delegados y los períodos de medición.
+                {% elif rol_usuario == "Verificador" %}Su perfil es de solo lectura: puede revisar todo y descargar informes.
+                {% else %}Configure el sistema: delegaciones, funcionarios y períodos.{% endif %}
+            </p>
+            <div class="dash-acceso-botones">
+                {% if rol_usuario == "Funcionario" %}
+                <a href="{% url 'gestion:crear' %}" class="btn btn-institucional">+ Registrar actividad</a>
+                <a href="{% url 'gestion:compromiso_crear' %}" class="btn btn-institucional">+ Nuevo compromiso</a>
+                <a href="{% url 'gestion:listado' %}?validacion=Rechazada" class="btn btn-institucional">Corregir actividades rechazadas</a>
+                {% elif rol_usuario == "Delegado" %}
+                <a href="{% url 'gestion:listado' %}?validacion=Pendiente" class="btn btn-institucional">Validar actividades{% if total_por_validar %} ({{ total_por_validar }}){% endif %}</a>
+                <a href="{% url 'organizacion:meta_crear' %}" class="btn btn-institucional">+ Asignar meta</a>
+                <a href="{% url 'gestion:compromiso_crear' %}" class="btn btn-institucional">+ Nuevo compromiso</a>
+                <a href="{% url 'organizacion:ausencia_crear' %}" class="btn btn-institucional">+ Registrar ausencia</a>
+                {% elif rol_usuario == "Verificador" %}
+                <a href="{% url 'gestion:exportar_cumplimiento' %}{% if periodo %}?periodo={{ periodo.pk }}{% endif %}" class="btn btn-institucional">Exportar cumplimiento</a>
+                <a href="{% url 'gestion:exportar_actividades' %}" class="btn btn-institucional">Exportar actividades</a>
+                <a href="{% url 'gestion:agenda_exportar' %}" class="btn btn-institucional">Exportar agenda</a>
+                {% else %}
+                {% if perms.delegaciones.add_delegacion %}<a href="{% url 'delegaciones:crear' %}" class="btn btn-institucional">+ Crear delegación</a>{% endif %}
+                {% if perms.organizacion.add_funcionario %}<a href="{% url 'organizacion:funcionario_crear' %}" class="btn btn-institucional">+ {% if rol_usuario == "Coordinador" %}Crear Delegado{% else %}Agregar funcionario{% endif %}</a>{% endif %}
+                {% if perms.organizacion.add_periodo %}<a href="{% url 'organizacion:periodo_crear' %}" class="btn btn-institucional">+ Nuevo período de medición</a>{% endif %}
+                <a href="{% url 'gestion:exportar_cumplimiento' %}{% if periodo %}?periodo={{ periodo.pk }}{% endif %}" class="btn btn-institucional">Exportar cumplimiento</a>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+    <div class="col-lg-6">
+        <section class="dash-acceso h-100">
+            <div class="dash-acceso-icono dash-acceso-consultar">{% include "includes/icono.html" with nombre="ojo" %}</div>
+            <h2 class="dash-acceso-titulo">Consultar información</h2>
+            <p class="dash-acceso-texto">
+                {% if rol_usuario == "Funcionario" %}Revise lo que ha registrado y la agenda de su delegación.
+                {% elif rol_usuario == "Delegado" %}Todo lo de la delegación {{ perfil.delegacion|default:"" }}.
+                {% else %}Acceso a la información de todas las delegaciones.{% endif %}
+            </p>
+            <div class="dash-acceso-grilla">
+                {% if rol_usuario == "Funcionario" %}
+                <a href="{% url 'gestion:listado' %}" class="btn btn-outline-institucional">Mis actividades</a>
+                <a href="{% url 'gestion:agenda' %}" class="btn btn-outline-institucional">Agenda colectiva</a>
+                {% if perfil %}<a href="{% url 'gestion:agenda' %}?responsable={{ perfil.pk }}" class="btn btn-outline-institucional">Mis compromisos</a>{% endif %}
+                <a href="{% url 'organizacion:reconocimientos' %}" class="btn btn-outline-institucional">Felicitaciones</a>
+                {% elif rol_usuario == "Delegado" %}
+                <a href="{% url 'gestion:listado' %}" class="btn btn-outline-institucional">Actividades</a>
+                <a href="{% url 'gestion:agenda' %}" class="btn btn-outline-institucional">Agenda colectiva</a>
+                <a href="{% url 'organizacion:listado' %}" class="btn btn-outline-institucional">Mis funcionarios</a>
+                <a href="{% url 'organizacion:metas' %}" class="btn btn-outline-institucional">Metas</a>
+                <a href="{% url 'organizacion:reconocimientos' %}" class="btn btn-outline-institucional">Felicitaciones y reclamos</a>
+                <a href="{% url 'organizacion:ausencias' %}" class="btn btn-outline-institucional">Ausencias</a>
+                <a href="{% url 'delegaciones:organizaciones' %}" class="btn btn-outline-institucional">Organizaciones</a>
+                <a href="{% url 'gestion:exportar_actividades' %}" class="btn btn-outline-institucional">Descargar Excel</a>
+                {% else %}
+                <a href="{% url 'delegaciones:listado' %}" class="btn btn-outline-institucional">Delegaciones</a>
+                <a href="{% url 'organizacion:listado' %}" class="btn btn-outline-institucional">{% if rol_usuario == "Coordinador" %}Delegados{% else %}Funcionarios{% endif %}</a>
+                <a href="{% url 'gestion:listado' %}" class="btn btn-outline-institucional">Actividades</a>
+                <a href="{% url 'gestion:agenda' %}" class="btn btn-outline-institucional">Agenda colectiva</a>
+                <a href="{% url 'organizacion:periodos' %}" class="btn btn-outline-institucional">Períodos</a>
+                <a href="{% url 'delegaciones:organizaciones' %}" class="btn btn-outline-institucional">Organizaciones</a>
+                {% if rol_usuario != "Coordinador" %}<a href="{% url 'organizacion:metas' %}" class="btn btn-outline-institucional">Metas</a>
+                <a href="{% url 'organizacion:cargos' %}" class="btn btn-outline-institucional">Cargos</a>{% endif %}
+                <a href="{% url 'comun:auditoria' %}" class="btn btn-outline-institucional">Auditoría</a>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>

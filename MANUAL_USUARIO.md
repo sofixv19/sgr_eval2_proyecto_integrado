@@ -1,4 +1,4 @@
-# Manual breve de usuario — SGR La Serena (versión 2.1.2)
+# Manual breve de usuario — SGR La Serena (versión 2.2)
 
 **Dirección:** http://184.194.243.125:8000 (Firefox, Edge o Chrome).
 
@@ -20,6 +20,17 @@ Todos los datos son ficticios, marcados "(ejemplo)". La contraseña de demostrac
 - **Rural:** el Delegado C. Araya y los funcionarios F. Contreras y L. Tapia.
 - **Centro:** el Delegado S. Pizarro y el funcionario J. Herrera.
 - Las otras cuatro delegaciones parten sin equipo.
+
+## Cómo se lee cada panel (versión 2.2)
+
+Todos los paneles tienen el mismo orden, de arriba hacia abajo:
+
+1. **Encabezado**: quién es usted, su delegación y el período. Arriba a la derecha puede elegir otro período.
+2. **Indicadores**: cuatro números clave.
+3. **Registrar y gestionar** (botones rojos): lo que usted puede hacer.
+4. **Consultar información** (botones blancos): lo que usted puede revisar.
+5. **Cumplimiento** (el círculo) y **Avisos**: se ven 4 avisos, y con "Ver más" aparecen los demás.
+6. **Detalle**: metas, evidencias y tablas.
 
 ---
 

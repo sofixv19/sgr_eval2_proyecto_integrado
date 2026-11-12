@@ -15,33 +15,29 @@
             </div>
         </div>
     </div>
-    <div class="dash-banner-acciones flex-column align-items-end">
+    <div class="dash-banner-acciones">
         {% include "includes/periodo_selector.html" %}
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'gestion:crear' %}" class="btn btn-light fw-semibold">+ Registrar actividad</a>
-            <a href="{% url 'gestion:agenda' %}" class="btn btn-outline-light">Agenda</a>
-        </div>
     </div>
 </section>
 
-{% include "includes/alertas.html" %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="actividades" %}</div><div><div class="dash-stat-valor">{{ total }}</div><div class="dash-stat-etiqueta">Actividades registradas</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-verde"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="validada" %}</div><div><div class="dash-stat-valor">{{ validadas }}</div><div class="dash-stat-etiqueta">Validadas por mi Delegado</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-ambar"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="reloj" %}</div><div><div class="dash-stat-valor">{{ pendientes }}</div><div class="dash-stat-etiqueta">Esperando validación</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-rojo"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="imagen" %}</div><div><div class="dash-stat-valor">{{ sin_evidencia }}</div><div class="dash-stat-etiqueta">Sin evidencia todavía</div></div></div></div>
+</div>
+
+{% include "includes/accesos.html" %}
 
 <div class="row g-3 mb-4">
-    <div class="col-xl-5">
+    <div class="col-lg-5">
         {% if resultado.dias_ausencia %}
         {% include "includes/dash_gauge.html" with titulo="Mi cumplimiento del período" valor=resultado.cumplimiento barra=resultado.barra esperado=resultado.esperado color=resultado.color mensaje=resultado.mensaje nota=nota_ausencia %}
         {% else %}
         {% include "includes/dash_gauge.html" with titulo="Mi cumplimiento del período" valor=resultado.cumplimiento barra=resultado.barra esperado=resultado.esperado color=resultado.color mensaje=resultado.mensaje %}
         {% endif %}
     </div>
-    <div class="col-xl-7">
-        <div class="row g-3 h-100">
-            <div class="col-6"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="actividades" %}</div><div><div class="dash-stat-valor">{{ total }}</div><div class="dash-stat-etiqueta">Actividades registradas</div></div></div></div>
-            <div class="col-6"><div class="dash-stat dash-tono-verde"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="validada" %}</div><div><div class="dash-stat-valor">{{ validadas }}</div><div class="dash-stat-etiqueta">Validadas por mi Delegado</div></div></div></div>
-            <div class="col-6"><div class="dash-stat dash-tono-ambar"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="reloj" %}</div><div><div class="dash-stat-valor">{{ pendientes }}</div><div class="dash-stat-etiqueta">Esperando validación</div></div></div></div>
-            <div class="col-6"><div class="dash-stat dash-tono-rojo"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="imagen" %}</div><div><div class="dash-stat-valor">{{ sin_evidencia }}</div><div class="dash-stat-etiqueta">Sin evidencia todavía</div></div></div></div>
-        </div>
-    </div>
+    <div class="col-lg-7">{% include "includes/alertas.html" %}</div>
 </div>
 
 <div class="row g-3">

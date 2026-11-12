@@ -1143,3 +1143,75 @@ a.dash-codigo:hover { background: var(--color-institucional); color: #fff; }
 .periodo-selector select option { color: var(--color-tinta); }
 .dash-reciente { font-size: .78rem; color: var(--dash-texto-suave); }
 .dash-reciente-alerta { color: #a52a38; font-weight: 600; }
+
+/* ---------------------------------------------------------------------
+   Versión 2.2 — Interfaz más ordenada
+   Cada panel sigue el mismo orden: encabezado → indicadores → accesos
+   rápidos (hacer / consultar) → cumplimiento y avisos → detalle.
+   --------------------------------------------------------------------- */
+.dash-banner { padding: 1.35rem 1.75rem; }
+.dash-banner-titulo { font-size: 1.6rem; margin-bottom: .45rem; }
+
+/* Indicadores: más compactos, todos en una fila */
+.dash-stat { padding: .95rem 1.1rem; gap: .85rem; border-bottom: 0; border-top: 3px solid var(--tono, var(--color-institucional)); }
+.dash-stat-icono { flex-basis: 40px; height: 40px; border-radius: 10px; }
+.dash-stat-icono svg { width: 20px; height: 20px; }
+.dash-stat-valor { font-size: 1.6rem; }
+.dash-stat-etiqueta { font-size: .8rem; line-height: 1.25; }
+
+/* Accesos rápidos */
+.dash-acceso {
+  background: #fff;
+  border-radius: var(--dash-radio);
+  box-shadow: var(--dash-sombra);
+  border-top: 3px solid var(--color-institucional);
+  padding: 1.4rem 1.5rem 1.5rem;
+}
+.dash-acceso-icono {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; margin-bottom: .75rem;
+}
+.dash-acceso-hacer { background: var(--color-institucional); }
+.dash-acceso-consultar { background: #4a4a52; }
+.dash-acceso-titulo { font-size: 1.05rem; font-weight: 700; margin: 0 0 .25rem; color: var(--color-tinta); font-family: inherit; }
+.dash-acceso-texto { font-size: .86rem; color: var(--dash-texto-suave); margin-bottom: 1rem; }
+.dash-acceso-botones { display: grid; gap: .5rem; }
+.dash-acceso-botones .btn { font-weight: 600; padding: .55rem 1rem; border-radius: 10px; }
+.dash-acceso-grilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.dash-acceso-grilla .btn { font-size: .86rem; padding: .5rem .6rem; border-radius: 10px; white-space: normal; }
+.btn-outline-institucional {
+  color: var(--color-institucional);
+  border: 1px solid #d9b3b3;
+  background: #fff;
+}
+.btn-outline-institucional:hover,
+.btn-outline-institucional:focus {
+  color: #fff;
+  background: var(--color-institucional);
+  border-color: var(--color-institucional);
+}
+
+/* Avisos: tarjeta compacta, 4 a la vista y el resto desplegable */
+.dash-contador {
+  display: inline-block; min-width: 1.6rem; padding: .05rem .45rem; margin-left: .3rem;
+  border-radius: 999px; background: #fbe9ea; color: var(--color-rojo);
+  font-size: .78rem; font-weight: 700; text-align: center; vertical-align: middle;
+}
+.dash-avisos-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; }
+.dash-aviso-item {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .65rem 0; border-bottom: 1px solid #f0f0f2; font-size: .9rem;
+}
+.dash-avisos-lista > .dash-aviso-item:last-child { border-bottom: 0; }
+.dash-aviso-punto { flex: 0 0 10px; height: 10px; border-radius: 50%; margin-top: .4rem; }
+.dash-aviso-rojo .dash-aviso-punto { background: var(--color-rojo); box-shadow: 0 0 0 4px #fbe9ea; }
+.dash-aviso-ambar .dash-aviso-punto { background: var(--color-ambar); box-shadow: 0 0 0 4px #fdf3e1; }
+.dash-aviso-texto { line-height: 1.35; }
+.dash-avisos-mas summary { cursor: pointer; font-size: .86rem; font-weight: 600; color: var(--color-institucional); padding-top: .5rem; }
+.dash-nota-alerta { color: var(--color-rojo); font-weight: 600; }
+
+@media (max-width: 575.98px) {
+  .dash-acceso-grilla { grid-template-columns: 1fr; }
+  .dash-stat { flex-direction: column; align-items: flex-start; }
+}

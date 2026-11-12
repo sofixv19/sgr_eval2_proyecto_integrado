@@ -178,7 +178,7 @@ SGR_LOGIN_MINUTOS_BLOQUEO = config('SGR_LOGIN_MINUTOS_BLOQUEO', default=15, cast
 
 # Versión del sistema (ver CHANGELOG.md). 1.x = requerimientos de la Guía SGR;
 # 2.0 = Nuevos requerimientos de octubre 2026.
-SGR_VERSION = '2.1.2'
+SGR_VERSION = '2.2.0'
 
 # Reglas de negocio parametrizables (Guía SGR, sección 13.1)
 SGR_TOPE_CUMPLIMIENTO = config('SGR_TOPE_CUMPLIMIENTO', default=150, cast=int)   # % máximo del colaborador

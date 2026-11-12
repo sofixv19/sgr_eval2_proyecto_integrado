@@ -15,38 +15,29 @@
             </div>
         </div>
     </div>
-    <div class="dash-banner-acciones flex-column align-items-end">
+    <div class="dash-banner-acciones">
         {% include "includes/periodo_selector.html" %}
-        <div class="d-flex flex-wrap gap-2 justify-content-end">
-        {% if perms.delegaciones.add_delegacion %}<a href="{% url 'delegaciones:crear' %}" class="btn btn-light fw-semibold">+ Crear delegación</a>{% endif %}
-        {% if perms.organizacion.add_funcionario %}<a href="{% url 'organizacion:funcionario_crear' %}" class="btn btn-outline-light">{% if rol_usuario == "Coordinador" %}Crear Delegado{% else %}Agregar funcionario{% endif %}</a>{% endif %}
-        <a href="{% url 'gestion:exportar_cumplimiento' %}{% if periodo %}?periodo={{ periodo.pk }}{% endif %}" class="btn btn-outline-light">Exportar cumplimiento</a>
-        </div>
     </div>
 </section>
 
-{% include "includes/alertas.html" %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="mapa" %}</div><div><div class="dash-stat-valor">{{ total_activas }}</div><div class="dash-stat-etiqueta">Delegaciones activas</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-rojo"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="alerta" %}</div><div><div class="dash-stat-valor">{{ sin_delegado|length }}</div><div class="dash-stat-etiqueta">Sin Delegado asignado</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="actividades" %}</div><div><div class="dash-stat-valor">{{ total_actividades }}</div><div class="dash-stat-etiqueta">Actividades registradas</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="dash-stat dash-tono-ambar"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="reloj" %}</div><div><div class="dash-stat-valor">{{ total_por_validar }}</div><div class="dash-stat-etiqueta">Por validar</div></div></div></div>
+</div>
 
-{% if sin_delegado %}
-<div class="dash-aviso mb-4">Delegaciones activas sin Delegado asignado: {% for d in sin_delegado %}<strong>{{ d }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}. Use <em>Crear Delegado</em> para asignarles uno.</div>
-{% endif %}
+{% include "includes/accesos.html" %}
 
 <div class="row g-3 mb-4">
-    <div class="col-xl-5">
+    <div class="col-lg-5">
         {% include "includes/dash_gauge.html" with titulo="Cumplimiento promedio de la comuna" valor=promedio barra=barra_promedio esperado=esperado color=color_promedio mensaje=mensaje_promedio %}
     </div>
-    <div class="col-xl-7">
-        <div class="row g-3 h-100">
-            <div class="col-6"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="mapa" %}</div><div><div class="dash-stat-valor">{{ total_activas }}</div><div class="dash-stat-etiqueta">Delegaciones activas</div></div></div></div>
-            <div class="col-6"><div class="dash-stat dash-tono-rojo"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="alerta" %}</div><div><div class="dash-stat-valor">{{ sin_delegado|length }}</div><div class="dash-stat-etiqueta">Sin Delegado asignado</div></div></div></div>
-            <div class="col-6"><div class="dash-stat dash-tono-marca"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="actividades" %}</div><div><div class="dash-stat-valor">{{ total_actividades }}</div><div class="dash-stat-etiqueta">Actividades registradas</div></div></div></div>
-            <div class="col-6"><div class="dash-stat dash-tono-ambar"><div class="dash-stat-icono">{% include "includes/icono.html" with nombre="reloj" %}</div><div><div class="dash-stat-valor">{{ total_por_validar }}</div><div class="dash-stat-etiqueta">Por validar</div></div></div></div>
-        </div>
-    </div>
+    <div class="col-lg-7">{% include "includes/alertas.html" %}</div>
 </div>
 
 <div class="dash-card">
-    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Cumplimiento por delegación</h2><div class="dash-card-sub">Verde: al día · Ámbar: sobre 60 % de lo esperado · Rojo: bajo eso · Umbral colectivo mínimo: {{ umbral_colectivo }} % ({{ bajo_umbral|length }} bajo el umbral)</div></div></div>
+    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Cumplimiento por delegación</h2><div class="dash-card-sub">Verde: al día · Ámbar: sobre 60 % de lo esperado · Rojo: bajo eso · Umbral colectivo mínimo: {{ umbral_colectivo }} % ({{ bajo_umbral|length }} bajo el umbral){% if sin_delegado %}<div class="dash-nota-alerta mt-1">Sin Delegado: {% for d in sin_delegado %}{{ d }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}</div></div></div>
     <div class="table-responsive">
     <table class="table align-middle mb-0 dash-tabla">
         <thead><tr><th>Delegación</th><th>Delegado</th><th class="text-end">Funcionarios</th><th class="text-end">Actividades</th><th class="text-end">Por validar</th><th class="text-end">Compromisos vencidos</th><th style="min-width: 190px">Cumplimiento</th><th class="text-end">Acciones</th></tr></thead>
