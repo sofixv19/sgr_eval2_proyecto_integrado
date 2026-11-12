@@ -18,9 +18,28 @@ from django.conf import settings
 from django.utils import timezone
 
 from comun.validadores import nombre_repetido, validar_nombre, validar_telefono
+from delegaciones.models import OrganizacionComunitaria
 from organizacion.models import Funcionario
 
 from .models import Actividad, Categoria, Evidencia, validar_archivo_evidencia
+
+
+def inicio_ventana_registro(hoy=None):
+    """Primer día que todavía se puede ingresar (v2.0, regla 4: cierre semanal).
+
+    La semana de trabajo va de lunes a viernes y se cierra el lunes
+    siguiente: el lunes aún se puede ingresar la semana anterior, pero
+    desde el martes solo se ingresa la semana en curso.
+    """
+    hoy = hoy or timezone.localdate()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    return lunes - timedelta(days=7) if hoy.weekday() == 0 else lunes
+
+
+def ingresos_de_hoy(funcionario, hoy=None):
+    """Actividades que el funcionario ya ingresó hoy (v2.0, regla 3)."""
+    hoy = hoy or timezone.localdate()
+    return Actividad.objects.filter(funcionario=funcionario, fecha_registro__date=hoy).count()
 
 
 class ActividadForm(forms.ModelForm):
@@ -41,8 +60,12 @@ class ActividadForm(forms.ModelForm):
 
     class Meta:
         model = Actividad
-        fields = ['fecha', 'categoria', 'estado', 'descripcion', 'solicitud_problema', 'contacto', 'telefono_contacto']
+        fields = ['fecha', 'categoria', 'tipo_gestion', 'estado', 'descripcion', 'tipo_solicitante', 'organizacion',
+                  'solicitud_problema', 'contacto', 'telefono_contacto']
         widgets = {
+            'tipo_gestion': forms.RadioSelect,
+            'tipo_solicitante': forms.Select(attrs={'class': 'form-select'}),
+            'organizacion': forms.Select(attrs={'class': 'form-select'}),
             'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'categoria': forms.Select(attrs={'class': 'form-select'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
@@ -51,7 +74,15 @@ class ActividadForm(forms.ModelForm):
             'contacto': forms.TextInput(attrs={'class': 'form-control'}),
             'telefono_contacto': forms.TextInput(attrs={'class': 'form-control'}),
         }
-        labels = {'categoria': 'Ítem / categoría de la actividad', 'descripcion': 'Acción realizada'}
+        labels = {
+            'categoria': 'Ítem / categoría de la actividad', 'descripcion': 'Acción realizada',
+            'contacto': 'Nombre del usuario (vecino/a)', 'telefono_contacto': 'Teléfono del usuario',
+        }
+        help_texts = {
+            'contacto': 'Obligatorio para que la actividad sume puntaje (v2.0).',
+            'telefono_contacto': 'Obligatorio para que la actividad sume puntaje (v2.0).',
+            'organizacion': 'Solo si la solicitó una organización comunitaria.',
+        }
 
     def __init__(self, *args, funcionario=None, elegir_funcionario=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -69,19 +100,51 @@ class ActividadForm(forms.ModelForm):
                 widget=forms.Select(attrs={'class': 'form-select'}),
             )
             self.order_fields(['funcionario'])
+        organizaciones = OrganizacionComunitaria.objects.filter(activa=True)
+        delegacion = getattr(funcionario, 'delegacion', None) or getattr(self.instance, 'delegacion', None)
+        if delegacion is not None and not elegir_funcionario:
+            organizaciones = organizaciones.filter(delegacion=delegacion)
+        self.fields['organizacion'].queryset = organizaciones
+        self.fields['tipo_gestion'].widget.attrs['class'] = 'form-check-input'
+        # Si el formulario no los envía (p. ej. integraciones antiguas), se usan
+        # los valores por defecto del modelo: realización y solicitante vecino.
+        self.fields['tipo_gestion'].required = False
+        self.fields['tipo_solicitante'].required = False
+
+    def clean_tipo_gestion(self):
+        return self.cleaned_data.get('tipo_gestion') or Actividad.TipoGestion.REALIZACION
+
+    def clean_tipo_solicitante(self):
+        return self.cleaned_data.get('tipo_solicitante') or Actividad.TipoSolicitante.VECINO
 
     def clean_fecha(self):
         fecha = self.cleaned_data.get('fecha')
         if fecha is None:
             return fecha
         hoy = timezone.localdate()
-        dias = getattr(settings, 'SGR_DIAS_REGISTRO_RETROACTIVO', 7)
         if fecha > hoy:
             raise forms.ValidationError('La fecha de la actividad no puede ser futura.')
-        if not self.instance.pk and fecha < hoy - timedelta(days=dias):
-            raise forms.ValidationError(
-                f'Solo se pueden registrar actividades de hasta {dias} días atrás.')
+        if not self.instance.pk or fecha != self.instance.fecha:
+            inicio = inicio_ventana_registro(hoy)
+            if fecha < inicio:
+                raise forms.ValidationError(
+                    f'Esa semana ya está cerrada. Hoy solo se pueden ingresar actividades desde el '
+                    f'{inicio:%d/%m/%Y}: cada semana (lunes a viernes) se cierra el lunes siguiente.')
         return fecha
+
+    def clean(self):
+        datos = super().clean()
+        if (datos.get('tipo_solicitante') == Actividad.TipoSolicitante.ORGANIZACION
+                and not datos.get('organizacion')):
+            self.add_error('organizacion', 'Indique qué organización comunitaria hizo la solicitud.')
+        if not self.instance.pk:
+            funcionario = datos.get('funcionario') or self.funcionario
+            maximo = getattr(settings, 'SGR_MAX_INGRESOS_DIARIOS', 7)
+            if funcionario is not None and ingresos_de_hoy(funcionario) >= maximo:
+                raise forms.ValidationError(
+                    f'Ya ingresó {maximo} actividades hoy, que es el máximo diario. '
+                    'Las siguientes se pueden ingresar mañana (dentro de la misma semana).')
+        return datos
 
     def clean_telefono_contacto(self):
         telefono = (self.cleaned_data.get('telefono_contacto') or '').strip()

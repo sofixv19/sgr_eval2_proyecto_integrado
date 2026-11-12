@@ -18,7 +18,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from delegaciones.models import Delegacion
+from delegaciones.models import Delegacion, OrganizacionComunitaria
 from gestion.models import Actividad, Categoria
 from organizacion.models import CargoFuncion, Funcionario, MetaProyecto, Periodo
 
@@ -112,6 +112,10 @@ class Command(BaseCommand):
 
         self.stdout.write('Asignando metas de ejemplo a cada funcionario (las asigna su Delegado)...')
         self._metas_demo()
+
+        self.stdout.write('Cargando organizaciones comunitarias de ejemplo (versión 2.0)...')
+        organizaciones = self._organizaciones_demo()
+        self.stdout.write(f'  {organizaciones} organizaciones nuevas.')
 
         self.stdout.write(self.style.SUCCESS(
             f'Listo: {delegaciones_creadas} delegaciones, '
@@ -208,7 +212,7 @@ class Command(BaseCommand):
                 ))
                 continue
 
-            Actividad.objects.update_or_create(
+            actividad, creada = Actividad.objects.update_or_create(
                 codigo=item['codigo'],
                 defaults={
                     'fecha': item['fecha'],
@@ -219,6 +223,11 @@ class Command(BaseCommand):
                     'estado': item['estado'],
                 },
             )
+            if creada:
+                # Datos históricos de la versión 1.x: las reglas de puntaje
+                # de la 2.0 no se les aplican hacia atrás.
+                actividad.version_reglas = '1.0'
+                actividad.save(update_fields=['version_reglas'])
         return Actividad.objects.count()
 
     def _metas_demo(self):
@@ -242,6 +251,25 @@ class Command(BaseCommand):
                     cargo=funcionario.cargo, funcionario=funcionario, periodo=periodo, categoria=categoria,
                     item_medible=categoria.nombre, valor_objetivo=objetivo, unidad='Cantidad', ponderador=ponderador,
                 )
+
+    def _organizaciones_demo(self):
+        """Una Junta de Vecinos y dos organizaciones funcionales por delegación
+        (RF-039, versión 2.0). Son datos de ejemplo, no el registro oficial."""
+        tipos = OrganizacionComunitaria.Tipo
+        ejemplos = [
+            ('Junta de Vecinos {n} (ejemplo)', tipos.JUNTA_VECINOS, 85),
+            ('Club de Adulto Mayor {n} (ejemplo)', tipos.ADULTO_MAYOR, 30),
+            ('Club Deportivo {n} (ejemplo)', tipos.DEPORTIVA, 40),
+        ]
+        creadas = 0
+        for delegacion in Delegacion.objects.all():
+            for plantilla, tipo, socios in ejemplos:
+                _, creada = OrganizacionComunitaria.objects.get_or_create(
+                    delegacion=delegacion, nombre=plantilla.format(n=delegacion.nombre),
+                    defaults={'tipo': tipo, 'socios_activos': socios, 'domicilio': f'Sede comunitaria, {delegacion.nombre}'},
+                )
+                creadas += int(creada)
+        return creadas
 
     def _validar_actividades_demo(self):
         """Marca como validada una actividad de ejemplo por cada delegación

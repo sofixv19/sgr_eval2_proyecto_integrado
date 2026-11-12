@@ -15,14 +15,35 @@
         {% if not form.instance.pk %}<br>El código se genera automáticamente con la sigla del área ({{ funcionario.cargo.area }}-0001, {{ funcionario.cargo.area }}-0002…) y la actividad parte en estado <em>Pendiente</em>.{% endif %}
     </div>
     {% endif %}
+    {% if not form.instance.pk %}
+    <div class="reglas-v2 mb-4">
+        <div class="reglas-v2-titulo"><span class="badge-version">v2.0</span> Reglas para que la actividad sume puntaje</div>
+        <ul class="mb-0">
+            <li>Debe ser la <strong>realización</strong> de la acción: coordinar, enviar correos o invitar no da punto.</li>
+            <li>Debe llevar el <strong>nombre y teléfono del usuario</strong>. Si la pidió el propio Delegado, no se contabiliza.</li>
+            <li>Ingrese a diario: {% if ingresos_hoy is not None %}lleva <strong>{{ ingresos_hoy }} de {{ max_ingresos }}</strong> ingresos hoy{% else %}máximo {{ max_ingresos }} ingresos por día{% endif %}.
+                La semana se cierra el lunes siguiente; hoy se puede ingresar desde el <strong>{{ inicio_ventana|date:"d/m/Y" }}</strong>.</li>
+        </ul>
+    </div>
+    {% endif %}
 
     <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
 
         {% for field in form %}
         <div class="mb-3">
+            {% if field.widget_type == "radioselect" %}
+            <div class="form-label">{{ field.label }}</div>
+            {% for opcion in field %}
+            <div class="form-check">
+                {{ opcion.tag }}
+                <label class="form-check-label" for="{{ opcion.id_for_label }}">{{ opcion.choice_label }}</label>
+            </div>
+            {% endfor %}
+            {% else %}
             <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
+            {% endif %}
             {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
             {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
         </div>

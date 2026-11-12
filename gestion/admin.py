@@ -27,15 +27,17 @@ class ActividadAdmin(admin.ModelAdmin):
     """Administración completa de Actividad, con navegación hacia sus
     entidades relacionadas (Delegacion y Categoria) mediante autocomplete."""
 
-    list_display = ('codigo', 'fecha', 'delegacion', 'categoria', 'funcionario', 'estado', 'estado_validacion')
-    list_filter = ('estado', 'estado_validacion', 'categoria', 'delegacion')
+    list_display = ('codigo', 'fecha', 'delegacion', 'categoria', 'funcionario', 'estado', 'estado_validacion',
+                    'puntuable', 'version_reglas')
+    list_filter = ('estado', 'estado_validacion', 'puntuable', 'version_reglas', 'tipo_gestion', 'categoria',
+                   'delegacion')
     search_fields = (
         'codigo', 'descripcion', 'funcionario__nombre', 'delegacion__nombre',
         'solicitud_problema', 'contacto',
     )
     date_hierarchy = 'fecha'
     ordering = ('-fecha',)
-    readonly_fields = ('fecha_validacion', 'fecha_registro')
+    readonly_fields = ('fecha_validacion', 'fecha_registro', 'puntuable', 'motivo_sin_puntaje', 'version_reglas')
     actions = ['marcar_validadas']
 
     # autocomplete_fields permite navegar/buscar la delegación, la
@@ -53,6 +55,10 @@ class ActividadAdmin(admin.ModelAdmin):
         }),
         ('Detalle', {
             'fields': ('descripcion',),
+        }),
+        ('Reglas de puntaje (versión 2.0)', {
+            'fields': ('tipo_gestion', 'tipo_solicitante', 'organizacion',
+                       'puntuable', 'motivo_sin_puntaje', 'version_reglas'),
         }),
         ('Validación del Delegado', {
             'fields': ('estado_validacion', 'validado', 'validado_por', 'fecha_validacion', 'observacion_validacion'),

@@ -1061,3 +1061,40 @@ a.dash-codigo:hover { background: var(--color-institucional); color: #fff; }
 /* Formularios centrados en la página */
 .form-card:not(.form-card-ancha) { margin-left: auto; margin-right: auto; }
 .form-volver { display: block; max-width: 640px; margin: 0 auto; }
+
+/* ---------------------------------------------------------------------
+   Versión 2.0 — Nuevos requerimientos (octubre 2026)
+   --------------------------------------------------------------------- */
+.badge-version {
+  display: inline-block;
+  padding: .05rem .45rem;
+  border-radius: 6px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  background: #ece7ff;
+  color: #4b3aa6;
+  vertical-align: middle;
+}
+.reglas-v2 {
+  padding: .9rem 1.1rem;
+  border-radius: 12px;
+  background: #f7f5ff;
+  border: 1px solid #ddd5ff;
+  font-size: .88rem;
+}
+.reglas-v2 ul { padding-left: 1.1rem; margin-top: .4rem; }
+.reglas-v2 li + li { margin-top: .2rem; }
+.reglas-v2-titulo { font-weight: 700; }
+.dash-ajustes {
+  margin-top: 1rem;
+  padding: .75rem 1rem;
+  border: 1px dashed #e2e2e6;
+  border-radius: 12px;
+  font-size: .9rem;
+  display: grid;
+  gap: .3rem;
+}
+.dash-ajustes > div { display: flex; justify-content: space-between; }
+.dash-ajuste-mas strong { color: #1f7a62; }
+.dash-ajuste-menos strong { color: #a52a38; }

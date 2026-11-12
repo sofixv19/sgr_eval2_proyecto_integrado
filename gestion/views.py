@@ -4,6 +4,7 @@ Vistas de la app 'gestion' (Aplicación 2).
 Evaluación Sumativa 2: todas las vistas obtienen la información mediante
 consultas Django ORM (antes se leía desde data/actividades.json).
 """
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
@@ -17,7 +18,9 @@ from cuentas.perfiles import (
     ADMINISTRADOR, DELEGADO, FUNCIONARIO, es_delegado_de, filtrar_actividades, perfil_de, rol_de,
 )
 
-from .forms import ActividadForm, CategoriaForm, EvidenciaForm, RevisionForm
+from .forms import (
+    ActividadForm, CategoriaForm, EvidenciaForm, RevisionForm, inicio_ventana_registro, ingresos_de_hoy,
+)
 from .models import Actividad, Categoria, Evidencia
 from .services import grados_donut, resumen_por_estado
 
@@ -210,6 +213,10 @@ def crear(request):
         'form': form,
         'funcionario': funcionario,
         'volver_url': reverse('gestion:listado'),
+        # Versión 2.0: ventana de la semana y ingresos del día
+        'inicio_ventana': inicio_ventana_registro(),
+        'ingresos_hoy': ingresos_de_hoy(funcionario) if funcionario else None,
+        'max_ingresos': settings.SGR_MAX_INGRESOS_DIARIOS,
     }
     return render(request, 'gestion/form.html', contexto)
 

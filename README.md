@@ -1,4 +1,40 @@
-# SGR La Serena — Evaluación Sumativa 2 (Programación Back End)
+# SGR La Serena — Sistema de Gestión de Resultados
+
+> **Versión actual: 2.0.0** (Nuevos requerimientos, octubre 2026) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
+
+| Versión | Qué trae | Pruebas |
+|---|---|---|
+| **2.0.0** | Nuevos requerimientos de la Coordinación de Delegaciones: organizaciones comunitarias, reglas de puntaje (solicitante, nombre y teléfono, gestión previa), máximo 7 ingresos diarios, cierre semanal, tope de 120 % por ítem, felicitaciones y reclamos, y ausencias que ajustan el semáforo | 156 |
+| 1.1.0 | Correcciones de la revisión de la Evaluación 2: ámbito por rol, cuentas ligadas a funcionarios, código automático por área, evidencias, validación del Delegado, metas y paneles por rol | 140 |
+| 1.0.0 | Evaluación 2 de Proyecto Integrado: login, mantenedores, roles y despliegue en AWS | 118 |
+
+### Novedades de la versión 2.0
+
+- **Cada actividad muestra si suma puntaje y por qué.** No suman:
+  - las gestiones previas (coordinar, enviar correos, invitar);
+  - las que pidió el propio Delegado;
+  - las que no tienen nombre y teléfono del usuario.
+- **Máximo 7 ingresos por día** y **cierre semanal**: la semana se ingresa hasta el lunes siguiente.
+- **Tope de 120 % por ítem.** El total del colaborador, con felicitaciones, llega como máximo a 150 %.
+- **Menú "Mi equipo" del Delegado**:
+  - *Felicitaciones y reclamos*: +10 cada una, máximo 3; −20 cada reclamo.
+  - *Ausencias*: se descuentan del período en el semáforo.
+  - *Organizaciones comunitarias*: territoriales y funcionales.
+- **Las actividades anteriores a la 2.0 conservan su puntaje** (`version_reglas = "1.0"`).
+
+### Actualizar un servidor que ya tenía la versión 1.x
+
+```bash
+python manage.py migrate                 # crea las tablas nuevas y marca las actividades antiguas como 1.0
+python manage.py configurar_roles        # agrega los permisos nuevos a cada rol
+python manage.py cargar_datos_iniciales  # (opcional) organizaciones de ejemplo
+python manage.py collectstatic --noinput
+sudo systemctl restart sgr
+```
+
+---
+
+## Proyecto base — Evaluación Sumativa 2 (Programación Back End)
 
 Continuación del proyecto desarrollado en la **Evaluación Sumativa 1**: el mismo
 caso "Sistema de Gestión de Resultados (SGR)" de las delegaciones de la
@@ -18,7 +54,7 @@ para desplegarse en una instancia **AWS EC2** con control de versiones en
   - Categorías (`/gestion/categorias/`)
   - Períodos de medición (`/organizacion/periodos/`), que es la tabla `periodo` del MER de la Evaluación 1. Las metas ahora pertenecen a un cargo **y a un período**.
 - **Roles con permisos**: `python manage.py configurar_roles` crea los grupos Administrador, Coordinador, Delegado, Funcionario y Verificador. Con `--usuarios-demo --clave "..."` crea además un usuario de prueba por rol.
-- **118 pruebas unitarias**: `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
+- **118 pruebas unitarias** en la versión 1.0 (hoy son 156): `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
 - **Estándares** de construcción y de seguridad documentados en `ESTANDARES.md`. El estilo se revisa con `flake8`.
 
 ## Qué cambió respecto a la Evaluación 1
@@ -89,20 +125,25 @@ Funcionario Operativo (rol 'Funcionario' — registra actividades y evidencia)
 ```
 sgr_evaluacion/      # Configuración del proyecto (settings, urls raíz)
 delegaciones/        # Aplicación 1: información institucional de las delegaciones
-  models.py           #   Delegacion
+  models.py           #   Delegacion, OrganizacionComunitaria (v2.0)
   admin.py            #   Administración de Delegacion
 organizacion/        # Aplicación de cargos/funcionarios (diseño: compañero de equipo)
-  models.py            #   CargoFuncion, Funcionario, MetaProyecto
+  models.py            #   CargoFuncion, Funcionario, MetaProyecto, Periodo, Reconocimiento y Ausencia (v2.0)
   admin.py             #   Administración de las 3 entidades (con metas inline)
 gestion/             # Aplicación 2: actividades / solicitudes registradas
   models.py           #   Categoria, Actividad (FK a Delegacion, Categoria y Funcionario)
   admin.py            #   Administración de Categoria y Actividad
   services.py          #   Agregaciones ORM (resumen por estado, donut)
+  indicadores.py       #   Cumplimiento, semáforo, tope por ítem, felicitaciones y ausencias
+  tests_roles.py       #   Pruebas de la versión 1.1 (CP-PERF, CP-COD, CP-EVI, CP-CUM)
+  tests_v2.py          #   Pruebas de la versión 2.0 (CP-V2-001 a CP-V2-016)
   management/commands/cargar_datos_iniciales.py  # Migra los JSON + siembra cargos/funcionarios
 data/                # JSON originales de la Evaluación 1 (fuente para el seed)
 static/              # Bootstrap local, CSS propio e imágenes
 templates/           # Plantilla base + formulario genérico + confirmación de borrado
 .env.example         # Plantilla de variables de entorno (copiar a .env)
+CHANGELOG.md         # Historial de versiones (1.0, 1.1, 2.0)
+REQUISITOS_V2.md     # Requerimientos por versión: RF-039 a RF-048 con trazabilidad
 DIAGRAMA_CLASES.md   # Diagrama de clases (Mermaid + PNG), 13 clases, estructura de Eval. 1
 TESTING.md           # Plan de pruebas: automatizadas + manuales + rendimiento, con evidencia
 CASOS_DE_USO.md       # Matriz de trazabilidad: caso de uso -> ruta -> prueba
@@ -121,7 +162,8 @@ GUIA_DESPLIEGUE.md    # Paso a paso para correr con MySQL local y desplegar en A
 
 ## Pruebas automatizadas
 
-El proyecto incluye 41 pruebas (`python manage.py test`) sobre las cuatro
+El proyecto incluye **156 pruebas** (`python manage.py test`) en la versión 2.0
+(41 en la primera versión de la Evaluación 2). Abarcan las cuatro
 apps: unitarias de modelo (slugs, unicidad, relaciones y restricciones de
 borrado), unitarias de la regla de validación (solo un Delegado valida, no
 autovalidación), e integrales de vista (listados, filtros, búsqueda, 404,
@@ -272,6 +314,14 @@ git commit -m "Evaluación Sumativa 2: migración a base de datos y Django Admin
 git branch -M main
 git remote add origin URL_DEL_REPOSITORIO
 git push -u origin main
+```
+
+Cada versión se marca con un *tag* de Git, para poder volver a cualquiera de ellas:
+
+```bash
+git tag -a v2.0 -m "Versión 2.0: nuevos requerimientos octubre 2026"
+git push origin --tags
+git checkout v1.1      # ver cómo estaba la versión 1.1 (volver con: git checkout main)
 ```
 
 El archivo `.gitignore` incluido excluye `venv/`, `.env`, `db.sqlite3` y los

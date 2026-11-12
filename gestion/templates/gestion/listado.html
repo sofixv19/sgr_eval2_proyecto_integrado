@@ -77,6 +77,7 @@
                 <p class="small text-muted mb-2">{{ actividad.categoria }} &middot; {{ actividad.fecha }}{% if rol_usuario != "Funcionario" %} &middot; {{ actividad.funcionario.nombre }}{% endif %} &middot; {{ actividad.total_evidencias }} evidencia{{ actividad.total_evidencias|pluralize }}</p>
                 <p class="mb-2">{{ actividad.descripcion }}</p>
                 {% include "gestion/includes/badge_validacion.html" %}
+                {% if not actividad.puntuable %}<span class="dash-pill dash-pill-gris dash-pill-chica ms-1" title="{{ actividad.motivo_sin_puntaje }}">No suma puntaje</span>{% endif %}
             </div>
             <div class="deleg-card-acciones">
                 <a href="{% url 'gestion:detalle' actividad.id %}" class="deleg-card-link">

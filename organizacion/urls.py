@@ -27,4 +27,13 @@ urlpatterns = [
     path('metas/nueva/', views.MetaCrear.as_view(), name='meta_crear'),
     path('metas/<int:pk>/editar/', views.MetaEditar.as_view(), name='meta_editar'),
     path('metas/<int:pk>/eliminar/', views.MetaEliminar.as_view(), name='meta_eliminar'),
+    # Versión 2.0: felicitaciones/reclamos y ausencias (las registra el Delegado)
+    path('felicitaciones/', views.ReconocimientoListado.as_view(), name='reconocimientos'),
+    path('felicitaciones/nueva/', views.ReconocimientoCrear.as_view(), name='reconocimiento_crear'),
+    path('felicitaciones/<int:pk>/editar/', views.ReconocimientoEditar.as_view(), name='reconocimiento_editar'),
+    path('felicitaciones/<int:pk>/eliminar/', views.ReconocimientoEliminar.as_view(), name='reconocimiento_eliminar'),
+    path('ausencias/', views.AusenciaListado.as_view(), name='ausencias'),
+    path('ausencias/nueva/', views.AusenciaCrear.as_view(), name='ausencia_crear'),
+    path('ausencias/<int:pk>/editar/', views.AusenciaEditar.as_view(), name='ausencia_editar'),
+    path('ausencias/<int:pk>/eliminar/', views.AusenciaEliminar.as_view(), name='ausencia_eliminar'),
 ]

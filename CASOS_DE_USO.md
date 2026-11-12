@@ -36,22 +36,22 @@ que quede trazable de principio a fin (requerimiento → código → prueba).
 | CU-13 | Ver resumen de gestión (semáforo por estado) | Visitante / Coordinador | `gestion:resumen` (`/gestion/resumen/`) | ✅ Completo | — (manual, Evaluación 2) |
 | CU-14 | Listar funcionarios, con búsqueda por nombre/cargo/delegación | Visitante | `organizacion:listado` (`/organizacion/funcionarios/`) | ✅ Completo | — (manual, Evaluación 2) |
 | CU-15 | Administrar catálogo completo (cargos, metas, funcionarios, categorías, delegaciones, actividades) | Administrador | Django Admin (`/admin/`) | ✅ Completo, incl. acción masiva "Marcar como validadas" | — (cubierto indirectamente por las pruebas de modelo) |
-| CU-16 | Autenticarse en el sistema | Administrador / Coordinador / Delegado / Funcionario | Login de Django Admin (`/admin/login/`) | ⚠️ Solo existe para Django Admin; no hay login para el sitio público todavía | — Pendiente |
-| CU-17 | Un Funcionario/Delegado inicia sesión y solo ve/edita lo que le corresponde (permisos por rol fuera de Admin) | Funcionario / Delegado | — | ❌ No implementado | — Pendiente (ver limitación abajo) |
+| CU-16 | Autenticarse en el sistema | Todos los roles | `cuentas:login` (`/cuentas/ingresar/`) | ✅ Completo (v1.0) | `CP-ACC-*`, `CP-LOGIN-*` |
+| CU-17 | Ver y editar solo lo que corresponde a su rol y delegación | Funcionario / Delegado / Coordinador | `cuentas/perfiles.py` (filtros de ámbito) | ✅ Completo (v1.1) | `CP-PERF-001` a `CP-PERF-010` |
+| CU-18 | Subir evidencia y validarla o rechazarla | Funcionario / Delegado | `gestion:detalle` | ✅ Completo (v1.1) | `CP-EVI-*`, `CP-VLD-*` |
+| CU-19 | Asignar metas a los funcionarios y ver el cumplimiento con semáforo | Delegado / Coordinador | `organizacion:metas`, paneles por rol | ✅ Completo (v1.1) | `CP-MET-*`, `CP-CUM-*` |
+
+### Casos de uso nuevos de la versión 2.0 (Nuevos requerimientos, octubre 2026)
+
+| # | Caso de uso | Actor(es) | Implementado en (ruta) | Requisito | Prueba automatizada |
+|---|---|---|---|---|---|
+| CU-20 | Registrar una actividad sabiendo si suma puntaje (solicitante, nombre y teléfono, gestión previa o realización), con máximo 7 por día y cierre semanal | Funcionario Operativo | `gestion:crear` | RF-040 a RF-044 | `CP-V2-001` a `CP-V2-005` |
+| CU-21 | Registrar felicitaciones y reclamos con respaldo formal | **Delegado** | `organizacion:reconocimientos` (`/organizacion/felicitaciones/`) | RF-046 | `CP-V2-009`, `CP-V2-010`, `CP-V2-012`, `CP-V2-013` |
+| CU-22 | Registrar ausencias del equipo (ajustan el semáforo) | **Delegado** | `organizacion:ausencias` (`/organizacion/ausencias/`) | RF-047 | `CP-V2-011`, `CP-V2-014`, `CP-V2-015` |
+| CU-23 | Gestionar organizaciones comunitarias territoriales y funcionales | Delegado / Coordinador / Administrador | `delegaciones:organizaciones` (`/organizaciones/`) | RF-039 | `CP-V2-006`, `CP-V2-016` |
 
 ## Limitaciones conocidas (declaradas, no ocultas)
 
-- **CU-16/CU-17**: el rol (`Funcionario.rol`) hoy es un dato del catálogo,
-  pero no está enlazado a una cuenta de usuario de Django fuera de Django
-  Admin. En la práctica, "quién valida" se elige en un selector dentro del
-  formulario de validación (`ValidacionForm`, limitado a
-  `rol='Delegado'`), en vez de inferirse de una sesión iniciada. Esto es
-  suficiente para demostrar la regla de negocio (CU-12) con las pruebas
-  automatizadas, pero un sistema de login por rol para el sitio público
-  queda fuera del alcance actual.
-- No hay bitácora/auditoría (quién cambió qué y cuándo) más allá del par
-  `validado_por` / `fecha_validacion` específico de la validación de
-  actividades.
-
-Estas dos limitaciones ya se le mencionaron a Sofía durante el desarrollo
-y quedaron fuera de alcance por decisión explícita, no por descuido.
+- Las limitaciones CU-16 y CU-17 de la versión 1.0 (no había login por rol) quedaron **resueltas en la versión 1.1**.
+- No hay bitácora general de auditoría (quién cambió qué y cuándo). Solo quedan registrados quién validó (`validado_por`, `fecha_validacion`) y quién registró felicitaciones y ausencias (`registrado_por`).
+- La regla 6 de los Nuevos requerimientos ("no ingresar solo para generar puntaje") no se puede verificar de forma automática. La apoyan las reglas de puntaje y la validación del Delegado.

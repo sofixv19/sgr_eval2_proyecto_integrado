@@ -175,10 +175,20 @@ LOGIN_REDIRECT_URL = '/'
 SGR_LOGIN_MAX_INTENTOS = config('SGR_LOGIN_MAX_INTENTOS', default=5, cast=int)
 SGR_LOGIN_MINUTOS_BLOQUEO = config('SGR_LOGIN_MINUTOS_BLOQUEO', default=15, cast=int)
 
+# Versión del sistema (ver CHANGELOG.md). 1.x = requerimientos de la Guía SGR;
+# 2.0 = Nuevos requerimientos de octubre 2026.
+SGR_VERSION = '2.0.0'
+
 # Reglas de negocio parametrizables (Guía SGR, sección 13.1)
-SGR_DIAS_REGISTRO_RETROACTIVO = config('SGR_DIAS_REGISTRO_RETROACTIVO', default=7, cast=int)
-SGR_TOPE_CUMPLIMIENTO = config('SGR_TOPE_CUMPLIMIENTO', default=150, cast=int)   # % máximo computable
+SGR_TOPE_CUMPLIMIENTO = config('SGR_TOPE_CUMPLIMIENTO', default=150, cast=int)   # % máximo del colaborador
 SGR_EVIDENCIA_MAX_MB = config('SGR_EVIDENCIA_MAX_MB', default=5, cast=int)
+
+# Versión 2.0 — Nuevos requerimientos (octubre 2026)
+SGR_TOPE_ITEM = config('SGR_TOPE_ITEM', default=120, cast=int)                    # % máximo por ítem (regla 7)
+SGR_MAX_INGRESOS_DIARIOS = config('SGR_MAX_INGRESOS_DIARIOS', default=7, cast=int)  # regla 3
+SGR_PUNTOS_FELICITACION = 10      # cada felicitación suma 10 puntos (máx. 3 por período)
+SGR_MAX_FELICITACIONES = 3
+SGR_PUNTOS_RECLAMO = 20           # cada reclamo resta 20 puntos
 
 # Evidencias subidas por los funcionarios. No se publican en una URL
 # abierta: se entregan con la vista gestion:evidencia, que revisa permisos.

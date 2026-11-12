@@ -7,7 +7,7 @@
     <title>{% block titulo %}SGR La Serena{% endblock %} · Municipalidad de La Serena</title>
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=20">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="site-body">
@@ -34,13 +34,24 @@
                         {% if rol_usuario == "Funcionario" %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'gestion:crear' %}">Registrar actividad</a></li>
                         {% elif rol_usuario == "Delegado" %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:listado' %}">Mis funcionarios</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:metas' %}">Metas</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:cargos' %}">Cargos</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mi equipo</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'organizacion:listado' %}">Mis funcionarios</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:metas' %}">Metas</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:cargos' %}">Cargos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Versión 2.0</h6></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:reconocimientos' %}">Felicitaciones y reclamos</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:ausencias' %}">Ausencias (semáforo)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'delegaciones:organizaciones' %}">Organizaciones comunitarias</a></li>
+                            </ul>
+                        </li>
                         {% elif rol_usuario == "Coordinador" %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'delegaciones:listado' %}">Delegaciones</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:listado' %}">Delegados</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:periodos' %}">Períodos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'delegaciones:organizaciones' %}">Organizaciones</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a></li>
                         {% elif rol_usuario == "Administrador" or rol_usuario == "Verificador" %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'gestion:resumen' %}">Resumen</a></li>
@@ -53,6 +64,11 @@
                                 <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Períodos de medición</a></li>
                                 <li><a class="dropdown-item" href="{% url 'organizacion:metas' %}">Metas de los funcionarios</a></li>
                                 <li><a class="dropdown-item" href="{% url 'gestion:categorias' %}">Categorías de actividad</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Versión 2.0</h6></li>
+                                <li><a class="dropdown-item" href="{% url 'delegaciones:organizaciones' %}">Organizaciones comunitarias</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:reconocimientos' %}">Felicitaciones y reclamos</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:ausencias' %}">Ausencias</a></li>
                             </ul>
                         </li>
                         {% endif %}
@@ -93,7 +109,7 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p class="mb-1">Sistema de Gestión de Resultados (SGR) &mdash; Prototipo académico</p>
+            <p class="mb-1">Sistema de Gestión de Resultados (SGR) &mdash; Prototipo académico &middot; <span class="badge-version">v{{ sgr_version }}</span></p>
             <p class="mb-0 text-muted small">
                 Ilustre Municipalidad de La Serena · Proyecto Integrado · Programación Back End · INACAP
             </p>

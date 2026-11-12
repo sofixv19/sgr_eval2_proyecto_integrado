@@ -19,6 +19,7 @@ Parámetros: titulo, valor, barra (0-100), esperado, color (verde/ambar/rojo/gri
         <div class="dash-gauge-leyenda">
             <div><span class="dash-punto dash-punto-{{ color }}"></span> Logrado: <strong>{{ valor }} %</strong></div>
             <div><span class="dash-punto dash-punto-marca"></span> Esperado a hoy: <strong>{{ esperado }} %</strong></div>
+            {% if nota %}<div class="small">{{ nota }}</div>{% endif %}
         </div>
     </div>
 </div>

@@ -19,7 +19,15 @@
 
         {% for field in form %}
         <div class="mb-3">
-            {% if field.field.widget.input_type == 'checkbox' %}
+            {% if field.widget_type == "radioselect" %}
+            <div class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</div>
+            {% for opcion in field %}
+            <div class="form-check">
+                {{ opcion.tag }}
+                <label class="form-check-label" for="{{ opcion.id_for_label }}">{{ opcion.choice_label }}</label>
+            </div>
+            {% endfor %}
+            {% elif field.field.widget.input_type == 'checkbox' %}
             <div class="form-check">
                 {{ field }}
                 <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>

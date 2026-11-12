@@ -19,10 +19,18 @@
     </div>
 {% endfor %}
 </div>
+{% if resultado.tiene_ajuste %}
+<div class="dash-ajustes">
+    <div><span>Cumplimiento de las metas</span><strong>{{ resultado.base }} %</strong></div>
+    {% if resultado.felicitaciones %}<div class="dash-ajuste-mas"><span>Felicitaciones ({{ resultado.felicitaciones }})</span><strong>+{{ resultado.puntos_felicitaciones }}</strong></div>{% endif %}
+    {% if resultado.reclamos %}<div class="dash-ajuste-menos"><span>Reclamos ({{ resultado.reclamos }})</span><strong>&minus;{{ resultado.puntos_reclamos }}</strong></div>{% endif %}
+</div>
+{% endif %}
 <div class="dash-meta-total">
     <span>Cumplimiento ponderado</span>
     <span class="dash-pill dash-pill-{{ resultado.color }}">{{ resultado.cumplimiento }} %</span>
 </div>
+<p class="small text-muted mb-0 mt-2"><span class="badge-version">v2.0</span> Cada ítem llega como máximo a 120 %; el total del colaborador, a 150 %.</p>
 {% else %}
 <div class="dash-vacio">Todavía no tiene metas asignadas en el período vigente.</div>
 {% endif %}

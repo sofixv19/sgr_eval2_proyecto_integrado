@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
+from .models import Ausencia, CargoFuncion, Funcionario, MetaProyecto, Periodo, Reconocimiento
 
 
 class MetaProyectoInline(admin.TabularInline):
@@ -47,3 +47,19 @@ class PeriodoAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'fecha_inicio', 'fecha_fin', 'estado')
     list_filter = ('estado',)
     search_fields = ('nombre',)
+
+
+@admin.register(Reconocimiento)
+class ReconocimientoAdmin(admin.ModelAdmin):
+    """Versión 2.0: felicitaciones (+10) y reclamos (−20) registrados por el Delegado."""
+    list_display = ('fecha', 'tipo', 'funcionario', 'periodo', 'respaldo', 'registrado_por')
+    list_filter = ('tipo', 'periodo', 'respaldo')
+    search_fields = ('funcionario__nombre', 'detalle')
+
+
+@admin.register(Ausencia)
+class AusenciaAdmin(admin.ModelAdmin):
+    """Versión 2.0: ausencias que ajustan la meta esperada en el semáforo."""
+    list_display = ('funcionario', 'tipo', 'desde', 'hasta', 'dias', 'registrado_por')
+    list_filter = ('tipo',)
+    search_fields = ('funcionario__nombre', 'observacion')

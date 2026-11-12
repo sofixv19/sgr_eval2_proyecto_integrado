@@ -9,7 +9,7 @@ from django import forms
 
 from comun.validadores import nombre_repetido, validar_nombre, validar_telefono, validar_texto_minimo
 
-from .models import Delegacion
+from .models import Delegacion, OrganizacionComunitaria
 
 
 class DelegacionForm(forms.ModelForm):
@@ -46,3 +46,50 @@ class DelegacionForm(forms.ModelForm):
 
     def clean_direccion(self):
         return validar_texto_minimo(self.cleaned_data.get('direccion'), minimo=5, campo='dirección')
+
+
+class OrganizacionForm(forms.ModelForm):
+    """Versión 2.0 (RF-039): organizaciones territoriales y funcionales."""
+
+    class Meta:
+        model = OrganizacionComunitaria
+        fields = ['nombre', 'tipo', 'delegacion', 'domicilio', 'socios_activos', 'fecha_constitucion',
+                  'registro_pj', 'activa']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 200}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'delegacion': forms.Select(attrs={'class': 'form-select'}),
+            'domicilio': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 200}),
+            'socios_activos': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'fecha_constitucion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'registro_pj': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30}),
+            'activa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        help_texts = {
+            'tipo': 'Junta de Vecinos = organización territorial. El resto son funcionales: agrupan por un '
+                    'objetivo o interés común, sin importar el territorio exacto donde vive cada socio.',
+        }
+
+    def __init__(self, *args, delegacion=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.delegacion_fija = delegacion
+        if delegacion is not None:
+            # El Delegado registra organizaciones solo de su propia delegación.
+            del self.fields['delegacion']
+        else:
+            self.fields['delegacion'].queryset = Delegacion.objects.filter(activa=True)
+
+    def clean_nombre(self):
+        return validar_texto_minimo(self.cleaned_data.get('nombre'), minimo=3, campo='nombre de la organización')
+
+    def clean(self):
+        datos = super().clean()
+        delegacion = self.delegacion_fija or datos.get('delegacion')
+        nombre = datos.get('nombre')
+        if delegacion and nombre:
+            repetida = OrganizacionComunitaria.objects.filter(delegacion=delegacion, nombre__iexact=nombre)
+            if repetida.exclude(pk=self.instance.pk).exists():
+                self.add_error('nombre', 'Ya existe una organización con ese nombre en esta delegación.')
+        if self.delegacion_fija is not None:
+            self.instance.delegacion = self.delegacion_fija
+        return datos

@@ -57,6 +57,16 @@ class Actividad(models.Model):
         VALIDADA = 'Validada', 'Validada'
         RECHAZADA = 'Rechazada', 'Rechazada'
 
+    # --- Versión 2.0 (Nuevos requerimientos, octubre 2026) ---
+    class TipoGestion(models.TextChoices):
+        REALIZACION = 'Realizacion', 'Realización de la acción (taller, visita, atención, operativo…)'
+        PREVIA = 'Previa', 'Gestión previa (coordinación, correo, invitación, coordinación interna)'
+
+    class TipoSolicitante(models.TextChoices):
+        VECINO = 'Vecino', 'Vecino/a (usuario)'
+        ORGANIZACION = 'Organizacion', 'Organización comunitaria'
+        DELEGADO = 'Delegado', 'El propio Delegado (gestión interna)'
+
     codigo = models.CharField(
         'Código', max_length=20, unique=True, blank=True,
         help_text='Se genera automáticamente con la sigla del área del funcionario (por ejemplo, TR-0001).',
@@ -97,6 +107,30 @@ class Actividad(models.Model):
     )
     telefono_contacto = models.CharField(
         'Teléfono de contacto', max_length=20, blank=True,
+    )
+
+    # --- Versión 2.0: reglas de puntaje (RF-040, RF-041, RF-044) ---
+    tipo_gestion = models.CharField(
+        'Tipo de gestión', max_length=20, choices=TipoGestion.choices, default=TipoGestion.REALIZACION,
+        help_text='Solo la realización de la acción da punto; las gestiones previas no.',
+    )
+    tipo_solicitante = models.CharField(
+        'Quién solicita', max_length=20, choices=TipoSolicitante.choices, default=TipoSolicitante.VECINO,
+        help_text='Si el solicitante es el propio Delegado, la actividad no se contabiliza (otra gestión).',
+    )
+    organizacion = models.ForeignKey(
+        'delegaciones.OrganizacionComunitaria', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='actividades', verbose_name='Organización solicitante',
+    )
+    puntuable = models.BooleanField(
+        'Suma puntaje', default=True, editable=False,
+        help_text='Se calcula al guardar según las reglas de la versión 2.0.',
+    )
+    motivo_sin_puntaje = models.CharField('Motivo por el que no suma', max_length=200, blank=True, editable=False)
+    version_reglas = models.CharField(
+        'Versión de reglas', max_length=5, default='2.0', editable=False,
+        help_text='Versión de los requerimientos vigente al registrar la actividad. '
+                  'Las reglas de puntaje de la 2.0 no se aplican hacia atrás a las actividades 1.x.',
     )
 
     # --- Validación (retroalimentación del profesor Ciceo, Evaluación 1):
@@ -142,7 +176,36 @@ class Actividad(models.Model):
                 numeros.append(int(resto))
         return f'{prefijo}{(max(numeros) + 1) if numeros else 1:04d}'
 
+    # ------------------------------------------------------------ puntaje
+    def motivos_sin_puntaje(self):
+        """Reglas de la versión 2.0 que impiden que la actividad sume puntaje."""
+        motivos = []
+        if self.tipo_gestion == self.TipoGestion.PREVIA:
+            motivos.append('es una gestión previa (solo la realización da punto)')
+        if self.tipo_solicitante == self.TipoSolicitante.DELEGADO:
+            motivos.append('el solicitante es el propio Delegado (otra gestión)')
+        if not (self.contacto or '').strip() or not (self.telefono_contacto or '').strip():
+            motivos.append('falta el nombre o el teléfono del usuario')
+        return motivos
+
+    def actualizar_puntaje(self):
+        if self.version_reglas.startswith('1.'):
+            self.puntuable, self.motivo_sin_puntaje = True, ''
+            return
+        motivos = self.motivos_sin_puntaje()
+        self.puntuable = not motivos
+        self.motivo_sin_puntaje = ('No suma: ' + '; '.join(motivos) + '.')[:200] if motivos else ''
+
+    @property
+    def suma_al_avance(self):
+        """Aporta al cumplimiento: validada por el Delegado y puntuable."""
+        return self.puntuable and self.estado_validacion == self.EstadoValidacion.VALIDADA
+
     def save(self, *args, **kwargs):
+        self.actualizar_puntaje()
+        campos = kwargs.get('update_fields')
+        if campos is not None:
+            kwargs['update_fields'] = list(set(campos) | {'puntuable', 'motivo_sin_puntaje'})
         if not self.codigo:
             sigla = 'AD'
             if self.funcionario_id:

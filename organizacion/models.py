@@ -163,3 +163,92 @@ class MetaProyecto(models.Model):
             return float(str(self.valor_objetivo).replace(',', '.'))
         except ValueError:
             return 0.0
+
+
+# ---------------------------------------------------------------------------
+# Versión 2.0 — Nuevos requerimientos (octubre 2026)
+# ---------------------------------------------------------------------------
+class Reconocimiento(models.Model):
+    """Felicitación o reclamo de un usuario hacia un funcionario (RF-046).
+
+    Lo registra SOLO el Delegado de la delegación y debe tener respaldo
+    formal: una felicitación que llega por mensaje directo al funcionario no
+    es válida. Cada felicitación suma 10 puntos al cumplimiento (máximo 3
+    por período) y cada reclamo resta 20; el total nunca supera el 150 %.
+    """
+
+    class Tipo(models.TextChoices):
+        FELICITACION = 'Felicitacion', 'Felicitación'
+        RECLAMO = 'Reclamo', 'Reclamo'
+
+    class Respaldo(models.TextChoices):
+        CORREO = 'Correo', 'Correo al Delegado'
+        WHATSAPP = 'WhatsApp', 'WhatsApp al Delegado'
+        LIBRO = 'Libro', 'Libro de observaciones de la delegación'
+        CARTA = 'Carta', 'Carta formal / Oficina de Partes'
+
+    funcionario = models.ForeignKey(
+        Funcionario, on_delete=models.CASCADE, related_name='reconocimientos', verbose_name='Funcionario',
+    )
+    periodo = models.ForeignKey(Periodo, on_delete=models.PROTECT, related_name='reconocimientos',
+                                verbose_name='Período de medición')
+    tipo = models.CharField('Tipo', max_length=20, choices=Tipo.choices)
+    fecha = models.DateField('Fecha', default=timezone.localdate)
+    respaldo = models.CharField('Medio de respaldo', max_length=20, choices=Respaldo.choices)
+    detalle = models.TextField('Detalle', help_text='Quién la envía y qué dice (resumen).')
+    registrado_por = models.ForeignKey(
+        Funcionario, on_delete=models.PROTECT, null=True, blank=True, related_name='reconocimientos_registrados',
+        limit_choices_to={'rol': 'Delegado'}, verbose_name='Registrado por (Delegado)',
+    )
+    creado = models.DateTimeField('Fecha de registro', default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = 'Felicitación o reclamo'
+        verbose_name_plural = 'Felicitaciones y reclamos'
+        ordering = ['-fecha', '-creado']
+
+    def __str__(self):
+        return f'{self.get_tipo_display()} · {self.funcionario.nombre} · {self.fecha:%d/%m/%Y}'
+
+
+class Ausencia(models.Model):
+    """Días libres, vacaciones, días administrativos o licencias (RF-047).
+
+    Los ingresa el Delegado y ajustan la meta esperada del funcionario en
+    el semáforo: los días ausentes no cuentan como días disponibles.
+    """
+
+    class Tipo(models.TextChoices):
+        LICENCIA = 'Licencia', 'Licencia médica'
+        VACACIONES = 'Vacaciones', 'Vacaciones'
+        ADMINISTRATIVO = 'Administrativo', 'Día administrativo'
+        LIBRE = 'Libre', 'Día libre / compensatorio'
+
+    funcionario = models.ForeignKey(
+        Funcionario, on_delete=models.CASCADE, related_name='ausencias', verbose_name='Funcionario',
+    )
+    tipo = models.CharField('Tipo de ausencia', max_length=20, choices=Tipo.choices)
+    desde = models.DateField('Desde')
+    hasta = models.DateField('Hasta (inclusive)')
+    observacion = models.CharField('Observación', max_length=200, blank=True)
+    registrado_por = models.ForeignKey(
+        Funcionario, on_delete=models.PROTECT, null=True, blank=True, related_name='ausencias_registradas',
+        limit_choices_to={'rol': 'Delegado'}, verbose_name='Registrado por (Delegado)',
+    )
+
+    class Meta:
+        verbose_name = 'Ausencia'
+        verbose_name_plural = 'Ausencias'
+        ordering = ['-desde']
+
+    def __str__(self):
+        return f'{self.get_tipo_display()} · {self.funcionario.nombre} · {self.desde:%d/%m} al {self.hasta:%d/%m/%Y}'
+
+    @property
+    def dias(self):
+        return (self.hasta - self.desde).days + 1
+
+    def dias_entre(self, inicio, fin):
+        """Días de esta ausencia que caen dentro del rango [inicio, fin]."""
+        desde, hasta = max(self.desde, inicio), min(self.hasta, fin)
+        return max((hasta - desde).days + 1, 0)

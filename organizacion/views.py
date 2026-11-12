@@ -19,13 +19,15 @@ from comun.vistas import (
     MantenedorCrear, MantenedorDetalle, MantenedorEditar, MantenedorEliminar, MantenedorListado,
 )
 from cuentas.perfiles import (
-    COORDINADOR, DELEGADO, filtrar_funcionarios, filtrar_metas, generar_clave, perfil_de, rol_de,
-    sincronizar_cuenta,
+    COORDINADOR, DELEGADO, filtrar_funcionarios, filtrar_metas, filtrar_por_funcionario, generar_clave, perfil_de,
+    rol_de, sincronizar_cuenta,
 )
 from gestion.indicadores import cumplimiento_funcionario
 
-from .forms import CargoFuncionForm, FuncionarioForm, MetaFuncionarioForm, PeriodoForm
-from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
+from .forms import (
+    AusenciaForm, CargoFuncionForm, FuncionarioForm, MetaFuncionarioForm, PeriodoForm, ReconocimientoForm,
+)
+from .models import Ausencia, CargoFuncion, Funcionario, MetaProyecto, Periodo, Reconocimiento
 
 
 # --------------------------------------------------------------------- Cargos
@@ -229,7 +231,8 @@ class MetaListado(MetaConfig, MantenedorListado):
     url_crear, url_editar, url_eliminar = 'organizacion:meta_crear', 'organizacion:meta_editar', 'organizacion:meta_eliminar'
     descripcion = ('El Delegado asigna las metas a los funcionarios de su delegación. El avance de cada meta '
                    'es la cantidad de actividades validadas de esa categoría en el período, y la suma de '
-                   'ponderadores de un funcionario no puede superar 100 %.')
+                   'ponderadores de un funcionario no puede superar 100 %. Versión 2.0: cada ítem llega como '
+                   'máximo a 120 %; pasado eso, más actividades no suben el puntaje.')
 
 
 class MetaCrear(MetaConfig, MantenedorCrear):
@@ -276,3 +279,88 @@ class PeriodoEditar(PeriodoConfig, MantenedorEditar):
 
 class PeriodoEliminar(PeriodoConfig, MantenedorEliminar):
     advertencia = 'Si el período tiene metas asociadas no se podrá eliminar.'
+
+
+# ------------------------------------- Versión 2.0: felicitaciones y ausencias
+class _RegistroDelEquipoConfig:
+    """Felicitaciones/reclamos y ausencias: las registra el Delegado para los
+    funcionarios de su delegación (Nuevos requerimientos, reglas 8 y 9)."""
+
+    def get_queryset(self):
+        return filtrar_por_funcionario(self.request.user, super().get_queryset().select_related(
+            'funcionario', 'funcionario__delegacion', 'registrado_por'))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.get_form_class() is self.form_class:
+            kwargs['funcionarios'] = filtrar_funcionarios(self.request.user, Funcionario.objects.all())
+        return kwargs
+
+    def form_valid(self, form):
+        if rol_de(self.request.user) == DELEGADO:
+            form.instance.registrado_por = perfil_de(self.request.user)
+        return super().form_valid(form)
+
+
+class ReconocimientoConfig(_RegistroDelEquipoConfig):
+    model = Reconocimiento
+    form_class = ReconocimientoForm
+    nombre_singular = 'felicitación o reclamo'
+    nombre_plural = 'felicitaciones y reclamos'
+    url_listado = 'organizacion:reconocimientos'
+
+
+class ReconocimientoListado(ReconocimientoConfig, MantenedorListado):
+    campos_busqueda = ('funcionario__nombre', 'detalle')
+    columnas = (('Fecha', 'fecha'), ('Tipo', 'tipo'), ('Funcionario', 'funcionario.nombre'),
+                ('Delegación', 'funcionario.delegacion'), ('Respaldo', 'respaldo'),
+                ('Registrado por', 'registrado_por.nombre'))
+    url_crear, url_editar, url_eliminar = (
+        'organizacion:reconocimiento_crear', 'organizacion:reconocimiento_editar',
+        'organizacion:reconocimiento_eliminar')
+    descripcion = ('Versión 2.0: cada felicitación suma 10 puntos al cumplimiento del funcionario (máximo 3 por '
+                   'período) y cada reclamo resta 20. Las registra solo el Delegado, con respaldo formal: '
+                   'una felicitación enviada por mensaje directo al funcionario no es válida.')
+
+
+class ReconocimientoCrear(ReconocimientoConfig, MantenedorCrear):
+    pass
+
+
+class ReconocimientoEditar(ReconocimientoConfig, MantenedorEditar):
+    pass
+
+
+class ReconocimientoEliminar(ReconocimientoConfig, MantenedorEliminar):
+    pass
+
+
+class AusenciaConfig(_RegistroDelEquipoConfig):
+    model = Ausencia
+    form_class = AusenciaForm
+    nombre_singular = 'ausencia'
+    nombre_plural = 'ausencias del equipo'
+    url_listado = 'organizacion:ausencias'
+
+
+class AusenciaListado(AusenciaConfig, MantenedorListado):
+    campos_busqueda = ('funcionario__nombre', 'observacion')
+    columnas = (('Funcionario', 'funcionario.nombre'), ('Tipo', 'tipo'), ('Desde', 'desde'),
+                ('Hasta', 'hasta'), ('Días', 'dias'), ('Registrado por', 'registrado_por.nombre'))
+    url_crear, url_editar, url_eliminar = (
+        'organizacion:ausencia_crear', 'organizacion:ausencia_editar', 'organizacion:ausencia_eliminar')
+    descripcion = ('Versión 2.0: los días libres, vacaciones, días administrativos y licencias los ingresa el '
+                   'Delegado. Esos días se descuentan del período y así se ajusta la meta esperada del '
+                   'funcionario en el semáforo.')
+
+
+class AusenciaCrear(AusenciaConfig, MantenedorCrear):
+    pass
+
+
+class AusenciaEditar(AusenciaConfig, MantenedorEditar):
+    pass
+
+
+class AusenciaEliminar(AusenciaConfig, MantenedorEliminar):
+    pass

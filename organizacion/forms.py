@@ -3,6 +3,7 @@ Formularios de los mantenedores de la app 'organizacion' (tablas maestras
 Cargo, Funcionario y Meta), con sus validaciones y reglas de negocio.
 """
 from django import forms
+from django.conf import settings
 from django.db.models import Sum
 
 from comun.validadores import nombre_repetido, normalizar_rut, validar_nombre, validar_texto_minimo
@@ -10,7 +11,7 @@ from comun.validadores import nombre_repetido, normalizar_rut, validar_nombre, v
 from delegaciones.models import Delegacion
 from gestion.models import Categoria
 
-from .models import CargoFuncion, Funcionario, MetaProyecto, Periodo
+from .models import Ausencia, CargoFuncion, Funcionario, MetaProyecto, Periodo, Reconocimiento
 
 UNIDADES = [
     ('Porcentaje', 'Porcentaje'),
@@ -319,3 +320,85 @@ class MetaFuncionarioForm(forms.ModelForm):
         if commit:
             meta.save()
         return meta
+
+
+# ---------------------------------------------------------------------------
+# Versión 2.0 — Felicitaciones/reclamos y ausencias (las registra el Delegado)
+# ---------------------------------------------------------------------------
+class _FormDelEquipo(forms.ModelForm):
+    """Formulario cuyo funcionario se elige solo entre el equipo del Delegado."""
+
+    def __init__(self, *args, funcionarios=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        consulta = funcionarios if funcionarios is not None else Funcionario.objects.all()
+        self.fields['funcionario'].queryset = consulta.filter(rol='Funcionario', activo=True).select_related('delegacion')
+        self.fields['funcionario'].label_from_instance = lambda f: f'{f.nombre} · {f.delegacion}'
+
+
+class ReconocimientoForm(_FormDelEquipo):
+    class Meta:
+        model = Reconocimiento
+        fields = ['funcionario', 'periodo', 'tipo', 'fecha', 'respaldo', 'detalle']
+        widgets = {
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
+            'periodo': forms.Select(attrs={'class': 'form-select'}),
+            'tipo': forms.RadioSelect(attrs={'class': 'form-check-input'}),
+            'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'respaldo': forms.Select(attrs={'class': 'form-select'}),
+            'detalle': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        help_texts = {
+            'respaldo': 'Debe llegar al Delegado o a la delegación con respaldo formal. '
+                        'Un mensaje directo al funcionario no es válido.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tipo'].choices = Reconocimiento.Tipo.choices   # sin la opción vacía "---------"
+        if not self.instance.pk and not self.initial.get('periodo'):
+            vigente = Periodo.objects.filter(estado=Periodo.Estado.ABIERTO).first()
+            if vigente:
+                self.initial['periodo'] = vigente.pk
+
+    def clean_detalle(self):
+        return validar_texto_minimo(self.cleaned_data.get('detalle'), minimo=10, campo='detalle')
+
+    def clean(self):
+        datos = super().clean()
+        periodo, fecha = datos.get('periodo'), datos.get('fecha')
+        if periodo and fecha and not (periodo.fecha_inicio <= fecha <= periodo.fecha_fin):
+            self.add_error('fecha', f'La fecha debe estar dentro del período {periodo} '
+                                    f'({periodo.fecha_inicio:%d/%m/%Y} al {periodo.fecha_fin:%d/%m/%Y}).')
+        if (datos.get('tipo') == Reconocimiento.Tipo.FELICITACION and datos.get('funcionario') and periodo):
+            maximo = getattr(settings, 'SGR_MAX_FELICITACIONES', 3)
+            otras = Reconocimiento.objects.filter(funcionario=datos['funcionario'], periodo=periodo,
+                                                  tipo=Reconocimiento.Tipo.FELICITACION).exclude(pk=self.instance.pk)
+            if otras.count() >= maximo:
+                raise forms.ValidationError(
+                    f'{datos["funcionario"].nombre} ya tiene {maximo} felicitaciones en {periodo}, '
+                    'que es el máximo que suma puntaje.')
+        return datos
+
+
+class AusenciaForm(_FormDelEquipo):
+    class Meta:
+        model = Ausencia
+        fields = ['funcionario', 'tipo', 'desde', 'hasta', 'observacion']
+        widgets = {
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'desde': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'hasta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'observacion': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 200}),
+        }
+
+    def clean(self):
+        datos = super().clean()
+        desde, hasta, funcionario = datos.get('desde'), datos.get('hasta'), datos.get('funcionario')
+        if desde and hasta and hasta < desde:
+            self.add_error('hasta', 'La fecha de término no puede ser anterior a la de inicio.')
+        elif desde and hasta and funcionario:
+            cruce = Ausencia.objects.filter(funcionario=funcionario, desde__lte=hasta, hasta__gte=desde)
+            if cruce.exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError('Ese funcionario ya tiene una ausencia registrada en esas fechas.')
+        return datos

@@ -92,6 +92,24 @@
             {% endif %}
         </div>
     </div>
+    <div class="deleg-detalle-item deleg-detalle-full">
+        <svg class="deleg-dato-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="m12 2 3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21.1l1.4-7L2 9.3l7-.8L12 2Z" fill="currentColor"/></svg>
+        <div>
+            <span class="deleg-detalle-label">Puntaje <span class="badge-version">reglas v{{ actividad.version_reglas }}</span></span>
+            <p class="mb-0">
+                {% if actividad.puntuable %}
+                <span class="dash-pill dash-pill-verde dash-pill-chica">Suma puntaje</span>
+                <span class="text-muted small ms-1">{% if actividad.estado_validacion == "Validada" %}Ya cuenta en el avance de su meta.{% else %}Contará cuando el Delegado la valide.{% endif %}</span>
+                {% else %}
+                <span class="dash-pill dash-pill-gris dash-pill-chica">No suma puntaje</span>
+                <span class="text-muted small ms-1">{{ actividad.motivo_sin_puntaje }}</span>
+                {% endif %}
+            </p>
+            <p class="small text-muted mb-0 mt-1">
+                {{ actividad.get_tipo_gestion_display }} &middot; Solicita: {{ actividad.get_tipo_solicitante_display }}{% if actividad.organizacion %} ({{ actividad.organizacion }}){% endif %}
+            </p>
+        </div>
+    </div>
     <div class="deleg-detalle-item">
         <div>
             <span class="deleg-detalle-label">Registrada el</span>

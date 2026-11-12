@@ -192,6 +192,23 @@ necesitas.)
 
 ---
 
+## Paso 11 — Actualizar a una versión nueva (por ejemplo, de 1.x a 2.0)
+
+En la instancia en uso (EC2 con MariaDB y el servicio `sgr`), se sube el zip de la versión y se ejecuta:
+
+```bash
+unzip -o sgr_evaluacion_fusionado_v2.0.zip
+cd sgr_evaluacion_fusionado && source venv/bin/activate
+python manage.py migrate                       # tablas y campos nuevos de la versión
+python manage.py configurar_roles              # permisos nuevos por rol
+python manage.py cargar_datos_iniciales        # (opcional) datos de ejemplo nuevos
+python manage.py collectstatic --noinput       # estilos nuevos
+sudo systemctl restart sgr
+python manage.py test                          # en la 2.0 deben pasar 156 pruebas
+```
+
+El número de versión aparece en el pie de la página (por ejemplo, `v2.0.0`). Así se comprueba que el servidor quedó actualizado.
+
 ## Errores comunes
 
 | Error | Causa probable | Solución |

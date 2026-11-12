@@ -92,6 +92,23 @@ def filtrar_funcionarios(usuario, consulta):
     return consulta.none()
 
 
+def filtrar_organizaciones(usuario, consulta):
+    """Organizaciones comunitarias (v2.0): cada delegación ve las de su territorio."""
+    rol = rol_de(usuario)
+    if rol in (ADMINISTRADOR, COORDINADOR, VERIFICADOR):
+        return consulta
+    perfil = perfil_de(usuario)
+    if perfil:
+        return consulta.filter(delegacion_id=perfil.delegacion_id)
+    return consulta.none()
+
+
+def filtrar_por_funcionario(usuario, consulta):
+    """Registros ligados a un funcionario (metas, felicitaciones, ausencias):
+    el Delegado ve los de su delegación y el Funcionario solo los suyos."""
+    return filtrar_metas(usuario, consulta)
+
+
 def filtrar_metas(usuario, consulta):
     rol = rol_de(usuario)
     if rol in (ADMINISTRADOR, COORDINADOR, VERIFICADOR):

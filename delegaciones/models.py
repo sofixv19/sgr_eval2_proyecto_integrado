@@ -55,3 +55,56 @@ class Delegacion(models.Model):
     def delegado(self):
         """Funcionario con rol Delegado activo asignado a esta delegación."""
         return self.funcionarios.filter(rol='Delegado', activo=True).first()
+
+
+class OrganizacionComunitaria(models.Model):
+    """Organización comunitaria del territorio de una delegación.
+
+    Versión 2.0 (Nuevos requerimientos, octubre 2026 — RF-039): además de
+    las Juntas de Vecinos (organizaciones territoriales, Ley 19.418) se
+    registran las organizaciones funcionales, que agrupan a personas por un
+    objetivo o interés común sin importar el territorio exacto en que viven.
+    Una actividad puede indicar la organización que la solicitó.
+    """
+
+    class Tipo(models.TextChoices):
+        JUNTA_VECINOS = 'JJVV', 'Junta de Vecinos (territorial)'
+        ADULTO_MAYOR = 'ADULTO_MAYOR', 'Club de Adulto Mayor'
+        DEPORTIVA = 'DEPORTIVA', 'Organización Deportiva'
+        CENTRO_MADRES = 'CENTRO_MADRES', 'Centro de Madres'
+        CENTRO_CULTURAL = 'CENTRO_CULTURAL', 'Centro Cultural'
+        JUVENIL = 'JUVENIL', 'Agrupación Juvenil'
+        COMITE_VECINOS = 'COMITE_VECINOS', 'Comité de Vecinos'
+        COMITE_ALLEGADOS = 'COMITE_ALLEGADOS', 'Comité de Allegados'
+        COMITE_SEGURIDAD = 'COMITE_SEGURIDAD', 'Comité de Seguridad'
+        OTRA_FUNCIONAL = 'OTRA', 'Otra organización funcional'
+
+    nombre = models.CharField('Nombre de la organización', max_length=200)
+    tipo = models.CharField('Tipo de organización', max_length=20, choices=Tipo.choices, default=Tipo.JUNTA_VECINOS)
+    delegacion = models.ForeignKey(
+        Delegacion, on_delete=models.PROTECT, related_name='organizaciones', verbose_name='Delegación',
+    )
+    domicilio = models.CharField('Domicilio legal', max_length=200, blank=True)
+    socios_activos = models.PositiveIntegerField('Socios activos', null=True, blank=True)
+    fecha_constitucion = models.DateField('Fecha de constitución', null=True, blank=True)
+    registro_pj = models.CharField('N° registro personalidad jurídica', max_length=30, blank=True)
+    activa = models.BooleanField('Vigente', default=True)
+
+    class Meta:
+        verbose_name = 'Organización comunitaria'
+        verbose_name_plural = 'Organizaciones comunitarias'
+        ordering = ['delegacion__nombre', 'nombre']
+        constraints = [
+            models.UniqueConstraint(fields=['delegacion', 'nombre'], name='organizacion_unica_por_delegacion'),
+        ]
+
+    def __str__(self):
+        return self.nombre
+
+    @property
+    def es_territorial(self):
+        return self.tipo == self.Tipo.JUNTA_VECINOS
+
+    @property
+    def clase(self):
+        return 'Territorial' if self.es_territorial else 'Funcional'

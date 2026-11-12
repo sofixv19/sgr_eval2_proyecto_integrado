@@ -5,6 +5,7 @@ Evaluación Sumativa 2: todas las vistas obtienen la información mediante
 consultas Django ORM contra la base de datos (antes se leía desde
 data/delegaciones.json).
 """
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.db.models import Count, ProtectedError, Q, RestrictedError
@@ -12,18 +13,20 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from comun.vistas import MantenedorCrear, MantenedorEditar, MantenedorEliminar, MantenedorListado
 from cuentas.perfiles import (
-    ADMINISTRADOR, COORDINADOR, DELEGADO, FUNCIONARIO, VERIFICADOR, perfil_de, rol_de,
+    ADMINISTRADOR, COORDINADOR, DELEGADO, FUNCIONARIO, VERIFICADOR, filtrar_organizaciones, perfil_de, rol_de,
 )
 from gestion.indicadores import (
     MENSAJES_SEMAFORO, cumplimiento_delegacion, cumplimiento_funcionario, periodo_vigente, porcentaje_esperado,
     semaforo,
 )
+from gestion.forms import ingresos_de_hoy
 from gestion.models import Actividad
 from gestion.services import grados_donut, resumen_por_estado
 
-from .forms import DelegacionForm
-from .models import Delegacion
+from .forms import DelegacionForm, OrganizacionForm
+from .models import Delegacion, OrganizacionComunitaria
 
 
 def _actividades_por_delegacion():
@@ -76,7 +79,13 @@ def panel_funcionario(request, perfil):
         'total': actividades.count(),
         'validadas': actividades.filter(estado_validacion=Actividad.EstadoValidacion.VALIDADA).count(),
         'pendientes': actividades.filter(estado_validacion=Actividad.EstadoValidacion.PENDIENTE).count(),
+        'ingresos_hoy': ingresos_de_hoy(perfil),
+        'max_ingresos': settings.SGR_MAX_INGRESOS_DIARIOS,
     }
+    resultado = contexto['resultado']
+    if resultado.dias_ausencia:
+        contexto['nota_ausencia'] = (f'Meta esperada ajustada por {resultado.dias_ausencia} '
+                                     f'día{"s" if resultado.dias_ausencia != 1 else ""} de ausencia.')
     return render(request, 'delegaciones/panel_funcionario.html', contexto)
 
 
@@ -303,3 +312,54 @@ def cambiar_estado(request, slug):
     estado = 'activada' if delegacion.activa else 'desactivada'
     messages.success(request, f'Delegación "{delegacion.nombre}" {estado}.')
     return redirect(request.POST.get('volver') or reverse('delegaciones:detalle', args=[delegacion.slug]))
+
+
+# ------------------------------------------------- Organizaciones (v2.0)
+class OrganizacionConfig:
+    """Mantenedor de organizaciones comunitarias (RF-039, versión 2.0)."""
+
+    model = OrganizacionComunitaria
+    form_class = OrganizacionForm
+    nombre_singular = 'organización comunitaria'
+    nombre_plural = 'organizaciones comunitarias'
+    url_listado = 'delegaciones:organizaciones'
+
+    def get_queryset(self):
+        return filtrar_organizaciones(self.request.user, super().get_queryset().select_related('delegacion'))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if rol_de(self.request.user) == DELEGADO:
+            perfil = perfil_de(self.request.user)
+            kwargs['delegacion'] = perfil.delegacion if perfil else None
+        return kwargs
+
+
+class OrganizacionListado(OrganizacionConfig, MantenedorListado):
+    campos_busqueda = ('nombre', 'domicilio', 'delegacion__nombre')
+    columnas = (('Organización', 'nombre'), ('Tipo', 'tipo'), ('Clase', 'clase'),
+                ('Delegación', 'delegacion'), ('Socios activos', 'socios_activos'), ('Vigente', 'activa'))
+    url_crear, url_editar, url_eliminar = (
+        'delegaciones:organizacion_crear', 'delegaciones:organizacion_editar', 'delegaciones:organizacion_eliminar')
+    descripcion = ('Versión 2.0: además de las Juntas de Vecinos (territoriales) se registran las organizaciones '
+                   'funcionales, como clubes de adulto mayor, organizaciones deportivas, centros de madres, '
+                   'centros culturales, agrupaciones juveniles y comités.')
+
+    def get_queryset(self):
+        consulta = super().get_queryset()
+        tipo = self.request.GET.get('tipo', '')
+        if tipo in OrganizacionComunitaria.Tipo.values:
+            consulta = consulta.filter(tipo=tipo)
+        return consulta
+
+
+class OrganizacionCrear(OrganizacionConfig, MantenedorCrear):
+    pass
+
+
+class OrganizacionEditar(OrganizacionConfig, MantenedorEditar):
+    pass
+
+
+class OrganizacionEliminar(OrganizacionConfig, MantenedorEliminar):
+    advertencia = 'Si la organización tiene actividades asociadas, quedarán sin organización solicitante.'

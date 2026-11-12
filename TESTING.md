@@ -19,7 +19,13 @@ python manage.py test -v 2
 ```
 
 El runner de Django crea una base de datos de prueba aparte (no toca los
-datos reales), la usa para las 41 pruebas, y la destruye al terminar.
+datos reales), la usa para todas las pruebas (156 en la versión 2.0) y la
+destruye al terminar. Para generar la matriz de resultados con el ID de cada
+caso (`resultados_pruebas.csv`):
+
+```powershell
+python plan_pruebas.py
+```
 
 ## Alcance del plan
 
@@ -31,7 +37,43 @@ datos reales), la usa para las 41 pruebas, y la destruye al terminar.
 | Integrales de CRUD real | Crear/editar/eliminar Delegación y Actividad mediante los formularios reales (ya no son marcadores de posición) | `delegaciones/tests.py::DelegacionCrudTests`, `gestion/tests.py::ActividadCrudTests` |
 | Integrales del flujo de validación | El formulario de validación en la vista de detalle: se muestra solo si falta validar, rechaza autovalidación, guarda correctamente cuando el Delegado es válido | `gestion/tests.py::ActividadValidacionVistaTests` |
 
-**Total: 41 pruebas, 4 apps, 0 fallos.**
+**Total en la primera versión de este documento: 41 pruebas, 4 apps, 0 fallos.**
+
+## Pruebas por versión del sistema
+
+| Versión | Casos agregados | Archivo | Total acumulado |
+|---|---|---|---|
+| 1.0.0 | CP-ACC, CP-LOGIN, CP-ROL, CP-DEL, CP-FUN, CP-CAR, CP-MET, CP-PER, CP-ACT, CP-VLD, etc. | `*/tests.py` | 118 |
+| 1.1.0 | CP-PERF-001 a 010, CP-COD-001 a 003, CP-EVI-001 a 005 y CP-CUM-001 a 004 | `gestion/tests_roles.py` | 140 |
+| **2.0.0** | **CP-V2-001 a CP-V2-016** | `gestion/tests_v2.py` | **156** |
+
+En la versión 2.0 se **actualizaron** dos casos de la 1.x porque su regla cambió:
+
+- **CP-CUM-002**: el tope por ítem pasa de 150 % a 120 % (RF-045).
+- **CP-COD-003**: el plazo de "7 días atrás" pasa a cierre semanal (RF-043).
+
+### Casos de la versión 2.0
+
+| Caso | Requisito | Qué verifica |
+|---|---|---|
+| CP-V2-001 | RF-040 | Solicitante Delegado → no suma puntaje |
+| CP-V2-002 | RF-041 | Sin nombre o teléfono del usuario → no suma; con ambos, sí |
+| CP-V2-003 | RF-044 | Gestión previa validada no aporta al avance |
+| CP-V2-004 | RF-042 | La 8.ª actividad del día se rechaza |
+| CP-V2-005 | RF-043 | Cierre semanal: el lunes se ingresa la semana anterior; el martes, no |
+| CP-V2-006 | RF-039 | Si solicita una organización, hay que elegirla |
+| CP-V2-007 | RF-048 | Actividades con reglas 1.0 conservan su puntaje |
+| CP-V2-008 | RF-045 | Tope de 120 % por ítem |
+| CP-V2-009 | RF-046 | Felicitación +10 y reclamo −20 |
+| CP-V2-010 | RF-046 | Total entre 0 y 150 % |
+| CP-V2-011 | RF-047 | Las ausencias ajustan la meta esperada |
+| CP-V2-012 | RF-046 | Máximo 3 felicitaciones por período |
+| CP-V2-013 | RF-046 | Solo el Delegado registra felicitaciones (403 para el Funcionario) |
+| CP-V2-014 | RF-046/047 | El Delegado solo elige funcionarios de su equipo |
+| CP-V2-015 | RF-047 | Ausencias sin fechas al revés ni cruzadas |
+| CP-V2-016 | RF-039 | Organizaciones por delegación, territoriales y funcionales |
+
+Resultado de la corrida de la versión 2.0: **156 pruebas, 0 fallos** (`resultados_pruebas.csv`). Además, `flake8` reporta 0 observaciones.
 
 ## 2.1.6.14 — Herramientas automatizadas y manuales
 

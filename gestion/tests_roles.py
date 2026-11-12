@@ -69,7 +69,8 @@ class EscenarioBase(TestCase):
 
     def _actividad(self, funcionario, **extra):
         datos = dict(fecha=HOY, categoria=self.categoria, descripcion='Reunión con junta de vecinos',
-                     funcionario=funcionario, delegacion=funcionario.delegacion)
+                     funcionario=funcionario, delegacion=funcionario.delegacion,
+                     contacto='Rosa Pérez', telefono_contacto='+56 9 1234 5678')
         datos.update(extra)
         return Actividad.objects.create(**datos)
 
@@ -197,10 +198,12 @@ class RegistroActividadTests(EscenarioBase):
         self.assertIsNotNone(actividad.fecha_registro)
 
     def test_cp_cod_003_fecha_con_plazo(self):
-        """CP-COD-003: No se aceptan fechas futuras ni más antiguas que el plazo (7 días); dentro del plazo sí."""
+        """CP-COD-003: No se aceptan fechas futuras ni de semanas ya cerradas (v2.0); la semana en curso sí."""
+        from gestion.forms import inicio_ventana_registro
         base = {'categoria': self.categoria.pk, 'descripcion': 'Prueba de fecha'}
-        casos = [(HOY + datetime.timedelta(days=1), False), (HOY - datetime.timedelta(days=8), False),
-                 (HOY - datetime.timedelta(days=7), True), (HOY, True)]
+        inicio = inicio_ventana_registro(HOY)
+        casos = [(HOY + datetime.timedelta(days=1), False), (inicio - datetime.timedelta(days=1), False),
+                 (inicio, True), (HOY, True)]
         for fecha, valida in casos:
             with self.subTest(fecha=fecha):
                 form = ActividadForm(data={**base, 'fecha': fecha.isoformat()}, funcionario=self.ana)
@@ -290,15 +293,15 @@ class CumplimientoTests(EscenarioBase):
         self.assertEqual((resultado.filas[0].avance, resultado.cumplimiento), (2, 50.0))
 
     def test_cp_cum_002_ponderacion_y_tope(self):
-        """CP-CUM-002: Se aplica el ponderador de cada meta y el tope de 150 % por meta."""
+        """CP-CUM-002: Se aplica el ponderador de cada meta y el tope por ítem (v2.0: 120 %, antes 150 %)."""
         otra = Categoria.objects.create(nombre='Seguridad')
         self._meta(self.ana, 2, 60)
         self._meta(self.ana, 4, 40, categoria=otra)
-        self._validadas(self.ana, 5)            # 250 % -> tope 150 %
+        self._validadas(self.ana, 5)            # 250 % -> tope 120 %
         self._validadas(self.ana, 1, categoria=otra)  # 25 %
         resultado = cumplimiento_funcionario(self.ana, self.periodo)
-        self.assertEqual([f.cumplimiento for f in resultado.filas], [150.0, 25.0])
-        self.assertEqual(resultado.cumplimiento, 100.0)  # 60*150/100 + 40*25/100
+        self.assertEqual([f.cumplimiento for f in resultado.filas], [120.0, 25.0])
+        self.assertEqual(resultado.cumplimiento, 82.0)  # 60*120/100 + 40*25/100
 
     def test_cp_cum_003_semaforo(self):
         """CP-CUM-003: Semáforo: verde si alcanza lo esperado, ámbar desde 60 % de lo esperado y rojo bajo eso."""

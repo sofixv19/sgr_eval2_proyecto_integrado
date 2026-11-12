@@ -233,3 +233,61 @@ eso, relación por relación:
   una referencia permanente.
 - **▷ Herencia (triángulo hueco)**: una clase hereda todos los atributos y
   métodos de otra, y además agrega los suyos propios.
+
+## Ampliación de la versión 2.0 (Nuevos requerimientos, octubre 2026)
+
+La versión 2.0 no cambia las 13 clases anteriores. Agrega **3 clases** y algunos atributos a `Actividad`. Detalle de cada requisito en `REQUISITOS_V2.md`.
+
+```mermaid
+classDiagram
+    class OrganizacionComunitaria {
+        +String nombre
+        +String tipo
+        +String domicilio
+        +int sociosActivos
+        +Date fechaConstitucion
+        +String registroPJ
+        +boolean activa
+        +clase() String
+    }
+    class Reconocimiento {
+        +String tipo
+        +Date fecha
+        +String respaldo
+        +String detalle
+    }
+    class Ausencia {
+        +String tipo
+        +Date desde
+        +Date hasta
+        +dias() int
+        +diasEntre(inicio, fin) int
+    }
+    class Actividad {
+        +String tipoGestion
+        +String tipoSolicitante
+        +boolean puntuable
+        +String motivoSinPuntaje
+        +String versionReglas
+        +motivosSinPuntaje() List
+        +sumaAlAvance() boolean
+    }
+
+    Delegacion "1" o-- "0..*" OrganizacionComunitaria : territorio
+    OrganizacionComunitaria "0..1" <-- "0..*" Actividad : solicitada por
+    Funcionario "1" *-- "0..*" Reconocimiento : recibe
+    Periodo "1" --> "0..*" Reconocimiento : vigente en
+    Delegado "1" --> "0..*" Reconocimiento : registra
+    Funcionario "1" *-- "0..*" Ausencia : tiene
+    Delegado "1" --> "0..*" Ausencia : registra
+    GestorIndicadores ..> Reconocimiento : suma/resta puntos
+    GestorIndicadores ..> Ausencia : ajusta esperado
+```
+
+| Relación | Tipo | Justificación |
+|---|---|---|
+| Delegación → OrganizaciónComunitaria | Agregación | La organización existe en el territorio de la delegación, pero tiene vida propia: si se reorganizan las delegaciones, la organización sigue existiendo. En la base de datos es PROTECT. |
+| Actividad → OrganizaciónComunitaria | Asociación opcional (0..1) | Solo algunas actividades las solicita una organización. Si la organización se elimina, la actividad se conserva sin solicitante (SET_NULL). |
+| Funcionario → Reconocimiento / Ausencia | Composición | Una felicitación o una ausencia no tiene sentido sin el funcionario al que pertenece (CASCADE). |
+| Delegado → Reconocimiento / Ausencia | Asociación | El Delegado es quien las registra (`registrado_por`), igual que con la Validación. |
+| GestorIndicadores → Reconocimiento / Ausencia | Dependencia | Los usa para calcular el cumplimiento (+10 / −20) y la meta esperada, pero no los almacena. |

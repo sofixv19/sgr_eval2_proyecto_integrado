@@ -21,6 +21,17 @@ efectivamente implementada y verificada con pruebas automatizadas):
 | `MetaProyecto` | `ítem medible`, `valor objetivo`, `unidad`, `ponderador` | FK → `CargoFuncion` (CASCADE). |
 | `Actividad` | `código` (único), `fecha`, `descripción`, `estado`, `solicitud_problema`, `contacto`, `teléfono_contacto`, **`validado`, `validado_por`, `fecha_validacion`** | FK → `Delegacion` (CASCADE), FK → `Categoria` (PROTECT), FK → `Funcionario` (PROTECT), FK → `Funcionario` como `validado_por` (PROTECT, solo rol Delegado). |
 
+### Cambios del modelo en la versión 2.0 (Nuevos requerimientos, octubre 2026)
+
+| Entidad | Campos clave | Relación |
+|---|---|---|
+| `OrganizacionComunitaria` (**nueva**) | `nombre`, `tipo` (Junta de Vecinos territorial, o funcional: Adulto Mayor, Deportiva, Centro de Madres, Cultural, Juvenil, Comités), `domicilio`, `socios_activos`, `fecha_constitucion`, `registro_pj`, `activa` | FK → `Delegacion` (PROTECT). Nombre único por delegación. |
+| `Reconocimiento` (**nueva**) | `tipo` (Felicitación / Reclamo), `fecha`, `respaldo` (correo, WhatsApp o libro al Delegado, carta), `detalle` | FK → `Funcionario` (CASCADE), FK → `Periodo` (PROTECT), FK → `Funcionario` como `registrado_por` (solo Delegado). |
+| `Ausencia` (**nueva**) | `tipo` (licencia, vacaciones, administrativo, libre), `desde`, `hasta`, `observacion` | FK → `Funcionario` (CASCADE), FK → `Funcionario` como `registrado_por` (solo Delegado). |
+| `Actividad` (campos **nuevos**) | `tipo_gestion` (realización / previa), `tipo_solicitante` (vecino / organización / Delegado), `puntuable`, `motivo_sin_puntaje`, `version_reglas` ("1.0" o "2.0") | FK → `OrganizacionComunitaria` como `organizacion` (SET_NULL, opcional). |
+
+`puntuable` y `motivo_sin_puntaje` no los escribe el usuario: se calculan al guardar con las reglas de la versión indicada en `version_reglas`. Las actividades que ya existían al migrar quedaron como `"1.0"`, así que su puntaje no cambia (ver `REQUISITOS_V2.md`, RF-048).
+
 Las restricciones de borrado (`on_delete`) se eligieron según el
 significado real de cada relación:
 

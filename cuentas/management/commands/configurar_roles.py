@@ -24,8 +24,12 @@ TABLAS_MAESTRAS = [
     ('organizacion', 'funcionario'),
     ('organizacion', 'metaproyecto'),
     ('organizacion', 'periodo'),
+    ('delegaciones', 'organizacioncomunitaria'),   # v2.0
 ]
-TRANSACCIONALES = [('gestion', 'actividad'), ('gestion', 'evidencia')]
+TRANSACCIONALES = [
+    ('gestion', 'actividad'), ('gestion', 'evidencia'),
+    ('organizacion', 'reconocimiento'), ('organizacion', 'ausencia'),   # v2.0
+]
 TODAS = TABLAS_MAESTRAS + TRANSACCIONALES
 
 # Acciones permitidas por grupo y tabla (view/add/change/delete, más el
@@ -51,6 +55,9 @@ GRUPOS = {
         ('gestion', 'categoria'): ['view'],
         ('gestion', 'actividad'): ['view'],
         ('gestion', 'evidencia'): ['view'],
+        ('delegaciones', 'organizacioncomunitaria'): ['view', 'add', 'change'],
+        ('organizacion', 'reconocimiento'): ['view'],
+        ('organizacion', 'ausencia'): ['view'],
     },
     'Delegado': {
         ('delegaciones', 'delegacion'): ['view'],
@@ -61,11 +68,18 @@ GRUPOS = {
         ('gestion', 'categoria'): ['view'],
         ('gestion', 'actividad'): ['view', 'validar'],
         ('gestion', 'evidencia'): ['view'],
+        # v2.0: organizaciones de su territorio, felicitaciones/reclamos y ausencias de su equipo
+        ('delegaciones', 'organizacioncomunitaria'): ['view', 'add', 'change'],
+        ('organizacion', 'reconocimiento'): ['view', 'add', 'change', 'delete'],
+        ('organizacion', 'ausencia'): ['view', 'add', 'change', 'delete'],
     },
     'Funcionario': {
         ('gestion', 'categoria'): ['view'],
         ('gestion', 'actividad'): ['view', 'add', 'change', 'delete'],
         ('gestion', 'evidencia'): ['view', 'add'],
+        ('delegaciones', 'organizacioncomunitaria'): ['view'],
+        ('organizacion', 'reconocimiento'): ['view'],
+        ('organizacion', 'ausencia'): ['view'],
     },
     'Verificador': {t: ['view'] for t in TODAS},
 }
