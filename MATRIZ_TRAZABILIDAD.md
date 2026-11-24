@@ -1,4 +1,4 @@
-# Matriz de trazabilidad — SGR La Serena (versión 2.1)
+# Matriz de trazabilidad — SGR La Serena (versión 3.0)
 
 Es la matriz que exige la Guía SGR (sección 15.1). Cada historia de usuario se relaciona con:
 - el requisito,
@@ -6,7 +6,7 @@ Es la matriz que exige la Guía SGR (sección 15.1). Cada historia de usuario se
 - los casos de prueba automatizados y su resultado,
 - la ruta de la página donde se ve.
 
-Los resultados salen de la corrida real de `python plan_pruebas.py`, guardada en `resultados_pruebas.csv`: **180 casos, 180 aprobados**. Los casos CP-DEM-001 y CP-DEM-002 prueban los datos de demostración, y los CP-SEG-001 a 004 prueban la seguridad (OWASP); ninguno de ellos corresponde a una HU. Los casos marcados con `*` incluyen todos los casos de ese grupo.
+Los resultados salen de la corrida real de `python plan_pruebas.py`, guardada en `resultados_pruebas.csv`: **217 casos, 217 aprobados** (versión 3.0). Los casos CP-DEM-001 y CP-DEM-002 prueban los datos de demostración, y los CP-SEG-001 a 004 prueban la seguridad (OWASP); ninguno de ellos corresponde a una HU. Los casos marcados con `*` incluyen todos los casos de ese grupo.
 
 > **Responsable**: completar con el integrante que presenta cada historia (Sofía Veliz, Elías Medina, Ignacio Sepúlveda o Diego Villalobos). Diego es el responsable de las pruebas CP-PER, CP-MET, CP-ACT y CP-VLD.
 
@@ -14,7 +14,7 @@ Los resultados salen de la corrida real de `python plan_pruebas.py`, guardada en
 |---|---|---|---|---|---|---|---|---|
 | HU-01 | Registro de actividades | P1 | RF-009, RF-010, RF-014, RF-022 | `gestion/forms.py (ActividadForm), gestion/views.py (crear)` | CP-ACT-*, CP-COD-*, CP-V2-001–006 | 21/21 aprobados | Equipo SGR | `/gestion/nueva/` |
 | HU-02 | Registro de compromisos ciudadanos | P1 | RF-016 a RF-021 | `gestion/views_agenda.py, gestion/models.py (Compromiso)` | CP-AGE-001–005 | 5/5 aprobados | Equipo SGR | `/gestion/agenda/` |
-| HU-03 | Registro de servicios entregados (atención social) | P2 | RF-004, RF-015 | ⛔ No implementado (prioridad P2, limitación declarada) | — | — | — | — |
+| HU-03 | Registro de servicios entregados (atención social) | P2 · v3.0 | RF-004, RF-015 | `gestion/forms.py (GestionSocialForm), gestion/views.py (crear_gestion_social), territorio/models.py (TipoAtencion, SubtipoAtencion, Vecino)` | CP-GSO-001–005, CP-COM-008, CP-COM-010 | 7/7 aprobados | Equipo SGR | `/gestion/gestion-social/nueva/` |
 | HU-04 | Funciones por cargo | P1 | RF-003, RF-006, RF-007 | `organizacion/forms.py (CargoFuncionForm, MetaFuncionarioForm)` | CP-CAR-*, CP-ORG-*, CP-MET-* | 22/22 aprobados | Equipo SGR | `/organizacion/cargos/` |
 | HU-05 | Definición de metas | P1 | RF-005 a RF-007 | `organizacion/forms.py (MetaFuncionarioForm, PeriodoForm)` | CP-MET-*, CP-PER-* | 17/17 aprobados | Equipo SGR | `/organizacion/metas/` |
 | HU-06 | Seguimiento de avance | P1 | RF-008, RF-022, RF-023, RF-028 | `delegaciones/views.py (panel_funcionario), gestion/indicadores.py` | CP-CUM-001, CP-PERF-008, CP-ALE-003 | 3/3 aprobados | Equipo SGR | `/` |
@@ -48,6 +48,26 @@ Los resultados salen de la corrida real de `python plan_pruebas.py`, guardada en
 | HU-V2-03 | Felicitaciones y reclamos | 2.0 | RF-046 | `organizacion/models.py (Reconocimiento)` | CP-V2-009, CP-V2-010, CP-V2-012, CP-V2-013 | 4/4 aprobados | Equipo SGR | `/organizacion/felicitaciones/` |
 | HU-V2-04 | Ausencias que ajustan el semáforo | 2.0 | RF-047 | `organizacion/models.py (Ausencia), gestion/indicadores.py` | CP-V2-011, CP-V2-014, CP-V2-015 | 3/3 aprobados | Equipo SGR | `/organizacion/ausencias/` |
 | HU-V2-05 | Organizaciones comunitarias | 2.0 | RF-039 | `delegaciones/models.py (OrganizacionComunitaria)` | CP-V2-006, CP-V2-016 | 2/2 aprobados | Equipo SGR | `/organizaciones/` |
+
+## Requerimientos de la Guía PI Evaluación 3 (alcance funcional mínimo, versión 3.0)
+
+Relaciona cada requerimiento de la guía con la pantalla, la regla de negocio, los casos de prueba y el estado de implementación.
+
+| Requerimiento (Guía Ev. 3) | Pantalla (ruta) | Regla de negocio | Casos de prueba | Estado |
+|---|---|---|---|---|
+| Autenticación, roles y permisos | `/cuentas/ingresar/` y menú por rol | Bloqueo tras 5 intentos; mínimo privilegio por rol; 403 sin permiso | CP-LOGIN-001–010, CP-ACC, CP-ROL, CP-PERF | Implementado |
+| Usuario con contraseña temporal y cambio obligatorio en el primer ingreso | `/organizacion/funcionarios/nuevo/` → `/cuentas/cambiar-clave/` | Toda página redirige al cambio mientras la clave sea temporal | CP-CLA-001–003, CP-CLA-008 | Implementado |
+| Recuperación de contraseña | `/cuentas/recuperar/` | Enlace de un solo uso que vence en 1 hora; no revela si el correo existe | CP-CLA-004–007 | Implementado |
+| CRUD de delegaciones, usuarios, cargos, roles, metas y trimestres | `/delegaciones/`, `/organizacion/funcionarios/`, `/organizacion/cargos/`, `/organizacion/metas/`, `/organizacion/periodos/` | Validaciones en el servidor; no se borra lo que está en uso | CP-DEL, CP-FUN, CP-CAR, CP-MET, CP-PER, CP-ROL | Implementado (roles: grupos fijos administrados con `configurar_roles` y Django Admin) |
+| CRUD de territorios, vecinos, juntas de vecinos (socios y dirigentes), hitos, tipos y subtipos de atención | Menú Comunidad (`/territorio/...`, `/organizaciones/`) | RUT válido y único; un cargo vigente por organización; responsable del hito de la misma delegación | CP-COM-001–009 | Implementado |
+| Registro de actividades, gestiones sociales y evidencias; ingreso opcional al Tubo | `/gestion/nueva/`, `/gestion/gestion-social/nueva/`, ficha `/gestion/<id>/` | Código automático; evidencia JPG/PNG/PDF ≤ 5 MB; casilla "Ingresar al Tubo" | CP-ACT, CP-EVI, CP-COD, CP-GSO-001–005 | Implementado |
+| Metas por funcionario y trimestre, ponderación y tope de 120 % | `/organizacion/metas/`, paneles | Solo cuentan registros aprobados que ponderan; tope por ítem 120 % | CP-MET, CP-CUM-001–004, CP-V2-008–011 | Implementado |
+| Verificación: pendiente, aprobada, rechazada o más antecedentes; lo aprobado no se modifica | Ficha `/gestion/<id>/` (Delegado) | Observación obligatoria al rechazar o pedir antecedentes; nadie valida lo propio | CP-VLD-001–010, CP-VER-001–004 | Implementado |
+| Tubo de seguimiento por delegación y Tubo de cartas | `/gestion/agenda/`, `/gestion/cartas/` | Toda la delegación consulta; cada funcionario modifica lo suyo mientras no esté aprobado | CP-AGE-001–007, CP-TUB-001–004 | Implementado |
+| Dashboard y semáforo con filtros y gráficos | `/gestion/dashboard/`, paneles `/` | Cada rol ve su ámbito; semáforo según lo esperado a la fecha | CP-DAS-001–003, CP-CUM-003 | Implementado |
+| Códigos y fechas automáticos, autocompletar, búsqueda dinámica, filtros por funcionario, fechas y estado | Formularios de registro, Tubo, listado | Autocompletar por RUT o nombre del vecino; búsqueda al escribir por código, RUT o nombre | CP-COD, CP-COM-010, CP-TUB-005, CP-GSO-004, CP-FIL-001 | Implementado |
+| Reglas del cliente (delegado no contabiliza, sin nombre y teléfono no puntúa, 7 diarias, cierre semanal, previas no ponderan, felicitaciones, ausencias) | Formulario de registro, ficha, Felicitaciones, Ausencias | RF-039 a RF-048 | CP-V2-001–016 | Implementado |
+| Respaldo y recuperación | Comandos `respaldar` y `restaurar` | Recuperar exige `--confirmar` | CP-RES-001–002 | Implementado |
 
 ## Limitaciones declaradas
 

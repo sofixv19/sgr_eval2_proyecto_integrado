@@ -80,3 +80,19 @@ por pruebas automatizadas reales (ver `TESTING.md`).
 | Control de versiones | Git / GitHub | Historial de commits del proyecto; necesario para que el equipo trabaje en paralelo. |
 | Despliegue objetivo | AWS EC2 (Ubuntu) | Instancia en la nube requerida por la Evaluación 2 del ramo de Programación Back End. |
 | Diagramado técnico | Mermaid (diagramas de clases, flujos) | Permite versionar los diagramas como texto junto al código, y regenerarlos cuando el modelo cambia (ver `DIAGRAMA_CLASES.md`). |
+
+
+## Versión 3.0 — módulos y rutas principales
+
+| App (módulo) | Responsabilidad | Rutas principales |
+|---|---|---|
+| `cuentas` | Inicio de sesión, bloqueo, roles, contraseña temporal y recuperación | `/cuentas/ingresar/`, `/cuentas/cambiar-clave/`, `/cuentas/recuperar/`, `/cuentas/restablecer/<uid>/<token>/` |
+| `delegaciones` | Delegaciones, organizaciones comunitarias (JJVV) y paneles por rol | `/`, `/delegaciones/`, `/organizaciones/` |
+| `organizacion` | Funcionarios, cargos, trimestres, metas, felicitaciones y ausencias | `/organizacion/...` |
+| `gestion` | Actividades, gestiones sociales, evidencias, verificación, Tubo de seguimiento, Tubo de cartas, dashboard y exportación | `/gestion/`, `/gestion/gestion-social/nueva/`, `/gestion/agenda/`, `/gestion/cartas/`, `/gestion/dashboard/` |
+| `territorio` (nueva) | Territorios, vecinos, socios y dirigentes, hitos, tipos y subtipos de atención; autocompletar | `/territorio/...`, `/territorio/vecinos/buscar/` |
+| `comun` | Mantenedores genéricos, validadores, auditoría, respaldo y recuperación | `/auditoria/`, comandos `respaldar` y `restaurar` |
+
+**Estructura del repositorio:** una carpeta por app (modelos, formularios, vistas, plantillas y pruebas), `sgr_evaluacion/` (configuración), `templates/` y `static/` (interfaz, Bootstrap 5, Chart.js y `js/sgr.js`), `docs/` (diagramas y protocolo de pruebas) y los documentos `.md` de la raíz.
+
+**Perfiles de acceso:** Funcionario, Delegado, Coordinador, Administrador y Verificador (ver `SEGURIDAD.md`).

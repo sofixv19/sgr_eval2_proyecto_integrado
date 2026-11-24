@@ -49,7 +49,20 @@ python plan_pruebas.py
 | 2.1.0 | CP-AGE-001 a 007, CP-AUD-001 a 004, CP-EXP-001 y 002, CP-PCE-001, CP-FIL-001, CP-ALE-001 a 003 | `gestion/tests_v21.py` | 174 |
 | 2.1.2 | CP-DEM-001 (reinicio de los datos de demostración) | `gestion/tests_v21.py` | 175 |
 | 2.2.1 | CP-DEM-002 (instalar de nuevo no revierte los nombres cambiados) | `gestion/tests_v21.py` | 176 |
-| **2.2.3** | **CP-SEG-001 a 004** (inyección SQL, XSS, CSRF y control de acceso) | `gestion/tests_seguridad.py` | **180** |
+| 2.2.3 | CP-SEG-001 a 004 (inyección SQL, XSS, CSRF y control de acceso) | `gestion/tests_seguridad.py` | 180 |
+| **3.0.0** | **CP-CLA-001 a 008** (contraseña temporal y recuperación), **CP-VER-001 a 004** (más antecedentes, bloqueo de lo aprobado), **CP-COM-001 a 010** (territorios, vecinos, socios y dirigentes, hitos, tipos de atención, autocompletar), **CP-GSO-001 a 005** (gestiones sociales e ingreso al Tubo), **CP-TUB-001 a 005** (Tubo de cartas y búsqueda dinámica), **CP-DAS-001 a 003** (dashboard), **CP-RES-001 y 002** (respaldo) | `cuentas/tests_v3.py`, `gestion/tests_v3.py`, `territorio/tests.py` | **217** |
+
+El **protocolo de pruebas completo** de la versión 3.0 (cada caso con requerimiento, prioridad, precondiciones, perfil, datos, pasos, resultado esperado y obtenido, responsable, fecha, evidencia, defecto, corrección y reejecución), el **registro de defectos** y los **indicadores** están en `docs/pruebas/Protocolo_Pruebas_SGR_v3.xlsx`.
+
+| Archivo | Contenido |
+|---|---|
+| `docs/pruebas/Protocolo_Pruebas_SGR_v3.xlsx` | Hojas Resumen, Plan, Indicadores, Protocolo (217 automáticas), Protocolo manual (12), Defectos y Ejecuciones |
+| `docs/pruebas/generar_protocolo.py` | Regenera la planilla desde `resultados_pruebas.csv` y `resultados_manuales.json` |
+| `docs/pruebas/protocolo_manual.js` | Ejecuta el protocolo manual en Chromium: `SGR_URL=http://127.0.0.1:8000 SGR_CLAVE_DEMO=<clave demo> node docs/pruebas/protocolo_manual.js` (necesita los datos de demostración) |
+| `docs/pruebas/evidencias/` | Capturas MAN-01 a MAN-12 |
+| `docs/pruebas/ejecuciones/` | Registro de las 4 ejecuciones del protocolo manual y de la suite automática |
+
+Pasos para repetir todo: `python plan_pruebas.py` → `python docs/pruebas/generar_protocolo.py`. Las claves de prueba nuevas se generan al azar en cada corrida y no se guardan.
 
 En la versión 2.0 se **actualizaron** dos casos de la 1.x porque su regla cambió:
 

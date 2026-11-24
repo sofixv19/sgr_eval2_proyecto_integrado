@@ -224,6 +224,22 @@ documentadas (ver `TESTING.md`): por ejemplo
 un Funcionario con actividades asociadas lanza una excepción real contra
 la base de datos.
 
+### Cambios del modelo en la versión 3.0 (Guía PI Evaluación 3)
+
+| Tabla nueva o cambio | Campos y relaciones | Restricciones e índices |
+|---|---|---|
+| `cuentas_estadocuenta` | `usuario` (1:1 auth_user), `debe_cambiar_clave`, `clave_cambiada_en` | PK; FK única |
+| `territorio_territorio` | `nombre`, `delegacion` (FK) | Único (delegación, nombre) |
+| `territorio_vecino` | `rut`, `nombre`, `telefono`, `email`, `direccion`, `delegacion` (FK), `territorio` (FK opcional) | RUT único; índice por nombre |
+| `territorio_membresiaorganizacion` | `vecino` (FK), `organizacion` (FK a organización comunitaria / JJVV), `rol` (Socio/Dirigente), `cargo`, `desde`, `vigente` | Único (vecino, organización); un cargo vigente por organización (validación) |
+| `territorio_hito` | `nombre`, `fecha`, `delegacion` (FK), `territorio` (FK), `responsable` (FK funcionario), `estado` | Índice por fecha |
+| `territorio_tipoatencion` / `territorio_subtipoatencion` | catálogo de dos niveles | Único (tipo, nombre) |
+| `gestion_actividad` (cambios) | `clase` (Actividad / Gestión social), `vecino` (FK), `subtipo_atencion` (FK); nuevo estado "Antecedentes" | Índices (delegación, fecha), (funcionario, fecha), (estado de validación), clase |
+| `gestion_compromiso` (cambio) | `rut_solicitante` | Índice |
+| `gestion_carta` (Tubo de cartas) | `codigo`, `fecha_ingreso`, `delegacion`, `para`, `remite`, `rut_remite`, `telefono_remite`, `tema`, `encargado` (FK), `estado`, `pronunciamiento`, `derivada_a`, `registrada_por` (FK) | Código único; índices por fecha, remitente y RUT |
+
+El **catálogo de metas** (ítems/categorías y cargos) está separado de la **asignación**: `organizacion_metaproyecto` guarda la meta de un funcionario para un trimestre (`periodo`), con su cantidad exigida (`valor_objetivo`) y ponderación propias. No existe una tabla por funcionario: todos los registros apuntan a las mismas tablas mediante claves foráneas.
+
 ## 2.1.4.9 — Bases estructuradas y no estructuradas
 
 El sistema combina dos formas de datos:

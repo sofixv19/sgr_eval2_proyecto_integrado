@@ -217,6 +217,56 @@ Borra todo lo creado probando (actividades, funcionarios, delegaciones extra, et
 
 El número de versión aparece en el pie de la página (por ejemplo, `v2.0.0`). Así se comprueba que el servidor quedó actualizado.
 
+## Paso 12 — Versión 3.0: correo, respaldo y recuperación
+
+### Versiones del entorno
+
+| Componente | Versión |
+|---|---|
+| Sistema operativo (EC2) | Amazon Linux 2023, instancia t3.micro |
+| Python | 3.9 en EC2 · 3.11+ en desarrollo |
+| Django | 4.2 (ver `requirements.txt`) · actualización a 5.2 LTS planificada (INC-07) |
+| Base de datos | MariaDB en EC2 (paquete de Amazon Linux 2023; ver `mysql --version`) · SQLite en desarrollo |
+| Servidor | servicio `systemd` llamado `sgr` (`runserver` en el puerto 8000) + WhiteNoise para los estáticos |
+| Librerías de interfaz | Bootstrap 5 y Chart.js 4.4.4, ambas servidas desde `static/` (sin CDN) |
+
+### Actualizar a la 3.0
+
+Igual que el Paso 11. La 3.0 trae migraciones nuevas (`cuentas`, `territorio`, `gestion`, `comun`, `organizacion`), permisos nuevos (`configurar_roles`) y datos de ejemplo de comunidad (`cargar_datos_iniciales`). Deben pasar **217 pruebas**.
+
+### Configurar el correo (recuperar contraseña)
+
+Por defecto, los correos de recuperación **no se envían**: se guardan como archivos en `logs/correos/`. Sirve para probar sin un servidor de correo:
+
+```bash
+ls logs/correos/          # un archivo .log por correo
+cat logs/correos/*.log    # ahí está el enlace para restablecer la contraseña
+```
+
+Para enviarlos de verdad, se agregan al `.env` del servidor las variables `EMAIL_*` indicadas en `.env.example` (por ejemplo, Gmail con una contraseña de aplicación) y se reinicia el servicio. **La contraseña del correo va solo en el `.env` del servidor, nunca en GitHub.**
+
+### Respaldo y recuperación
+
+```bash
+python manage.py respaldar                       # crea respaldos/sgr_AAAAMMDD_HHMMSS.zip (datos + evidencias)
+```
+
+El `.zip` se copia fuera del servidor (por ejemplo con `scp` al PC del equipo). Además, en MariaDB se puede respaldar la base completa con:
+
+```bash
+mysqldump -u sgr_user -p sgr_evaluacion > respaldos/sgr_$(date +%Y%m%d).sql
+```
+
+Para **recuperar** en una base nueva:
+
+```bash
+python manage.py migrate
+python manage.py restaurar respaldos/sgr_AAAAMMDD_HHMMSS.zip --confirmar
+python manage.py configurar_roles
+```
+
+Recomendación: un respaldo semanal y antes de cada actualización. Las incidencias de configuración resueltas están en [`INCIDENCIAS.md`](INCIDENCIAS.md).
+
 ## Errores comunes
 
 | Error | Causa probable | Solución |
