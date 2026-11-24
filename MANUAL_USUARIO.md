@@ -1,4 +1,4 @@
-# Manual breve de usuario — SGR La Serena (versión 2.2)
+# Manual breve de usuario — SGR La Serena (versión 3.0)
 
 **Dirección:** http://184.194.243.125:8000 (Firefox, Edge o Chrome).
 
@@ -114,3 +114,27 @@ En **Actividades**, **Agenda** y **Panel de coordinación** hay botones *Exporta
 | 🔴 Rojo | El avance está bajo el 60 % de lo esperado |
 
 En la agenda, el **amarillo** marca los compromisos que vencen en 3 días o menos, y el **rojo** los vencidos sin realizar.
+
+
+## 7. Novedades de la versión 3.0
+
+**Todos los roles**
+- **Primer ingreso:** si le entregaron una contraseña temporal, el sistema le pide cambiarla antes de continuar.
+- **¿Olvidó su contraseña?** En la pantalla de ingreso escriba su correo; recibirá un enlace que sirve una vez y vence en una hora.
+- **Dashboard** (menú superior): gráficos de cumplimiento, tendencia semanal, carga de trabajo y estado del Tubo. Use los filtros de trimestre, funcionario, verificación y fechas, y presione *Aplicar*.
+- **Tubo** (menú): *Tubo de seguimiento* (compromisos) y *Tubo de cartas*. Escriba en el buscador y la lista se filtra mientras escribe (código, RUT o nombre).
+
+**Funcionario**
+- **Registrar → Gestión social:** busque al vecino por RUT o nombre (se completan su nombre y teléfono), elija el tipo y subtipo de atención y describa la atención. Marque *Ingresar también al Tubo* si necesita hacerle seguimiento.
+- Si el Delegado le pide **más antecedentes**, abra la ficha, lea la observación y suba lo que falta: el registro vuelve a "Pendiente".
+- Un registro **aprobado** ya no se puede modificar.
+- **Comunidad → Vecinos:** registre una vez a cada vecino (RUT, nombre y teléfono) para reutilizarlo.
+
+**Delegado**
+- Al revisar un registro puede **Aprobar**, **Rechazar** o **Solicitar más antecedentes** (las dos últimas con observación).
+- **Comunidad:** territorios, vecinos, socios y dirigentes de las juntas de vecinos e hitos con su responsable.
+- **Tubo de cartas:** solo el Delegado deja una carta *Aprobada* o *Finalizada*.
+
+**Coordinador**
+- **Comunidad → Territorios, Tipos y Subtipos de atención:** mantiene los catálogos comunales.
+- En el **Dashboard** compara el cumplimiento de las delegaciones.

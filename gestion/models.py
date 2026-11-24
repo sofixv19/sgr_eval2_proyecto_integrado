@@ -56,6 +56,7 @@ class Actividad(models.Model):
         PENDIENTE = 'Pendiente', 'Pendiente de validación'
         VALIDADA = 'Validada', 'Validada'
         RECHAZADA = 'Rechazada', 'Rechazada'
+        ANTECEDENTES = 'Antecedentes', 'Se solicitan más antecedentes'   # v3.0
 
     # --- Versión 2.0 (Nuevos requerimientos, octubre 2026) ---
     class TipoGestion(models.TextChoices):
@@ -67,6 +68,23 @@ class Actividad(models.Model):
         ORGANIZACION = 'Organizacion', 'Organización comunitaria'
         DELEGADO = 'Delegado', 'El propio Delegado (gestión interna)'
 
+    # --- Versión 3.0 (Guía PI Ev. 3): la gestión social es un registro con el
+    # mismo flujo de la actividad (código, evidencia, verificación y metas),
+    # pero ligado a un vecino y a un tipo/subtipo de atención social. ---
+    class Clase(models.TextChoices):
+        ACTIVIDAD = 'Actividad', 'Actividad'
+        SOCIAL = 'Social', 'Gestión social'
+
+    clase = models.CharField('Clase de registro', max_length=10, choices=Clase.choices, default=Clase.ACTIVIDAD,
+                             db_index=True)
+    vecino = models.ForeignKey(
+        'territorio.Vecino', on_delete=models.PROTECT, null=True, blank=True, related_name='registros',
+        verbose_name='Vecino/a', help_text='Si el vecino ya está registrado, sus datos se completan solos.',
+    )
+    subtipo_atencion = models.ForeignKey(
+        'territorio.SubtipoAtencion', on_delete=models.PROTECT, null=True, blank=True, related_name='gestiones',
+        verbose_name='Tipo y subtipo de atención',
+    )
     codigo = models.CharField(
         'Código', max_length=20, unique=True, blank=True,
         help_text='Se genera automáticamente con la sigla del área del funcionario (por ejemplo, TR-0001).',
@@ -167,6 +185,11 @@ class Actividad(models.Model):
         verbose_name_plural = 'Actividades'
         ordering = ['-fecha', 'codigo']
         permissions = [('validar_actividad', 'Puede validar o rechazar actividades de su delegación')]
+        indexes = [   # v3.0: búsquedas y filtros frecuentes (listado, Tubo y dashboard)
+            models.Index(fields=['delegacion', 'fecha'], name='actividad_deleg_fecha_idx'),
+            models.Index(fields=['funcionario', 'fecha'], name='actividad_func_fecha_idx'),
+            models.Index(fields=['estado_validacion'], name='actividad_validacion_idx'),
+        ]
 
     # ------------------------------------------------------------ código
     @staticmethod
@@ -207,13 +230,19 @@ class Actividad(models.Model):
         return self.puntuable and self.estado_validacion == self.EstadoValidacion.VALIDADA
 
     def save(self, *args, **kwargs):
+        if self.vecino_id and not (self.contacto or '').strip():
+            self.contacto = self.vecino.nombre[:100]
+        if self.vecino_id and not (self.telefono_contacto or '').strip():
+            self.telefono_contacto = self.vecino.telefono
         self.actualizar_puntaje()
         campos = kwargs.get('update_fields')
         if campos is not None:
             kwargs['update_fields'] = list(set(campos) | {'puntuable', 'motivo_sin_puntaje'})
         if not self.codigo:
             sigla = 'AD'
-            if self.funcionario_id:
+            if self.clase == self.Clase.SOCIAL:
+                sigla = 'GS'
+            elif self.funcionario_id:
                 sigla = self.funcionario.cargo.area or 'AD'
             with transaction.atomic():
                 self.codigo = self.siguiente_codigo(sigla)
@@ -273,6 +302,34 @@ class Actividad(models.Model):
         self.observacion_validacion = observacion.strip()
         self.save(update_fields=['validado', 'validado_por', 'fecha_validacion',
                                  'estado_validacion', 'observacion_validacion'])
+
+    def solicitar_antecedentes(self, delegado, observacion):
+        """v3.0 (Guía PI Ev. 3): el Delegado pide más antecedentes en vez de
+        aprobar o rechazar. El funcionario completa y vuelve a quedar pendiente."""
+        if delegado.rol != 'Delegado':
+            raise ValueError('Solo un Funcionario con rol "Delegado" puede revisar una actividad.')
+        if delegado.id == self.funcionario_id:
+            raise ValueError('El Funcionario que registró la actividad no puede revisarla él mismo.')
+        if not (observacion or '').strip():
+            raise ValueError('Indique qué antecedentes faltan.')
+        self.validado = False
+        self.validado_por = delegado
+        self.fecha_validacion = timezone.now()
+        self.estado_validacion = self.EstadoValidacion.ANTECEDENTES
+        self.observacion_validacion = observacion.strip()
+        self.save(update_fields=['validado', 'validado_por', 'fecha_validacion',
+                                 'estado_validacion', 'observacion_validacion'])
+
+    def volver_a_pendiente(self):
+        """Tras corregir una actividad rechazada o completar antecedentes,
+        queda otra vez pendiente de revisión."""
+        if self.estado_validacion in (self.EstadoValidacion.RECHAZADA, self.EstadoValidacion.ANTECEDENTES):
+            self.estado_validacion = self.EstadoValidacion.PENDIENTE
+            self.save(update_fields=['estado_validacion'])
+
+    @property
+    def aprobada(self):
+        return self.estado_validacion == self.EstadoValidacion.VALIDADA
 
     @property
     def periodo_cerrado(self):
@@ -365,6 +422,8 @@ class Compromiso(models.Model):
                                    verbose_name='Delegación')
     origen = models.CharField('Origen', max_length=3, choices=Origen.choices, default=Origen.EXTERNO)
     solicitante = models.CharField('Solicitante', max_length=150)
+    rut_solicitante = models.CharField(   # v3.0: búsqueda en el Tubo por RUT
+        'RUT del solicitante', max_length=12, blank=True, db_index=True)
     organizacion = models.ForeignKey(
         'delegaciones.OrganizacionComunitaria', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='compromisos', verbose_name='Organización solicitante',
@@ -501,3 +560,57 @@ class CambioCompromiso(models.Model):
 
     def __str__(self):
         return f'{self.compromiso.codigo}: {self.campo} {self.valor_anterior} → {self.valor_nuevo}'
+
+
+class Carta(models.Model):
+    """v3.0 (Guía PI Ev. 3): Tubo de cartas. Seguimiento de las cartas que
+    llegan a la delegación (pestaña TUBO CARTAS de la matriz del cliente)."""
+
+    class Estado(models.TextChoices):
+        EN_PROCESO = 'En proceso', 'En proceso'
+        APROBADA = 'Aprobada', 'Aprobada'
+        FINALIZADA = 'Finalizada', 'Finalizada'
+        NO_APLICA = 'No aplica', 'No aplica'
+
+    CERRADOS = (Estado.APROBADA, Estado.FINALIZADA)
+
+    codigo = models.CharField('N.º', max_length=10, unique=True, blank=True)
+    fecha_ingreso = models.DateField('Fecha de ingreso', default=timezone.localdate, db_index=True)
+    delegacion = models.ForeignKey(Delegacion, on_delete=models.PROTECT, related_name='cartas',
+                                   verbose_name='Delegación')
+    para = models.CharField('Dirigida a', max_length=150)
+    remite = models.CharField('Remitente', max_length=150, db_index=True)
+    rut_remite = models.CharField('RUT del remitente', max_length=12, blank=True, db_index=True)
+    telefono_remite = models.CharField('Teléfono del remitente', max_length=20, blank=True)
+    tema = models.TextField('Tema')
+    encargado = models.ForeignKey(Funcionario, on_delete=models.PROTECT, related_name='cartas_a_cargo',
+                                  verbose_name='Encargado/a')
+    estado = models.CharField('Estado', max_length=12, choices=Estado.choices, default=Estado.EN_PROCESO)
+    pronunciamiento = models.TextField('Pronunciamiento / respuesta', blank=True)
+    derivada_a = models.CharField('Derivada a', max_length=150, blank=True)
+    registrada_por = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='cartas_registradas', verbose_name='Registrada por')
+
+    class Meta:
+        verbose_name = 'Carta'
+        verbose_name_plural = 'Tubo de cartas'
+        ordering = ['-fecha_ingreso', '-codigo']
+
+    def __str__(self):
+        return f'{self.codigo} · {self.remite}'
+
+    def save(self, *args, **kwargs):
+        if self.rut_remite:
+            from comun.validadores import normalizar_rut
+            self.rut_remite = normalizar_rut(self.rut_remite)
+        if not self.codigo:
+            with transaction.atomic():
+                numeros = [int(c[3:]) for c in Carta.objects.filter(codigo__startswith='TC-')
+                           .values_list('codigo', flat=True) if c[3:].isdigit()]
+                self.codigo = f'TC-{(max(numeros) + 1) if numeros else 1:04d}'
+                return super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
+
+    @property
+    def cerrada(self):
+        return self.estado in self.CERRADOS

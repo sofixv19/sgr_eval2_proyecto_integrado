@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Cambiar contraseña{% endblock %}
+{% block contenido %}
+<div class="form-card mx-auto mt-2" style="max-width: 520px;">
+    <h1 class="h4 mb-2">Cambiar contraseña</h1>
+    {% if obligatorio %}
+    <div class="alert alert-warning small" role="alert">Está usando una <strong>contraseña temporal</strong>. Por seguridad, debe cambiarla antes de continuar.</div>
+    {% endif %}
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "cuentas/_form_campos.html" %}
+        <button type="submit" class="btn btn-institucional w-100">Guardar nueva contraseña</button>
+    </form>
+    {% if obligatorio %}
+    <form method="post" action="{% url 'cuentas:logout' %}" class="mt-2">{% csrf_token %}<button class="btn btn-link btn-sm w-100">Cerrar sesión</button></form>
+    {% endif %}
+</div>
+{% endblock %}

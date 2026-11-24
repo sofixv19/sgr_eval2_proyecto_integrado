@@ -28,14 +28,33 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'delegaciones:inicio' %}">{% if rol_usuario == "Funcionario" %}Mi panel{% elif rol_usuario == "Delegado" %}Mi delegación{% else %}Panel{% endif %}</a>
                         </li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:dashboard' %}">Dashboard</a></li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'gestion:listado' %}">{% if rol_usuario == "Funcionario" %}Mis actividades{% elif rol_usuario == "Delegado" %}Validar actividades{% else %}Actividades{% endif %}</a>
                         </li>
                         {% if rol_usuario == "Funcionario" %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:crear' %}">Registrar actividad</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Registrar</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'gestion:crear' %}">Actividad</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestion:crear_gestion_social' %}">Gestión social</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tubo</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'gestion:agenda' %}">Tubo de seguimiento (agenda)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestion:cartas' %}">Tubo de cartas</a></li>
+                            </ul>
+                        </li>
                         {% elif rol_usuario == "Delegado" %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tubo</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'gestion:agenda' %}">Tubo de seguimiento (agenda)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestion:cartas' %}">Tubo de cartas</a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mi equipo</a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -52,17 +71,29 @@
                         {% elif rol_usuario == "Coordinador" %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'delegaciones:listado' %}">Delegaciones</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'organizacion:listado' %}">Delegados</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tubo</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'gestion:agenda' %}">Tubo de seguimiento (agenda)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestion:cartas' %}">Tubo de cartas</a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Más</a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Períodos de medición</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Trimestres</a></li>
                                 <li><a class="dropdown-item" href="{% url 'delegaciones:organizaciones' %}">Organizaciones comunitarias</a></li>
                                 <li><a class="dropdown-item" href="{% url 'comun:auditoria' %}">Auditoría</a></li>
                             </ul>
                         </li>
                         {% elif rol_usuario == "Administrador" or rol_usuario == "Verificador" %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'gestion:agenda' %}">Agenda</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tubo</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'gestion:agenda' %}">Tubo de seguimiento (agenda)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestion:cartas' %}">Tubo de cartas</a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'comun:auditoria' %}">Auditoría</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mantenedores</a>
@@ -70,7 +101,7 @@
                                 <li><a class="dropdown-item" href="{% url 'delegaciones:listado' %}">Delegaciones</a></li>
                                 <li><a class="dropdown-item" href="{% url 'organizacion:listado' %}">Funcionarios</a></li>
                                 <li><a class="dropdown-item" href="{% url 'organizacion:cargos' %}">Cargos y funciones</a></li>
-                                <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Períodos de medición</a></li>
+                                <li><a class="dropdown-item" href="{% url 'organizacion:periodos' %}">Trimestres</a></li>
                                 <li><a class="dropdown-item" href="{% url 'organizacion:metas' %}">Metas de los funcionarios</a></li>
                                 <li><a class="dropdown-item" href="{% url 'gestion:categorias' %}">Categorías de actividad</a></li>
                                 <li><hr class="dropdown-divider"></li>
@@ -81,11 +112,27 @@
                             </ul>
                         </li>
                         {% endif %}
+                        {% if perms.territorio.view_vecino %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Comunidad</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'territorio:vecinos' %}">Vecinos</a></li>
+                                <li><a class="dropdown-item" href="{% url 'delegaciones:organizaciones' %}">Juntas de vecinos y organizaciones</a></li>
+                                <li><a class="dropdown-item" href="{% url 'territorio:membresias' %}">Socios y dirigentes</a></li>
+                                <li><a class="dropdown-item" href="{% url 'territorio:hitos' %}">Hitos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'territorio:territorios' %}">Territorios</a></li>
+                                <li><a class="dropdown-item" href="{% url 'territorio:tipos' %}">Tipos de atención</a></li>
+                                <li><a class="dropdown-item" href="{% url 'territorio:subtipos' %}">Subtipos de atención</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ user.get_username }}</a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><span class="dropdown-item-text small text-muted">Rol: {{ rol_usuario|default:"Sin rol" }}{% if perfil_usuario %}<br>{{ perfil_usuario.delegacion }}{% endif %}</span></li>
                                 {% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Panel de administración</a></li>{% endif %}
+                                <li><a class="dropdown-item" href="{% url 'cuentas:cambiar_clave' %}">Cambiar contraseña</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="post" action="{% url 'cuentas:logout' %}" class="px-3">
@@ -126,6 +173,7 @@
     </footer>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/sgr.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

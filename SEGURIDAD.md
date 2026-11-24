@@ -19,11 +19,11 @@ codificación segura) de la rúbrica de Evaluación 2.
 
 | Rol | Permisos | Qué puede hacer |
 |---|---|---|
-| Funcionario | 14 | Registrar y corregir sus actividades mientras están pendientes, subir evidencias, crear y actualizar compromisos de su delegación. Ve solo lo suyo |
-| Delegado | 32 | Validar o rechazar las actividades de su equipo (nunca las propias), asignar metas, registrar felicitaciones, reclamos y ausencias, crear funcionarios de su delegación y reasignar compromisos |
-| Coordinador | 22 | Ver todas las delegaciones, crearlas y desactivarlas, crear Delegados, administrar períodos y consultar la auditoría |
-| Verificador / Auditor | 14 | Solo lectura de todo el sistema, incluida la auditoría |
-| Administrador | 51 | Todas las tablas maestras. Tampoco puede modificar ni borrar la auditoría |
+| Funcionario | 25 | Registrar y corregir sus actividades mientras están pendientes, subir evidencias, crear y actualizar compromisos de su delegación. Ve solo lo suyo |
+| Delegado | 53 | Validar o rechazar las actividades de su equipo (nunca las propias), asignar metas, registrar felicitaciones, reclamos y ausencias, crear funcionarios de su delegación y reasignar compromisos |
+| Coordinador | 35 | Ver todas las delegaciones, crearlas y desactivarlas, crear Delegados, administrar períodos y consultar la auditoría |
+| Verificador / Auditor | 21 | Solo lectura de todo el sistema, incluida la auditoría |
+| Administrador | 79 | Todas las tablas maestras. Tampoco puede modificar ni borrar la auditoría |
 
 Las acciones prohibidas responden "Acceso denegado" (403) y quedan registradas en la auditoría con usuario, IP y ruta.
 
@@ -95,3 +95,18 @@ Como parte de la Evaluación 3 de Ingeniería de Software, el sistema se revisó
    2. Recrear el `venv`.
    3. Actualizar `requirements.txt` a `Django>=5.2,<5.3`.
    4. Correr las pruebas y desplegar.
+
+
+## Versión 3.0 — controles agregados (Guía PI Evaluación 3, Actividad 2)
+
+| Control | Implementación | Prueba |
+|---|---|---|
+| Contraseñas con hash seguro | PBKDF2-SHA256 de Django (`PASSWORD_HASHERS`); nunca se guardan en texto | CP-LOGIN |
+| Contraseña temporal con cambio obligatorio | `EstadoCuenta.debe_cambiar_clave` + `CambioClaveObligatorioMiddleware` | CP-CLA-001–003, 008 |
+| Tokens de recuperación con expiración | `PasswordResetView` de Django; token firmado de un solo uso; `PASSWORD_RESET_TIMEOUT=3600`; mismo mensaje exista o no el correo | CP-CLA-004–007 |
+| Validación en el servidor | Formularios con validadores (RUT, teléfono, nombres, fechas, duplicados) | CP-COM, CP-GSO-002, CP-VER-002 |
+| Autorización por rol **y por propiedad del registro** | Permisos por grupo + filtro por delegación + dueño del registro (actividades, compromisos, cartas) | CP-PERF, CP-TUB-002, CP-COM-005 |
+| Registro aprobado inmutable | La edición y eliminación de una actividad aprobada responde 403, incluso para el Administrador | CP-VER-004 |
+| Sesiones seguras | Cookie HttpOnly y SameSite=Lax; vence a los 30 minutos sin uso; se renueva al iniciar sesión | CP-LOGIN |
+| Control de acceso a evidencias y archivos | Las evidencias se entregan por `/gestion/evidencias/<id>/` solo a quien puede ver el registro (no hay carpeta pública) | CP-EVI |
+| Trazabilidad | Auditoría de altas, cambios, validaciones, solicitudes de antecedentes, cambios de contraseña y accesos denegados | CP-AUD-001–004 |

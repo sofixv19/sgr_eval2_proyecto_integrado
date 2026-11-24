@@ -36,3 +36,6 @@ staticfiles/
 
 # Evidencias subidas (archivos de usuarios)
 media/
+
+# v3.0: respaldos locales (contienen datos; no se suben)
+respaldos/

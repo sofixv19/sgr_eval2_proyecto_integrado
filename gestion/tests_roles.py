@@ -64,7 +64,7 @@ class EscenarioBase(TestCase):
         funcionario = Funcionario.objects.create(
             nombre=nombre, rut=rut, email=f'{rut[:2]}{nombre.split()[0].lower()}@laserena.cl',
             delegacion=delegacion, cargo=cargo, rol=rol)
-        sincronizar_cuenta(funcionario, clave=CLAVE_PRUEBA)
+        sincronizar_cuenta(funcionario, clave=CLAVE_PRUEBA, temporal=False)
         return funcionario
 
     def _actividad(self, funcionario, **extra):

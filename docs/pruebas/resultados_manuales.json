@@ -1,0 +1,74 @@
+[
+ {
+  "id": "CP-MAN-01",
+  "estado": "Aprobado",
+  "obtenido": "Cada rol entra a su panel con su menú: funcionario.rural, delegado.rural, coordinador.sgr, verificador.sgr, admin.sgr",
+  "fecha": "2026-11-24T01:55:31.574Z"
+ },
+ {
+  "id": "CP-MAN-02",
+  "estado": "Aprobado",
+  "obtenido": "El Delegado creó la cuenta p.rivas.prueba; al ingresar con la clave temporal se exigió cambiarla y después accedió normalmente.",
+  "fecha": "2026-11-24T01:55:35.702Z"
+ },
+ {
+  "id": "CP-MAN-03",
+  "estado": "Aprobado",
+  "obtenido": "Llegó el correo con el enlace; se creó una clave nueva, el enlace quedó inválido al reutilizarlo y se ingresó con la clave nueva.",
+  "fecha": "2026-11-24T01:55:38.813Z"
+ },
+ {
+  "id": "CP-MAN-04",
+  "estado": "Aprobado",
+  "obtenido": "Actividad AD-0001 registrada con evidencia; la ficha muestra \"Suma puntaje\" y estado Pendiente.",
+  "fecha": "2026-11-24T01:55:40.761Z"
+ },
+ {
+  "id": "CP-MAN-05",
+  "estado": "Aprobado",
+  "obtenido": "El Delegado pidió antecedentes; el funcionario subió otra evidencia y volvió a Pendiente; el Delegado la aprobó.",
+  "fecha": "2026-11-24T01:55:43.619Z"
+ },
+ {
+  "id": "CP-MAN-06",
+  "estado": "Aprobado",
+  "obtenido": "Modificar una actividad aprobada responde 403 para el Funcionario y para el Administrador.",
+  "fecha": "2026-11-24T01:55:47.153Z"
+ },
+ {
+  "id": "CP-MAN-07",
+  "estado": "Aprobado",
+  "obtenido": "Gestión social registrada con el vecino elegido por autocompletar; ingresó al Tubo con RUT 9.100.100-4.",
+  "fecha": "2026-11-24T01:55:48.735Z"
+ },
+ {
+  "id": "CP-MAN-08",
+  "estado": "Aprobado",
+  "obtenido": "Al escribir parte del RUT la lista se filtró sin recargar: 1 de 4 compromisos.",
+  "fecha": "2026-11-24T01:55:52.254Z"
+ },
+ {
+  "id": "CP-MAN-09",
+  "estado": "Aprobado",
+  "obtenido": "La carta de otra funcionaria aparece en el Tubo de cartas del funcionario, en solo lectura.",
+  "fecha": "2026-11-24T01:55:53.513Z"
+ },
+ {
+  "id": "CP-MAN-10",
+  "estado": "Aprobado",
+  "obtenido": "Una actividad de hace 12 días se rechazó con el mensaje de semana cerrada.",
+  "fecha": "2026-11-24T01:55:55.425Z"
+ },
+ {
+  "id": "CP-MAN-11",
+  "estado": "Aprobado",
+  "obtenido": "El dashboard muestra 5 gráficos; al filtrar por un funcionario queda solo su fila.",
+  "fecha": "2026-11-24T01:55:56.490Z"
+ },
+ {
+  "id": "CP-MAN-12",
+  "estado": "Aprobado",
+  "obtenido": "El Funcionario recibió 403 en /auditoria/ y el Verificador ve el intento como \"Acceso denegado\".",
+  "fecha": "2026-11-24T01:55:59.330Z"
+ }
+]

@@ -67,7 +67,7 @@ class RunnerPlan(DiscoverRunner):
 
 if __name__ == '__main__':
     runner = RunnerPlan(verbosity=1)
-    fallas = runner.run_tests(['comun', 'cuentas', 'delegaciones', 'organizacion', 'gestion'])
+    fallas = runner.run_tests(['comun', 'cuentas', 'delegaciones', 'organizacion', 'gestion', 'territorio'])
     RESULTADOS.sort(key=lambda r: r['id'])
     with open('resultados_pruebas.csv', 'w', newline='', encoding='utf-8') as archivo:
         escritor = csv.DictWriter(archivo, fieldnames=list(RESULTADOS[0].keys()))

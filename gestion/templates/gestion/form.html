@@ -12,7 +12,7 @@
         <strong>Funcionario:</strong> {{ funcionario.nombre }} &middot;
         <strong>Delegación:</strong> {{ funcionario.delegacion }} &middot;
         <strong>Cargo:</strong> {{ funcionario.cargo.nombre_cargo }} ({{ funcionario.cargo.get_area_display }})
-        {% if not form.instance.pk %}<br>El código se genera automáticamente con la sigla del área ({{ funcionario.cargo.area }}-0001, {{ funcionario.cargo.area }}-0002…) y la actividad parte en estado <em>Pendiente</em>.{% endif %}
+        {% if not form.instance.pk %}{% if es_gestion_social %}<br>El código se genera automáticamente (GS-0001, GS-0002…) y la gestión social parte en estado <em>Pendiente</em>; el nombre y teléfono se toman del vecino.{% else %}<br>El código se genera automáticamente con la sigla del área ({{ funcionario.cargo.area }}-0001, {{ funcionario.cargo.area }}-0002…) y la actividad parte en estado <em>Pendiente</em>.{% endif %}{% endif %}
     </div>
     {% endif %}
     {% if not form.instance.pk %}
@@ -30,7 +30,7 @@
     {% if compromiso %}
     <div class="alert alert-success small mb-4">Esta actividad cumple el compromiso <strong>{{ compromiso.codigo }}</strong> de la agenda colectiva ({{ compromiso.solicitante }}). Al guardarla, el compromiso queda <em>Realizado</em>.</div>
     {% endif %}
-    <form method="post" enctype="multipart/form-data" novalidate>
+    <form method="post" enctype="multipart/form-data" novalidate data-url-vecinos="{% url 'territorio:buscar_vecino' %}">
         {% csrf_token %}
         {% if compromiso %}<input type="hidden" name="compromiso" value="{{ compromiso.pk }}">{% endif %}
 
@@ -44,6 +44,8 @@
                 <label class="form-check-label" for="{{ opcion.id_for_label }}">{{ opcion.choice_label }}</label>
             </div>
             {% endfor %}
+            {% elif field.widget_type == "checkbox" %}
+            <div class="form-check">{{ field }} <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
             {% else %}
             <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}

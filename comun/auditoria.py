@@ -23,12 +23,19 @@ MODELOS_AUDITADOS = [
     ('organizacion', 'CargoFuncion'), ('organizacion', 'Funcionario'), ('organizacion', 'Periodo'),
     ('organizacion', 'MetaProyecto'), ('organizacion', 'Reconocimiento'), ('organizacion', 'Ausencia'),
     ('gestion', 'Categoria'), ('gestion', 'Actividad'), ('gestion', 'Evidencia'), ('gestion', 'Compromiso'),
+    # v3.0
+    ('gestion', 'Carta'), ('territorio', 'Territorio'), ('territorio', 'Vecino'),
+    ('territorio', 'MembresiaOrganizacion'), ('territorio', 'Hito'), ('territorio', 'TipoAtencion'),
+    ('territorio', 'SubtipoAtencion'),
 ]
 CAMPOS_IGNORADOS = {'creado', 'fecha_registro', 'fecha_carga', 'puntuable', 'motivo_sin_puntaje'}
 
 
 def peticion_actual():
     return getattr(_local, 'peticion', None)
+
+
+ACCIONES_VALIDACION = {'Validada': 'Validación', 'Rechazada': 'Rechazo', 'Antecedentes': 'Más antecedentes'}
 
 
 class AuditoriaMiddleware:
@@ -119,7 +126,7 @@ def _despues_de_guardar(sender, instance, created, raw=False, **kwargs):
     accion = 'Modificación'
     clave_validacion = 'Estado de validación'
     if sender.__name__ == 'Actividad' and clave_validacion in cambios:
-        accion = {'Validada': 'Validación', 'Rechazada': 'Rechazo'}.get(instance.estado_validacion, accion)
+        accion = ACCIONES_VALIDACION.get(instance.estado_validacion, accion)
     registrar(accion, instance, cambios)
 
 

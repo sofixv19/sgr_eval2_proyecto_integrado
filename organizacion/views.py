@@ -251,14 +251,14 @@ class MetaEliminar(MetaConfig, MantenedorEliminar):
 class PeriodoConfig:
     model = Periodo
     form_class = PeriodoForm
-    nombre_singular = 'período'
-    nombre_plural = 'períodos de medición'
+    nombre_singular = 'trimestre'
+    nombre_plural = 'trimestres (períodos de medición)'
     url_listado = 'organizacion:periodos'
 
 
 class PeriodoListado(PeriodoConfig, MantenedorListado):
     campos_busqueda = ('nombre', 'estado')
-    columnas = (('Período', 'nombre'), ('Inicio', 'fecha_inicio'), ('Término', 'fecha_fin'), ('Estado', 'estado'),
+    columnas = (('Trimestre', 'nombre'), ('Inicio', 'fecha_inicio'), ('Término', 'fecha_fin'), ('Estado', 'estado'),
                 ('N.º de metas', 'total_metas'))
     url_crear, url_editar, url_eliminar = (
         'organizacion:periodo_crear', 'organizacion:periodo_editar', 'organizacion:periodo_eliminar',
@@ -278,7 +278,7 @@ class PeriodoEditar(PeriodoConfig, MantenedorEditar):
 
 
 class PeriodoEliminar(PeriodoConfig, MantenedorEliminar):
-    advertencia = 'Si el período tiene metas asociadas no se podrá eliminar.'
+    advertencia = 'Si el trimestre tiene metas asociadas no se podrá eliminar.'
 
 
 # ------------------------------------- Versión 2.0: felicitaciones y ausencias

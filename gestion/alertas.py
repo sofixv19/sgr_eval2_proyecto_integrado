@@ -82,8 +82,10 @@ def _alertas_compromisos(compromisos):
 
 def alertas_funcionario(perfil, resultado):
     alertas = _alertas_compromisos(Compromiso.objects.filter(responsable=perfil))
-    for a in Actividad.objects.filter(funcionario=perfil, estado_validacion=Actividad.EstadoValidacion.RECHAZADA):
-        alertas.append(Alerta('rojo', f'Actividad {a.codigo} rechazada: {a.observacion_validacion[:60]}',
+    for a in Actividad.objects.filter(funcionario=perfil, estado_validacion__in=[
+            Actividad.EstadoValidacion.RECHAZADA, Actividad.EstadoValidacion.ANTECEDENTES]):
+        motivo = 'rechazada' if a.estado_validacion == Actividad.EstadoValidacion.RECHAZADA else 'necesita más antecedentes'
+        alertas.append(Alerta('rojo', f'Actividad {a.codigo} {motivo}: {a.observacion_validacion[:60]}',
                               perfil.nombre, a.fecha, reverse('gestion:detalle', args=[a.pk]), 'Corregir'))
     reciente = actividad_reciente(perfil)
     if reciente.inactivo:

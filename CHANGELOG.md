@@ -6,10 +6,11 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`, `v2.2.2`, `v2.2.3`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`, `v2.2.2`, `v2.2.3`, `v3.0`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [3.0.0](#300--solución-completa-guía-pi-evaluación-3) | 26-11-2026 | Guía PI Evaluación 3 (alcance funcional mínimo) | 217 |
 | [2.2.3](#223--pruebas-de-seguridad) | 16-11-2026 | Pedido del docente: demostrar la seguridad con código | 180 |
 | [2.2.2](#222--diagramas-y-seguridad-al-día) | 14-11-2026 | Evaluación 3 de Ingeniería de Software | 176 |
 | [2.2.1](#221--los-cambios-hechos-desde-la-página-se-respetan) | 12-11-2026 | Error reportado por el equipo | 176 |
@@ -20,6 +21,42 @@ La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`s
 | [2.0.0](#200--nuevos-requerimientos-octubre-2026) | 12-11-2026 | Guía SGR + Nuevos Requerimientos (octubre 2026) | 156 |
 | [1.1.0](#110--correcciones-de-la-revisión-de-la-evaluación-2) | 05-11-2026 | Guía SGR + retroalimentación del profesor | 140 |
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
+
+---
+
+## 3.0.0 — Solución completa (Guía PI Evaluación 3)
+
+Cambio MAYOR porque la Guía de la Evaluación 3 agrega requerimientos al alcance funcional mínimo.
+
+**Cuentas y seguridad**
+- Contraseña temporal con **cambio obligatorio en el primer ingreso** (`cuentas/models.py: EstadoCuenta`, `CambioClaveObligatorioMiddleware`). Pruebas CP-CLA-001 a 003 y 008.
+- **Recuperación de contraseña por correo** con enlace de un solo uso que **vence en una hora** (`PASSWORD_RESET_TIMEOUT`). La respuesta es la misma exista o no el correo. Pruebas CP-CLA-004 a 007.
+- El cambio y la recuperación de contraseña quedan en la auditoría ("Cambio de clave").
+
+**Verificación**
+- Nuevo estado **"Se solicitan más antecedentes"**: el Delegado pide antecedentes con una observación; al completarlos, el registro vuelve a "Pendiente". Pruebas CP-VER-001 a 003.
+- **Un registro aprobado no se modifica ni se elimina**, tampoco el Administrador (antes el Administrador sí podía). Prueba CP-VER-004.
+
+**Catálogos y comunidad (app nueva `territorio`)**
+- CRUD con validaciones de **territorios**, **vecinos** (RUT validado y único), **socios y dirigentes** de juntas de vecinos (un cargo vigente por organización), **hitos** con responsable y **tipos y subtipos de atención**. Los períodos de medición pasan a llamarse **trimestres**. Pruebas CP-COM-001 a 010.
+- **Autocompletar**: al escribir el RUT o el nombre del vecino se completan su nombre y teléfono (`/territorio/vecinos/buscar/`).
+
+**Registros y Tubo**
+- **Gestiones sociales**: mismo flujo que la actividad (código GS-0001, evidencia, verificación y metas), con vecino y tipo/subtipo de atención. Pruebas CP-GSO-001 a 005 (la 005 cubre el defecto INC-13: el compromiso hereda el territorio del vecino).
+- Al registrar una actividad o gestión social se puede **ingresar o no al Tubo** (casilla "Ingresar también al Tubo").
+- **Tubo de cartas** por delegación (código TC-0001): todos lo ven; cada funcionario modifica solo lo suyo mientras no esté aprobado; solo el Delegado aprueba o finaliza. Pruebas CP-TUB-001 a 004.
+- **Búsqueda dinámica mientras se escribe** en el Tubo de seguimiento y en el Tubo de cartas, por código, RUT o nombre del solicitante. Prueba CP-TUB-005. El listado también busca por RUT y nombre del vecino.
+
+**Dashboard**
+- Página **Dashboard** con filtros (trimestre, delegación, funcionario, verificación y fechas) y gráficos de cumplimiento por funcionario y por delegación (semáforo), tendencia semanal, carga de trabajo, estado de los compromisos y verificación. Chart.js 4.4.4 servido desde `static/js` (sin CDN). Pruebas CP-DAS-001 a 003.
+
+**Base de datos y entorno**
+- Índices para búsquedas frecuentes en actividades (delegación+fecha, funcionario+fecha, estado de validación) y en RUT y nombres.
+- Comandos `respaldar` y `restaurar` (base de datos + evidencias en un .zip). Pruebas CP-RES-001 y 002.
+- Correo configurable en `.env` (por defecto se guarda en `logs/correos/`).
+- `INCIDENCIAS.md`: registro de incidencias de configuración resueltas. `CONTRIBUTING.md`: flujo de ramas y *pull requests* del equipo.
+
+**Total: 217 pruebas automatizadas, todas aprobadas; flake8 sin observaciones.**
 
 ---
 

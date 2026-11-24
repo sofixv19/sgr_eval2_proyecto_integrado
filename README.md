@@ -1,10 +1,11 @@
 # SGR La Serena — Sistema de Gestión de Resultados
 
-> **Versión actual: 2.2.3** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
+> **Versión actual: 3.0** (Guía PI Evaluación 3: solución completa) · Instalación y respaldo en [`GUIA_DESPLIEGUE.md`](GUIA_DESPLIEGUE.md) · Incidencias resueltas en [`INCIDENCIAS.md`](INCIDENCIAS.md) · Flujo de trabajo del equipo en [`CONTRIBUTING.md`](CONTRIBUTING.md) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
 
 | Versión | Qué trae | Pruebas |
 |---|---|---|
-| **2.2.3** | Pruebas de seguridad CP-SEG-001 a 004 (inyección SQL, XSS, CSRF y control de acceso) | 180 |
+| **3.0.0** | Guía PI Evaluación 3: cambio obligatorio de la contraseña temporal y recuperación por correo; estado "más antecedentes" y bloqueo de lo aprobado; territorios, vecinos, socios y dirigentes, hitos y tipos de atención; gestiones sociales; Tubo de cartas; búsqueda al escribir y autocompletar; dashboard con gráficos; respaldo y recuperación | 217 |
+| 2.2.3 | Pruebas de seguridad CP-SEG-001 a 004 (inyección SQL, XSS, CSRF y control de acceso) | 180 |
 | 2.2.2 | Documentación: diagramas de clases, datos, estados y componentes actualizados al código (`docs/diagramas/`), y revisión de seguridad OWASP Top 10:2025 en `SEGURIDAD.md` | 176 |
 | 2.2.1 | Corrección: instalar una versión nueva ya no revierte los nombres que el equipo cambió desde la página | 176 |
 | 2.2.0 | Interfaz más ordenada: todos los paneles con el mismo orden (indicadores → accesos rápidos "Registrar" y "Consultar" → cumplimiento y avisos → detalle) | 175 |
@@ -14,6 +15,16 @@
 | 2.0.0 | Nuevos requerimientos de la Coordinación de Delegaciones: organizaciones comunitarias, reglas de puntaje (solicitante, nombre y teléfono, gestión previa), máximo 7 ingresos diarios, cierre semanal, tope de 120 % por ítem, felicitaciones y reclamos, y ausencias que ajustan el semáforo | 156 |
 | 1.1.0 | Correcciones de la revisión de la Evaluación 2: ámbito por rol, cuentas ligadas a funcionarios, código automático por área, evidencias, validación del Delegado, metas y paneles por rol | 140 |
 | 1.0.0 | Evaluación 2 de Proyecto Integrado: login, mantenedores, roles y despliegue en AWS | 118 |
+
+### Novedades de la versión 3.0
+
+- **Menú Dashboard**: gráficos de cumplimiento (por funcionario y delegación, con semáforo), tendencia semanal, carga de trabajo y estado del Tubo, con filtros.
+- **Menú Tubo**: Tubo de seguimiento (agenda colectiva) y **Tubo de cartas**, con búsqueda mientras se escribe por código, RUT o nombre.
+- **Menú Comunidad**: vecinos, juntas de vecinos y organizaciones, socios y dirigentes, hitos, territorios y tipos/subtipos de atención.
+- **Registrar → Gestión social**: atención a un vecino con tipo y subtipo; puede ingresar o no al Tubo.
+- **Contraseñas**: la temporal se cambia en el primer ingreso; "¿Olvidó su contraseña?" en el inicio de sesión.
+- **Verificación**: el Delegado puede aprobar, rechazar o **pedir más antecedentes**; lo aprobado ya no se modifica.
+- **Respaldo**: `python manage.py respaldar` y `python manage.py restaurar archivo.zip --confirmar`.
 
 ### Novedades de la versión 2.1
 

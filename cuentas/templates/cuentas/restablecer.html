@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Nueva contraseña{% endblock %}
+{% block contenido %}
+<div class="form-card mx-auto mt-2" style="max-width: 480px;">
+    {% if validlink %}
+    <h1 class="h4 mb-2">Crear nueva contraseña</h1>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "cuentas/_form_campos.html" %}
+        <button type="submit" class="btn btn-institucional w-100">Guardar contraseña</button>
+    </form>
+    {% else %}
+    <h1 class="h4 mb-2">Enlace no válido</h1>
+    <p>El enlace ya se usó o venció. Pida uno nuevo.</p>
+    <a class="btn btn-institucional w-100" href="{% url 'cuentas:recuperar' %}">Pedir un nuevo enlace</a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -24,6 +24,8 @@ class RegistroAuditoria(models.Model):
         INICIO_SESION = 'Inicio de sesión', 'Inicio de sesión'
         ACCESO_FALLIDO = 'Acceso fallido', 'Inicio de sesión fallido'
         ACCESO_DENEGADO = 'Acceso denegado', 'Acceso denegado'
+        ANTECEDENTES = 'Más antecedentes', 'Solicitud de más antecedentes'   # v3.0
+        CAMBIO_CLAVE = 'Cambio de clave', 'Cambio de contraseña'               # v3.0
 
     fecha = models.DateTimeField('Fecha', default=timezone.now, db_index=True)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,

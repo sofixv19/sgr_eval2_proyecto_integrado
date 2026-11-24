@@ -154,7 +154,7 @@ def _nombre_usuario_libre(base):
     return nombre
 
 
-def sincronizar_cuenta(funcionario, clave=None):
+def sincronizar_cuenta(funcionario, clave=None, temporal=True):
     """Crea (si no existe) o actualiza la cuenta de acceso de un funcionario:
     grupo según su rol, estado activo y nombre. Devuelve (usuario, clave)
     donde clave es la contraseña temporal SOLO si la cuenta es nueva o si se
@@ -180,4 +180,29 @@ def sincronizar_cuenta(funcionario, clave=None):
     if funcionario.usuario_id != usuario.pk:
         funcionario.usuario = usuario
         funcionario.save(update_fields=['usuario'])
+    if clave_generada and temporal:
+        # v3.0: la contraseña temporal se cambia en el primer ingreso.
+        from .models import marcar_clave_temporal
+        marcar_clave_temporal(usuario)
     return usuario, clave_generada
+
+
+def filtrar_por_delegacion(usuario, consulta, campo='delegacion_id'):
+    """v3.0: territorios, vecinos, hitos y Tubo de cartas. Cada delegación ve
+    lo suyo; Administrador, Coordinador y Verificador ven todo."""
+    rol = rol_de(usuario)
+    if rol in (ADMINISTRADOR, COORDINADOR, VERIFICADOR):
+        return consulta
+    perfil = perfil_de(usuario)
+    if perfil:
+        return consulta.filter(**{campo: perfil.delegacion_id})
+    return consulta.none()
+
+
+def delegacion_fija(usuario):
+    """Delegación que se asigna sola al registrar (Delegado y Funcionario).
+    None para los roles que eligen la delegación."""
+    if rol_de(usuario) in (DELEGADO, FUNCIONARIO):
+        perfil = perfil_de(usuario)
+        return perfil.delegacion if perfil else None
+    return None

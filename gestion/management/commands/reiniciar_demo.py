@@ -77,6 +77,16 @@ class Command(BaseCommand):
         Compromiso.objects.all().delete()
         Evidencia.objects.all().delete()
         Actividad.objects.all().delete()
+        # v3.0: Tubo de cartas y comunidad (se vuelven a cargar como ejemplo)
+        from gestion.models import Carta
+        from territorio.models import Hito, MembresiaOrganizacion, SubtipoAtencion, Territorio, TipoAtencion, Vecino
+        Carta.objects.all().delete()
+        Hito.objects.all().delete()
+        MembresiaOrganizacion.objects.all().delete()
+        Vecino.objects.all().delete()
+        Territorio.objects.all().delete()
+        SubtipoAtencion.objects.all().delete()
+        TipoAtencion.objects.all().delete()
         MetaProyecto.objects.all().delete()
         Reconocimiento.objects.all().delete()
         Ausencia.objects.all().delete()

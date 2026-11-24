@@ -156,6 +156,9 @@ class Command(BaseCommand):
         self.stdout.write('Cargando compromisos de ejemplo en la agenda colectiva (versión 2.1)...')
         self.stdout.write(f'  {self._compromisos_demo()} compromisos nuevos.')
 
+        self.stdout.write('Cargando catálogos y comunidad de ejemplo (versión 3.0)...')
+        self.stdout.write(f'  {self._comunidad_demo()} registros nuevos.')
+
         self.stdout.write(self.style.SUCCESS(
             f'Listo: {delegaciones_creadas} delegaciones, '
             f'{funcionarios_creados} funcionarios, '
@@ -339,6 +342,65 @@ class Command(BaseCommand):
                     fecha_compromiso=hoy + datetime.timedelta(days=dias), estado=estado,
                     fecha_cierre=hoy if estado == 'Realizado' else None,
                     observacion='Dato de ejemplo para la demostración.')
+                creados += 1
+        return creados
+
+    def _comunidad_demo(self):
+        """v3.0: tipos y subtipos de atención (lista de la matriz del cliente) y,
+        para cada delegación con equipo, territorios, vecinos, socios y
+        dirigentes, un hito y una carta. Solo crea lo que falta."""
+        from comun.validadores import calcular_dv
+        from gestion.models import Carta
+        from territorio.models import Hito, MembresiaOrganizacion, SubtipoAtencion, Territorio, TipoAtencion, Vecino
+
+        creados = 0
+        catalogo = {
+            'Informes sociales': ['Informe social', 'Ficha Registro Social de Hogares'],
+            'Gestión de subsidios': ['PGU', 'SUF', 'Subsidio de agua potable (SAP)', 'Bonos IPS'],
+            'Derivaciones': ['Salud (CESFAM)', 'Dideco', 'Oficina de Protección de Derechos'],
+        }
+        for nombre_tipo, subtipos in catalogo.items():
+            tipo, nuevo = TipoAtencion.objects.get_or_create(nombre=nombre_tipo)
+            creados += int(nuevo)
+            for nombre in subtipos:
+                creados += int(SubtipoAtencion.objects.get_or_create(tipo=tipo, nombre=nombre)[1])
+
+        def rut(cuerpo):
+            return f'{cuerpo:,}'.replace(',', '.') + '-' + calcular_dv(cuerpo)
+
+        hoy = datetime.date.today()
+        for indice, delegacion in enumerate(Delegacion.objects.filter(funcionarios__isnull=False).distinct().order_by('pk')):
+            equipo = list(delegacion.funcionarios.filter(rol='Funcionario', activo=True).order_by('pk'))
+            if not equipo:
+                continue
+            sectores = []
+            for nombre in (f'Sector Norte {delegacion.nombre}', f'Sector Sur {delegacion.nombre}'):
+                sector, nuevo = Territorio.objects.get_or_create(
+                    delegacion=delegacion, nombre=nombre, defaults={'descripcion': 'Territorio de ejemplo'})
+                sectores.append(sector)
+                creados += int(nuevo)
+            vecinos = []
+            for n, nombre in enumerate(('Rosa Pérez (ejemplo)', 'Juan Soto (ejemplo)', 'Marta Díaz (ejemplo)')):
+                cuerpo = 9_100_000 + indice * 100 + n
+                vecino, nuevo = Vecino.objects.get_or_create(rut=rut(cuerpo), defaults={
+                    'nombre': nombre, 'telefono': f'+56 9 5{indice}{n}0 1{n}{n}{n}', 'delegacion': delegacion,
+                    'territorio': sectores[n % 2], 'direccion': f'Pasaje {n + 1}, {delegacion.nombre}'})
+                vecinos.append(vecino)
+                creados += int(nuevo)
+            jjvv = delegacion.organizaciones.filter(tipo=OrganizacionComunitaria.Tipo.JUNTA_VECINOS).first()
+            if jjvv:
+                creados += int(MembresiaOrganizacion.objects.get_or_create(
+                    vecino=vecinos[0], organizacion=jjvv, defaults={'rol': 'Dirigente', 'cargo': 'Presidente'})[1])
+                creados += int(MembresiaOrganizacion.objects.get_or_create(
+                    vecino=vecinos[1], organizacion=jjvv, defaults={'rol': 'Socio'})[1])
+            if not delegacion.hitos.exists():
+                Hito.objects.create(nombre='Operativo de limpieza (ejemplo)', fecha=hoy + datetime.timedelta(days=5),
+                                    delegacion=delegacion, territorio=sectores[0], responsable=equipo[0])
+                creados += 1
+            if not delegacion.cartas.exists():
+                Carta.objects.create(delegacion=delegacion, para='Delegado', remite=jjvv.nombre if jjvv else 'Vecinos',
+                                     tema='Solicitan reparación de luminarias en la plaza (ejemplo)', encargado=equipo[0],
+                                     registrada_por=equipo[0], fecha_ingreso=hoy - datetime.timedelta(days=2))
                 creados += 1
         return creados
 
