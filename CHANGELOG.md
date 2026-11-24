@@ -6,10 +6,11 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [2.2.1](#221--los-cambios-hechos-desde-la-página-se-respetan) | 12-11-2026 | Error reportado por el equipo | 176 |
 | [2.2.0](#220--interfaz-más-ordenada) | 12-11-2026 | Revisión visual del equipo | 175 |
 | [2.1.2](#212--datos-de-demostración-limpios) | 12-11-2026 | Ajuste tras revisión del equipo | 175 |
 | [2.1.1](#211--menú-más-simple) | 12-11-2026 | Ajuste tras revisión del equipo | 174 |
@@ -17,6 +18,18 @@ La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`s
 | [2.0.0](#200--nuevos-requerimientos-octubre-2026) | 12-11-2026 | Guía SGR + Nuevos Requerimientos (octubre 2026) | 156 |
 | [1.1.0](#110--correcciones-de-la-revisión-de-la-evaluación-2) | 05-11-2026 | Guía SGR + retroalimentación del profesor | 140 |
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
+
+---
+
+## 2.2.1 — Los cambios hechos desde la página se respetan
+
+### Corregido
+- **Error:** el equipo cambió los nombres de los funcionarios desde la página. Después de instalar una versión nueva volvieron a aparecer los nombres antiguos.
+  - **Causa:** cada instalación corre `cargar_datos_iniciales`, que hacía `update_or_create` y volvía a escribir el nombre, el RUT, la delegación, el cargo y el rol de los funcionarios de ejemplo. Lo mismo pasaba con los datos de las delegaciones y las metas por cargo.
+  - **Corrección:** ahora solo **crea lo que falta** y nunca modifica lo que ya existe.
+- Los funcionarios y delegaciones de ejemplo se reconocen por su **correo o RUT**, no por su nombre. Así, un nombre cambiado no genera duplicados.
+- `reiniciar_demo` conserva los nombres que el equipo les haya puesto a los funcionarios y delegaciones de ejemplo. Sigue borrando los datos de prueba.
+- Prueba nueva: CP-DEM-002.
 
 ---
 

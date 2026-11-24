@@ -11,16 +11,14 @@ ejemplo de `cargar_datos_iniciales`:
   períodos de prueba (deja abierto "Segundo semestre 2026").
 - Conserva las 5 cuentas de demostración CON su contraseña actual, los
   superusuarios, los cargos y las categorías.
+- Conserva los nombres que el equipo le haya puesto a los funcionarios y
+  delegaciones de ejemplo (versión 2.1.3).
 - La auditoría queda con un solo registro que deja constancia del reinicio.
 
 Es solo para el ambiente de demostración: pide --confirmar.
 
 Uso:  python manage.py reiniciar_demo --confirmar
 """
-import json
-from pathlib import Path
-
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
@@ -30,7 +28,9 @@ from comun.auditoria import registrar
 from comun.models import RegistroAuditoria
 from cuentas.management.commands.configurar_roles import USUARIOS_DEMO
 from delegaciones.models import Delegacion, OrganizacionComunitaria
-from gestion.management.commands.cargar_datos_iniciales import FUNCIONARIOS_SEED
+from gestion.management.commands.cargar_datos_iniciales import (
+    FUNCIONARIOS_SEED, _delegaciones_json, delegacion_semilla, funcionario_semilla,
+)
 from gestion.models import Actividad, CambioCompromiso, Compromiso, Evidencia
 from organizacion.models import Ausencia, Funcionario, MetaProyecto, Periodo, Reconocimiento
 
@@ -68,9 +68,10 @@ class Command(BaseCommand):
                 evidencia.archivo.delete(save=False)
             except OSError:  # si el archivo ya no está, se sigue igual
                 pass
+        equipo = [f.pk for f in (funcionario_semilla(item['nombre']) for item in FUNCIONARIOS_SEED) if f]
         conteo = {
             'actividades': Actividad.objects.count(),
-            'funcionarios': Funcionario.objects.exclude(email__in=[f['email'] for f in FUNCIONARIOS_SEED]).count(),
+            'funcionarios': Funcionario.objects.exclude(pk__in=equipo).count(),
         }
         CambioCompromiso.objects.all().delete()
         Compromiso.objects.all().delete()
@@ -83,21 +84,23 @@ class Command(BaseCommand):
 
         # Funcionarios que no son del equipo de ejemplo, y las cuentas que
         # quedan sin uso (nunca las 5 de demostración ni los superusuarios).
-        Funcionario.objects.exclude(email__in=[f['email'] for f in FUNCIONARIOS_SEED]).delete()
+        # Los del equipo de ejemplo se conservan con el nombre que les haya
+        # puesto el equipo; solo se borran los demás.
+        Funcionario.objects.exclude(pk__in=equipo).delete()
         demo = [u[0] for u in USUARIOS_DEMO]
         cuentas = (User.objects.filter(is_superuser=False, funcionario__isnull=True)
                    .exclude(username__in=demo))
         conteo['cuentas'] = cuentas.count()
         cuentas.delete()
 
-        ruta = Path(settings.BASE_DIR) / 'data' / 'delegaciones.json'
-        with open(ruta, encoding='utf-8') as archivo:
-            oficiales = [d['nombre'] for d in json.load(archivo)]
+        oficiales = [d.pk for d in (delegacion_semilla(nombre) for nombre in _delegaciones_json()) if d]
         # Si en las pruebas se movió a alguien del equipo de ejemplo, vuelve a su delegación.
         for item in FUNCIONARIOS_SEED:
-            Funcionario.objects.filter(email=item['email']).update(
-                delegacion=Delegacion.objects.get(nombre=item['delegacion']))
-        Delegacion.objects.exclude(nombre__in=oficiales).delete()
+            funcionario, delegacion = funcionario_semilla(item['nombre']), delegacion_semilla(item['delegacion'])
+            if funcionario and delegacion:
+                Funcionario.objects.filter(pk=funcionario.pk).update(
+                    delegacion=delegacion, rol=item.get('rol', 'Funcionario'), activo=True)
+        Delegacion.objects.exclude(pk__in=oficiales).delete()
         Delegacion.objects.update(activa=True)
 
         Periodo.objects.exclude(nombre=PERIODO_DEMO).delete()
@@ -111,7 +114,8 @@ class Command(BaseCommand):
         funcionario, sin tocar su contraseña."""
         for username, grupo, _nombre, _apellido, email in USUARIOS_DEMO:
             usuario = User.objects.filter(username=username).first()
-            funcionario = Funcionario.objects.filter(email=email).first() if email else None
+            datos = next((f for f in FUNCIONARIOS_SEED if f['email'] == email), None)
+            funcionario = funcionario_semilla(datos['nombre']) if datos else None
             if usuario is None or funcionario is None:
                 continue
             Funcionario.objects.filter(usuario=usuario).exclude(pk=funcionario.pk).update(usuario=None)

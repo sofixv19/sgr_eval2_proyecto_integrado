@@ -310,3 +310,19 @@ class ReinicioDemoTests(TestCase):
             self.assertTrue(Actividad.objects.filter(evidencias__isnull=False, validado=False).exists())
             self.assertEqual(list(RegistroAuditoria.objects.values_list('accion', flat=True)),
                              ['Reinicio de demostración'])
+
+    def test_cp_dem_002_no_se_pisan_los_nombres_cambiados(self):
+        """CP-DEM-002: si el equipo cambia nombres desde la página, instalar de nuevo o reiniciar la demo no los revierte."""
+        with self.settings(MEDIA_ROOT=self._media):
+            call_command('configurar_roles', verbosity=0)
+            call_command('cargar_datos_iniciales', stdout=StringIO())
+            Funcionario.objects.filter(email='f.contreras.ejemplo@laserena.cl').update(nombre='Francisca Contreras')
+            Delegacion.objects.filter(email='rural@laserena.cl').update(nombre='Delegación Rural Norte')
+            for comando in (['cargar_datos_iniciales'], ['reiniciar_demo', '--confirmar']):
+                call_command(*comando, stdout=StringIO())
+                self.assertEqual(Funcionario.objects.get(email='f.contreras.ejemplo@laserena.cl').nombre,
+                                 'Francisca Contreras')
+                self.assertEqual(Funcionario.objects.count(), 5)
+                self.assertEqual(Delegacion.objects.count(), 6)
+                self.assertTrue(Delegacion.objects.filter(nombre='Delegación Rural Norte').exists())
+            self.assertTrue(Actividad.objects.filter(funcionario__nombre='Francisca Contreras').exists())

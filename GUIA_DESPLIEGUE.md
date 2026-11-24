@@ -213,7 +213,7 @@ Para dejar los datos de demostración limpios (por ejemplo, antes de mostrar el 
 python manage.py reiniciar_demo --confirmar
 ```
 
-Borra todo lo creado probando (actividades, funcionarios, delegaciones extra, etc.) y vuelve a cargar el equipo de ejemplo. **No cambia las contraseñas** de las cuentas demo.
+Borra todo lo creado probando (actividades, funcionarios, delegaciones extra, etc.) y vuelve a cargar el equipo de ejemplo. **No cambia las contraseñas** de las cuentas demo ni los nombres que el equipo haya puesto a los funcionarios y delegaciones de ejemplo.
 
 El número de versión aparece en el pie de la página (por ejemplo, `v2.0.0`). Así se comprueba que el servidor quedó actualizado.
 

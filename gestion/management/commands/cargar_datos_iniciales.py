@@ -8,8 +8,9 @@ Uso:
     python manage.py cargar_datos_iniciales
 
 Es idempotente: se puede ejecutar varias veces sin duplicar registros,
-usando update_or_create() / get_or_create() según la clave natural de
-cada modelo.
+creando solo lo que falta. Desde la versión 2.1.3 nunca pisa los datos que
+el equipo haya cambiado desde la página (por ejemplo, el nombre de un
+funcionario o de una delegación).
 """
 import datetime
 import json
@@ -18,6 +19,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 
 from delegaciones.models import Delegacion, OrganizacionComunitaria
 from gestion.models import Actividad, Categoria, Compromiso, Evidencia
@@ -69,6 +71,27 @@ FUNCIONARIOS_SEED = [
      'cargo': 'Inspector Territorial', 'rut': '13.333.333-9',
      'email': 'j.herrera.ejemplo@laserena.cl'},
 ]
+
+
+def _delegaciones_json():
+    with open(Path(settings.BASE_DIR) / 'data' / 'delegaciones.json', encoding='utf-8') as archivo:
+        return {item['nombre']: item for item in json.load(archivo)}
+
+
+def delegacion_semilla(nombre):
+    """La delegación de ejemplo, aunque el equipo le haya cambiado el nombre
+    desde la página (se reconoce también por su correo)."""
+    datos = _delegaciones_json().get(nombre)
+    consulta = Q(nombre=nombre) | Q(email=datos['email']) if datos else Q(nombre=nombre)
+    return Delegacion.objects.filter(consulta).order_by('pk').first()
+
+
+def funcionario_semilla(nombre):
+    """El funcionario de ejemplo por su correo o RUT, aunque le hayan
+    cambiado el nombre."""
+    datos = next((f for f in FUNCIONARIOS_SEED if f['nombre'] == nombre), None)
+    consulta = Q(email=datos['email']) | Q(rut=datos['rut']) if datos else Q(nombre=nombre)
+    return Funcionario.objects.filter(consulta).order_by('pk').first()
 
 
 def _pdf_ejemplo(texto):
@@ -145,16 +168,12 @@ class Command(BaseCommand):
             delegaciones = json.load(archivo)
 
         for item in delegaciones:
-            Delegacion.objects.update_or_create(
-                nombre=item['nombre'],
-                defaults={
-                    'encargado': item['encargado'],
-                    'direccion': item['direccion'],
-                    'telefono': item['telefono'],
-                    'email': item['email'],
-                    'territorio': item['territorio'],
-                    'enfoque': item['enfoque'],
-                },
+            if delegacion_semilla(item['nombre']) is not None:
+                continue  # ya existe: no se pisan los cambios hechos desde la página
+            Delegacion.objects.create(
+                nombre=item['nombre'], encargado=item['encargado'], direccion=item['direccion'],
+                telefono=item['telefono'], email=item['email'], territorio=item['territorio'],
+                enfoque=item['enfoque'],
             )
         return Delegacion.objects.count()
 
@@ -170,7 +189,7 @@ class Command(BaseCommand):
         )
         for meta in METAS_SEED:
             cargo = CargoFuncion.objects.get(nombre_cargo=meta['cargo'])
-            MetaProyecto.objects.update_or_create(
+            MetaProyecto.objects.get_or_create(
                 cargo=cargo, item_medible=meta['item_medible'],
                 defaults={
                     'periodo': periodo,
@@ -181,26 +200,23 @@ class Command(BaseCommand):
             )
 
         for item in FUNCIONARIOS_SEED:
-            try:
-                delegacion = Delegacion.objects.get(nombre=item['delegacion'])
-            except Delegacion.DoesNotExist:
+            delegacion = delegacion_semilla(item['delegacion'])
+            if delegacion is None:
                 self.stdout.write(self.style.WARNING(
                     f"  Delegación '{item['delegacion']}' no encontrada; "
                     f"se omite el funcionario {item['nombre']}."
                 ))
                 continue
 
-            cargo = CargoFuncion.objects.get(nombre_cargo=item['cargo'])
-            Funcionario.objects.update_or_create(
-                email=item['email'],
-                defaults={
-                    'rut': item['rut'],
-                    'nombre': item['nombre'],
-                    'delegacion': delegacion,
-                    'cargo': cargo,
-                    'rol': item.get('rol', 'Funcionario'),
-                    'activo': True,
-                },
+            # Solo se crea si no existe (por correo o RUT). Así, si el equipo
+            # cambió el nombre u otro dato desde la página, una nueva
+            # instalación no lo vuelve a dejar como estaba.
+            if Funcionario.objects.filter(Q(email=item['email']) | Q(rut=item['rut'])).exists():
+                continue
+            Funcionario.objects.create(
+                email=item['email'], rut=item['rut'], nombre=item['nombre'], delegacion=delegacion,
+                cargo=CargoFuncion.objects.get(nombre_cargo=item['cargo']),
+                rol=item.get('rol', 'Funcionario'), activo=True,
             )
         return Funcionario.objects.count()
 
@@ -211,25 +227,23 @@ class Command(BaseCommand):
         for item in actividades:
             categoria, _ = Categoria.objects.get_or_create(nombre=item['categoria'])
 
-            try:
-                delegacion = Delegacion.objects.get(nombre=item['delegacion'])
-            except Delegacion.DoesNotExist:
+            delegacion = delegacion_semilla(item['delegacion'])
+            if delegacion is None:
                 self.stdout.write(self.style.WARNING(
                     f"  Delegación '{item['delegacion']}' no encontrada; "
                     f"se omite la actividad {item['codigo']}."
                 ))
                 continue
 
-            try:
-                funcionario = Funcionario.objects.get(nombre=item['funcionario'])
-            except Funcionario.DoesNotExist:
+            funcionario = funcionario_semilla(item['funcionario'])
+            if funcionario is None:
                 self.stdout.write(self.style.WARNING(
                     f"  Funcionario '{item['funcionario']}' no encontrado; "
                     f"se omite la actividad {item['codigo']}."
                 ))
                 continue
 
-            actividad, creada = Actividad.objects.update_or_create(
+            actividad, creada = Actividad.objects.get_or_create(
                 codigo=item['codigo'],
                 defaults={
                     'fecha': item['fecha'],

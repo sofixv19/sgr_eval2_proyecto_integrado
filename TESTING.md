@@ -47,7 +47,8 @@ python plan_pruebas.py
 | 1.1.0 | CP-PERF-001 a 010, CP-COD-001 a 003, CP-EVI-001 a 005 y CP-CUM-001 a 004 | `gestion/tests_roles.py` | 140 |
 | 2.0.0 | CP-V2-001 a CP-V2-016 | `gestion/tests_v2.py` | 156 |
 | 2.1.0 | CP-AGE-001 a 007, CP-AUD-001 a 004, CP-EXP-001 y 002, CP-PCE-001, CP-FIL-001, CP-ALE-001 a 003 | `gestion/tests_v21.py` | 174 |
-| **2.1.2** | **CP-DEM-001** (reinicio de los datos de demostración) | `gestion/tests_v21.py` | **175** |
+| 2.1.2 | CP-DEM-001 (reinicio de los datos de demostración) | `gestion/tests_v21.py` | 175 |
+| **2.2.1** | **CP-DEM-002** (instalar de nuevo no revierte los nombres cambiados) | `gestion/tests_v21.py` | **176** |
 
 En la versión 2.0 se **actualizaron** dos casos de la 1.x porque su regla cambió:
 
@@ -98,8 +99,9 @@ En la versión 2.0 se **actualizaron** dos casos de la 1.x porque su regla cambi
 | CP-ALE-002 | RF-037 | Alertas del Delegado (compromisos vencidos y funcionarios sin registros) |
 | CP-ALE-003 | RF-008 | El panel muestra un período anterior |
 | CP-DEM-001 | Guía §15 (datos de demostración) | `reiniciar_demo` deja solo el equipo de ejemplo y no cambia las contraseñas demo |
+| CP-DEM-002 | Guía §15 | Ni `cargar_datos_iniciales` ni `reiniciar_demo` revierten los nombres que el equipo cambió |
 
-Resultado de la corrida de la versión 2.1.2: **175 pruebas, 0 fallos** (`resultados_pruebas.csv`). Además, `flake8` reporta 0 observaciones. La relación de cada historia con sus casos está en `MATRIZ_TRAZABILIDAD.md`.
+Resultado de la corrida de la versión 2.2.1: **176 pruebas, 0 fallos** (`resultados_pruebas.csv`). Además, `flake8` reporta 0 observaciones. La relación de cada historia con sus casos está en `MATRIZ_TRAZABILIDAD.md`.
 
 ## 2.1.6.14 — Herramientas automatizadas y manuales
 
