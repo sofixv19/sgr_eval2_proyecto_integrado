@@ -1222,3 +1222,94 @@ a.dash-codigo:hover { background: var(--color-institucional); color: #fff; }
 .autocompletar-lista:empty { display: none; }
 .buscador-dinamico input { min-width: 260px; }
 @media (max-width: 576px) { .buscador-dinamico, .buscador-dinamico input { min-width: 0; width: 100%; } }
+
+/* ==========================================================================
+   Versión 3.0.1 — Transiciones suaves y mensajes que se cierran solos
+   ========================================================================== */
+
+/* 1. Cambio de página: fundido suave; la barra superior queda quieta.
+      Navegadores con View Transitions (Chrome, Edge, Brave): fundido cruzado.
+      Los demás: el contenido aparece con un fundido corto. */
+@view-transition { navigation: auto; }
+.site-header { view-transition-name: cabecera; }
+.site-footer { view-transition-name: pie; }
+::view-transition-old(root) { animation: sgr-salir .16s ease-in both; }
+::view-transition-new(root) { animation: sgr-entrar .24s ease-out both; }
+
+@keyframes sgr-entrar { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes sgr-salir  { from { opacity: 1; } to { opacity: 0; } }
+
+@supports not (view-transition-name: none) {
+  .site-body main.page-content { animation: sgr-entrar .28s ease-out both; }
+}
+
+/* 2. Menús desplegables: aparecen con un fundido y un leve desplazamiento */
+.dropdown-menu.show { animation: sgr-menu .16s ease-out both; transform-origin: top right; }
+@keyframes sgr-menu { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* Listas de autocompletar y paneles que se abren */
+.autocompletar-lista:not(:empty) { animation: sgr-menu .14s ease-out both; }
+details[open] > :not(summary) { animation: sgr-entrar .2s ease-out both; }
+
+/* 3. Mensajes del sistema: tarjetas flotantes arriba a la derecha que se cierran solas */
+.mensajes-sistema {
+  position: fixed;
+  top: 84px;
+  right: 1rem;
+  z-index: 1080;
+  width: min(380px, calc(100vw - 2rem));
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  pointer-events: none;
+}
+.mensajes-sistema .alert {
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding-right: 2.75rem;
+  border: 0;
+  border-left: 4px solid currentColor;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #1f2a37;
+  box-shadow: 0 2px 6px rgba(17, 17, 26, .08), 0 12px 28px rgba(17, 17, 26, .14);
+  animation: sgr-mensaje-entra .32s cubic-bezier(.2, .8, .2, 1) both;
+}
+.mensajes-sistema .alert-success { border-left-color: #2B7A66; }
+.mensajes-sistema .alert-info    { border-left-color: #2F78B4; }
+.mensajes-sistema .alert-warning { border-left-color: #E0A93E; }
+.mensajes-sistema .alert-danger,
+.mensajes-sistema .alert-error   { border-left-color: #B42318; }
+.mensajes-sistema .alert.saliendo { animation: sgr-mensaje-sale .3s ease-in both; }
+
+/* barra que muestra el tiempo que le queda al mensaje */
+.mensajes-sistema .alert::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: currentColor;
+  opacity: .18;
+  transform-origin: left;
+  animation: sgr-tiempo var(--duracion, 4.5s) linear forwards;
+}
+.mensajes-sistema .alert:hover::after,
+.mensajes-sistema .alert:focus-within::after { animation-play-state: paused; }
+
+@keyframes sgr-mensaje-entra { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes sgr-mensaje-sale  { to { opacity: 0; transform: translateX(24px); } }
+@keyframes sgr-tiempo { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+@media (max-width: 575.98px) {
+  .mensajes-sistema { top: auto; bottom: 1rem; right: 1rem; left: 1rem; width: auto; }
+}
+
+/* Accesibilidad: quien pide menos movimiento no ve animaciones */
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  *, *::before, *::after, ::view-transition-group(*) { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}

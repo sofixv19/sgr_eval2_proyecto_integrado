@@ -3,6 +3,9 @@
  *     registrados y se completan el nombre y el teléfono del formulario.
  *  2. Búsqueda dinámica: las listas con [data-busqueda-dinamica] se filtran
  *     mientras se escribe (código, RUT o nombre del solicitante).
+ *  3. (v3.0.1) Mensajes del sistema: aparecen arriba a la derecha y se
+ *     cierran solos (éxito 4,5 s; aviso 7 s; error 9 s). Si el mouse está
+ *     encima, esperan.
  */
 (function () {
   'use strict';
@@ -92,5 +95,47 @@
     };
     caja.addEventListener('input', debounce(filtrar, 120));
     filtrar();
+  });
+  // ------------------------------------------------ 3. Mensajes que se cierran solos
+  var DURACION = { success: 4500, info: 4500, warning: 7000, danger: 9000 };
+  function cerrarMensaje(alerta) {
+    if (alerta.classList.contains('saliendo')) return;
+    alerta.classList.add('saliendo');
+    var quitar = function () {
+      var caja = alerta.parentNode;
+      alerta.remove();
+      if (caja && !caja.children.length) caja.remove();
+    };
+    alerta.addEventListener('animationend', quitar, { once: true });
+    setTimeout(quitar, 400);  // por si el navegador no anima
+  }
+  document.querySelectorAll('.mensajes-sistema .alert').forEach(function (alerta, i) {
+    var tipo = Object.keys(DURACION).filter(function (k) { return alerta.classList.contains('alert-' + k); })[0] || 'success';
+    var restante = DURACION[tipo] + i * 600, inicio = Date.now(), reloj = null;
+    alerta.style.setProperty('--duracion', (restante / 1000) + 's');
+    var pausas = 0;
+    function correr() {
+      pausas = Math.max(0, pausas - 1);
+      if (pausas || reloj) return;
+      inicio = Date.now();
+      reloj = setTimeout(function () { cerrarMensaje(alerta); }, Math.max(restante, 800));
+    }
+    function pausar() {
+      pausas += 1;
+      if (!reloj) return;
+      clearTimeout(reloj); reloj = null;
+      restante -= Date.now() - inicio;
+    }
+    alerta.addEventListener('mouseenter', pausar);
+    alerta.addEventListener('mouseleave', correr);
+    alerta.addEventListener('focusin', pausar);
+    alerta.addEventListener('focusout', correr);
+    var boton = alerta.querySelector('.btn-close');
+    if (boton) {
+      boton.removeAttribute('data-bs-dismiss');
+      boton.addEventListener('click', function () { clearTimeout(reloj); cerrarMensaje(alerta); });
+    }
+    pausas = 1;
+    correr();
   });
 })();

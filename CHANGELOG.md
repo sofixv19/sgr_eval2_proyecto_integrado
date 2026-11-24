@@ -6,10 +6,11 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`, `v2.2.2`, `v2.2.3`, `v3.0`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`, `v2.2.2`, `v2.2.3`, `v3.0`, `v3.0.1`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [3.0.1](#301--transiciones-suaves-y-mensajes-que-se-cierran-solos) | 24-11-2026 | Observación del equipo (interfaz) | 217 |
 | [3.0.0](#300--solución-completa-guía-pi-evaluación-3) | 26-11-2026 | Guía PI Evaluación 3 (alcance funcional mínimo) | 217 |
 | [2.2.3](#223--pruebas-de-seguridad) | 16-11-2026 | Pedido del docente: demostrar la seguridad con código | 180 |
 | [2.2.2](#222--diagramas-y-seguridad-al-día) | 14-11-2026 | Evaluación 3 de Ingeniería de Software | 176 |
@@ -23,6 +24,16 @@ La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`s
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
 
 ---
+
+## 3.0.1 — Transiciones suaves y mensajes que se cierran solos
+
+Observación del equipo: al cambiar de página o abrir un menú todo aparecía de golpe, y los mensajes ("Bienvenido/a…", "Actividad registrada…") quedaban pegados arriba.
+
+- **Cambio de página**: fundido suave del contenido; la barra superior queda quieta (View Transitions en Chrome, Edge y Brave; fundido de entrada en los demás navegadores).
+- **Menús desplegables y autocompletar**: se abren con un fundido corto.
+- **Mensajes del sistema**: tarjetas flotantes arriba a la derecha (abajo en el celular) que se cierran solas: éxito e información 4,5 s, aviso 7 s, error 9 s. Una barra muestra el tiempo que queda; con el mouse encima esperan; la X los cierra al tiro.
+- Quien tiene activado "reducir movimiento" en su equipo no ve animaciones (accesibilidad).
+- Archivos: `static/css/custom.css`, `static/js/sgr.js`, `templates/base.html`. Sin cambios en la base de datos. 217 pruebas aprobadas.
 
 ## 3.0.0 — Solución completa (Guía PI Evaluación 3)
 

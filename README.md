@@ -1,9 +1,10 @@
 # SGR La Serena — Sistema de Gestión de Resultados
 
-> **Versión actual: 3.0** (Guía PI Evaluación 3: solución completa) · Instalación y respaldo en [`GUIA_DESPLIEGUE.md`](GUIA_DESPLIEGUE.md) · Incidencias resueltas en [`INCIDENCIAS.md`](INCIDENCIAS.md) · Flujo de trabajo del equipo en [`CONTRIBUTING.md`](CONTRIBUTING.md) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
+> **Versión actual: 3.0.1** (Guía PI Evaluación 3: solución completa) · Instalación y respaldo en [`GUIA_DESPLIEGUE.md`](GUIA_DESPLIEGUE.md) · Incidencias resueltas en [`INCIDENCIAS.md`](INCIDENCIAS.md) · Flujo de trabajo del equipo en [`CONTRIBUTING.md`](CONTRIBUTING.md) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
 
 | Versión | Qué trae | Pruebas |
 |---|---|---|
+| **3.0.1** | Interfaz: cambio de página con fundido suave, menús que se abren con animación y mensajes flotantes que se cierran solos | 217 |
 | **3.0.0** | Guía PI Evaluación 3: cambio obligatorio de la contraseña temporal y recuperación por correo; estado "más antecedentes" y bloqueo de lo aprobado; territorios, vecinos, socios y dirigentes, hitos y tipos de atención; gestiones sociales; Tubo de cartas; búsqueda al escribir y autocompletar; dashboard con gráficos; respaldo y recuperación | 217 |
 | 2.2.3 | Pruebas de seguridad CP-SEG-001 a 004 (inyección SQL, XSS, CSRF y control de acceso) | 180 |
 | 2.2.2 | Documentación: diagramas de clases, datos, estados y componentes actualizados al código (`docs/diagramas/`), y revisión de seguridad OWASP Top 10:2025 en `SEGURIDAD.md` | 176 |
