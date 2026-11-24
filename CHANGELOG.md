@@ -6,10 +6,11 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`, `v2.2.2`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`, `v2.2.2`, `v2.2.3`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [2.2.3](#223--pruebas-de-seguridad) | 16-11-2026 | Pedido del docente: demostrar la seguridad con código | 180 |
 | [2.2.2](#222--diagramas-y-seguridad-al-día) | 14-11-2026 | Evaluación 3 de Ingeniería de Software | 176 |
 | [2.2.1](#221--los-cambios-hechos-desde-la-página-se-respetan) | 12-11-2026 | Error reportado por el equipo | 176 |
 | [2.2.0](#220--interfaz-más-ordenada) | 12-11-2026 | Revisión visual del equipo | 175 |
@@ -19,6 +20,18 @@ La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`s
 | [2.0.0](#200--nuevos-requerimientos-octubre-2026) | 12-11-2026 | Guía SGR + Nuevos Requerimientos (octubre 2026) | 156 |
 | [1.1.0](#110--correcciones-de-la-revisión-de-la-evaluación-2) | 05-11-2026 | Guía SGR + retroalimentación del profesor | 140 |
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
+
+---
+
+## 2.2.3 — Pruebas de seguridad
+
+El docente pidió demostrar con código los controles que no se ven en la pantalla. Se agregaron cuatro pruebas en `gestion/tests_seguridad.py`:
+- **CP-SEG-001 (inyección SQL, OWASP A05):** una búsqueda con `' OR 1=1 --` responde sin registros de más. La prueba revisa además que el texto viaja como parámetro (`%s`) y nunca pegado dentro del SQL.
+- **CP-SEG-002 (XSS, A05):** una descripción con `<script>` se muestra escapada.
+- **CP-SEG-003 (CSRF, A08):** un formulario enviado sin token se rechaza con 403.
+- **CP-SEG-004 (control de acceso, A01):** el filtro por ámbito deja al Funcionario solo con lo suyo, y la ficha de otra delegación responde 404.
+
+El código de la aplicación no cambia. Total: 180 pruebas.
 
 ---
 

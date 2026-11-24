@@ -1,10 +1,11 @@
 # SGR La Serena — Sistema de Gestión de Resultados
 
-> **Versión actual: 2.2.2** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
+> **Versión actual: 2.2.3** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
 
 | Versión | Qué trae | Pruebas |
 |---|---|---|
-| **2.2.2** | Documentación: diagramas de clases, datos, estados y componentes actualizados al código (`docs/diagramas/`), y revisión de seguridad OWASP Top 10:2025 en `SEGURIDAD.md` | 176 |
+| **2.2.3** | Pruebas de seguridad CP-SEG-001 a 004 (inyección SQL, XSS, CSRF y control de acceso) | 180 |
+| 2.2.2 | Documentación: diagramas de clases, datos, estados y componentes actualizados al código (`docs/diagramas/`), y revisión de seguridad OWASP Top 10:2025 en `SEGURIDAD.md` | 176 |
 | 2.2.1 | Corrección: instalar una versión nueva ya no revierte los nombres que el equipo cambió desde la página | 176 |
 | 2.2.0 | Interfaz más ordenada: todos los paneles con el mismo orden (indicadores → accesos rápidos "Registrar" y "Consultar" → cumplimiento y avisos → detalle) | 175 |
 | 2.1.2 | Datos de demostración limpios: equipo de ejemplo pequeño y coherente, y comando `reiniciar_demo` para borrar lo creado probando | 175 |
@@ -69,7 +70,7 @@ la base del proyecto del ramo de Programación Back End.
   - Categorías (`/gestion/categorias/`)
   - Períodos de medición (`/organizacion/periodos/`), que es la tabla `periodo` del MER de la Evaluación 1. Las metas ahora pertenecen a un cargo **y a un período**.
 - **Roles con permisos**: `python manage.py configurar_roles` crea los grupos Administrador, Coordinador, Delegado, Funcionario y Verificador. Con `--usuarios-demo --clave "..."` crea además un usuario de prueba por rol.
-- **118 pruebas unitarias** en la versión 1.0 (hoy son 176): `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
+- **118 pruebas unitarias** en la versión 1.0 (hoy son 180): `python plan_pruebas.py` las ejecuta y genera la matriz `resultados_pruebas.csv` con el ID de cada caso del plan.
 - **Estándares** de construcción y de seguridad documentados en `ESTANDARES.md`. El estilo se revisa con `flake8`.
 
 ## Qué cambió respecto a la Evaluación 1
@@ -186,7 +187,7 @@ GUIA_DESPLIEGUE.md    # Paso a paso para correr con MySQL local y desplegar en A
 
 ## Pruebas automatizadas
 
-El proyecto incluye **176 pruebas** (`python manage.py test`) en la versión 2.2.1
+El proyecto incluye **180 pruebas** (`python manage.py test`) en la versión 2.2.3
 (41 en la primera versión de la Evaluación 2). Abarcan las cuatro
 apps: unitarias de modelo (slugs, unicidad, relaciones y restricciones de
 borrado), unitarias de la regla de validación (solo un Delegado valida, no

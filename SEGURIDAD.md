@@ -77,14 +77,14 @@ Como parte de la Evaluación 3 de Ingeniería de Software, el sistema se revisó
 
 | Riesgo | Control | Estado |
 |---|---|---|
-| A01 Control de acceso roto | Permisos por rol y filtro por delegación (404) | Cumple |
+| A01 Control de acceso roto | Permisos por rol y filtro por delegación (404). Prueba CP-SEG-004 | Cumple |
 | A02 Configuración insegura | DEBUG=False, ALLOWED_HOSTS, X-Frame-Options, nosniff, Referrer-Policy | Parcial: falta HTTPS y HSTS |
 | A03 Fallas en la cadena de suministro | 5 dependencias; revisión con `pip-audit` | Pendiente: ver hallazgo 2 |
 | A04 Fallas criptográficas | PBKDF2-SHA256; secretos en `.env` | Parcial: tráfico sin HTTPS |
-| A05 Inyección | ORM con SQL parametrizado; plantillas que escapan HTML | Cumple |
+| A05 Inyección | ORM con SQL parametrizado; plantillas que escapan HTML. Pruebas CP-SEG-001 y 002 | Cumple |
 | A06 Diseño inseguro | Nadie valida lo propio; períodos cerrados; tope de 7 ingresos diarios | Cumple |
 | A07 Fallas de autenticación | Bloqueo tras 5 intentos; validadores; sesión de 30 minutos | Cumple |
-| A08 Integridad de software o datos | CSRF; evidencias JPG, PNG o PDF de hasta 5 MB | Cumple |
+| A08 Integridad de software o datos | CSRF; evidencias JPG, PNG o PDF de hasta 5 MB. Prueba CP-SEG-003 | Cumple |
 | A09 Registro y alertas | Auditoría que no se puede modificar; `logs/seguridad.log` | Cumple |
 | A10 Condiciones excepcionales | Páginas 403 y 404 propias; la auditoría nunca bloquea la operación | Cumple |
 
