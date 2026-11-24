@@ -311,7 +311,7 @@ class ActividadValidacionVistaTests(TestCase):
         self.delegado = crear_funcionario('Delegado Vista', '23.000.000-2', self.delegacion, rol='Delegado')
         self.delegado_otra = crear_funcionario('Delegado Otra', '23.000.000-3', self.otra, rol='Delegado')
         for f in (self.funcionario, self.delegado, self.delegado_otra):
-            sincronizar_cuenta(f, clave=CLAVE_PRUEBA)
+            sincronizar_cuenta(f, clave=CLAVE_PRUEBA, temporal=False)
         self.actividad = Actividad.objects.create(
             fecha=datetime.date(2026, 10, 1), delegacion=self.delegacion, categoria=self.categoria,
             descripcion='Pendiente de validar', funcionario=self.funcionario,
