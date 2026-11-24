@@ -736,6 +736,7 @@ code {
 .badge-validacion-ok { background-color: var(--color-verde); color: #fff; }
 .badge-validacion-pendiente { background-color: #f1f1ef; color: #6b6b63; border: 1px solid var(--color-borde); }
 .badge-validacion-rechazada { background-color: #b42318; color: #fff; }
+.badge-validacion-antecedentes { background-color: #fdf0d5; color: #7a4d00; border: 1px solid #e0a93e; }
 .semaforo { display: inline-block; min-width: 4.5rem; text-align: center; padding: .15rem .5rem; border-radius: 999px; font-weight: 600; font-size: .85rem; }
 .semaforo-verde { background: #d1f2dc; color: #135c2c; }
 .semaforo-ambar { background: #fff1c2; color: #7a5700; }
@@ -1215,3 +1216,9 @@ a.dash-codigo:hover { background: var(--color-institucional); color: #fff; }
   .dash-acceso-grilla { grid-template-columns: 1fr; }
   .dash-stat { flex-direction: column; align-items: flex-start; }
 }
+
+/* v3.0: autocompletar vecino */
+.autocompletar-lista { max-height: 220px; overflow-y: auto; margin-bottom: .35rem; }
+.autocompletar-lista:empty { display: none; }
+.buscador-dinamico input { min-width: 260px; }
+@media (max-width: 576px) { .buscador-dinamico, .buscador-dinamico input { min-width: 0; width: 100%; } }

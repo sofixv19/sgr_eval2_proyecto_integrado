@@ -1,0 +1,13 @@
+{% autoescape off %}Hola {{ user.get_full_name|default:user.username }}:
+
+Recibimos una solicitud para crear una nueva contraseña en el Sistema de Gestión de Resultados (SGR) de La Serena.
+
+Para hacerlo, abra este enlace (sirve una sola vez y vence en una hora):
+{{ protocol }}://{{ domain }}{% url 'cuentas:restablecer' uidb64=uid token=token %}
+
+Su usuario es: {{ user.get_username }}
+
+Si usted no lo pidió, ignore este mensaje; su contraseña actual sigue igual.
+
+SGR · Delegaciones Municipales de La Serena
+{% endautoescape %}

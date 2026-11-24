@@ -30,7 +30,11 @@ TRANSACCIONALES = [
     ('gestion', 'actividad'), ('gestion', 'evidencia'),
     ('organizacion', 'reconocimiento'), ('organizacion', 'ausencia'),   # v2.0
     ('gestion', 'compromiso'), ('gestion', 'cambiocompromiso'),        # v2.1 agenda colectiva
+    ('gestion', 'carta'),                                              # v3.0 Tubo de cartas
     ('comun', 'registroauditoria'),                                    # v2.1 auditoría
+    ('territorio', 'territorio'), ('territorio', 'vecino'),           # v3.0
+    ('territorio', 'membresiaorganizacion'), ('territorio', 'hito'),
+    ('territorio', 'tipoatencion'), ('territorio', 'subtipoatencion'),
 ]
 TODAS = TABLAS_MAESTRAS + TRANSACCIONALES
 
@@ -66,6 +70,14 @@ GRUPOS = {
         ('gestion', 'compromiso'): ['view'],
         ('gestion', 'cambiocompromiso'): ['view'],
         ('comun', 'registroauditoria'): ['view'],
+        # v3.0: catálogos comunales
+        ('gestion', 'carta'): ['view'],
+        ('territorio', 'territorio'): ['view', 'add', 'change'],
+        ('territorio', 'tipoatencion'): ['view', 'add', 'change'],
+        ('territorio', 'subtipoatencion'): ['view', 'add', 'change'],
+        ('territorio', 'vecino'): ['view'],
+        ('territorio', 'membresiaorganizacion'): ['view'],
+        ('territorio', 'hito'): ['view'],
     },
     'Delegado': {
         ('delegaciones', 'delegacion'): ['view'],
@@ -83,6 +95,14 @@ GRUPOS = {
         # v2.1: agenda colectiva de su delegación (crear, actualizar, reasignar, eliminar)
         ('gestion', 'compromiso'): ['view', 'add', 'change', 'delete'],
         ('gestion', 'cambiocompromiso'): ['view'],
+        ('gestion', 'carta'): ['view', 'add', 'change', 'delete'],
+        # v3.0: territorio, vecinos, socios y dirigentes, hitos de su delegación
+        ('territorio', 'territorio'): ['view', 'add', 'change'],
+        ('territorio', 'vecino'): ['view', 'add', 'change', 'delete'],
+        ('territorio', 'membresiaorganizacion'): ['view', 'add', 'change', 'delete'],
+        ('territorio', 'hito'): ['view', 'add', 'change', 'delete'],
+        ('territorio', 'tipoatencion'): ['view'],
+        ('territorio', 'subtipoatencion'): ['view'],
     },
     'Funcionario': {
         ('gestion', 'categoria'): ['view'],
@@ -93,6 +113,14 @@ GRUPOS = {
         ('organizacion', 'ausencia'): ['view'],
         ('gestion', 'compromiso'): ['view', 'add', 'change'],
         ('gestion', 'cambiocompromiso'): ['view'],
+        ('gestion', 'carta'): ['view', 'add', 'change'],
+        # v3.0: registra vecinos para sus gestiones sociales; consulta catálogos e hitos
+        ('territorio', 'territorio'): ['view'],
+        ('territorio', 'vecino'): ['view', 'add', 'change'],
+        ('territorio', 'membresiaorganizacion'): ['view'],
+        ('territorio', 'hito'): ['view'],
+        ('territorio', 'tipoatencion'): ['view'],
+        ('territorio', 'subtipoatencion'): ['view'],
     },
     'Verificador': {t: ['view'] for t in TODAS},
 }

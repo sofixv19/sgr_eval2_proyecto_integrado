@@ -100,7 +100,7 @@ def filtrar_agenda(request, consulta):
     texto = request.GET.get('q', '').strip()
     if texto:
         consulta = consulta.filter(Q(codigo__icontains=texto) | Q(solicitante__icontains=texto)
-                                   | Q(descripcion__icontains=texto))
+                                   | Q(rut_solicitante__icontains=texto) | Q(descripcion__icontains=texto))
         filtros['q'] = texto
     return consulta, filtros
 
@@ -170,7 +170,10 @@ def compromiso_crear(request):
         actividad_origen = filtrar_actividades(request.user, Actividad.objects.all()).filter(pk=int(origen)).first()
         if actividad_origen:
             inicial.update({'solicitante': actividad_origen.contacto, 'descripcion': actividad_origen.solicitud_problema
-                            or actividad_origen.descripcion, 'organizacion': actividad_origen.organizacion_id})
+                            or actividad_origen.descripcion, 'organizacion': actividad_origen.organizacion_id,
+                            'rut_solicitante': actividad_origen.vecino.rut if actividad_origen.vecino_id else ''})
+            if actividad_origen.vecino_id and actividad_origen.vecino.territorio_id:
+                inicial['territorio'] = actividad_origen.vecino.territorio.nombre
     if request.method == 'POST':
         form = CompromisoForm(request.POST, delegacion=delegacion)
         if form.is_valid():

@@ -22,7 +22,8 @@ from delegaciones.models import Delegacion
 from organizacion.models import Funcionario, Periodo
 
 from .forms import (
-    ActividadForm, CategoriaForm, EvidenciaForm, RevisionForm, inicio_ventana_registro, ingresos_de_hoy,
+    ActividadForm, CategoriaForm, EvidenciaForm, GestionSocialForm, RevisionForm, inicio_ventana_registro,
+    ingresos_de_hoy,
 )
 from .models import Actividad, Categoria, Compromiso, Evidencia
 
@@ -51,6 +52,10 @@ def filtrar_listado_actividades(request, actividades):
     if valor in Actividad.Estado.values:
         actividades = actividades.filter(estado=valor)
         filtros['estado'] = valor
+    valor = request.GET.get('clase')
+    if valor in Actividad.Clase.values:   # v3.0: actividades o gestiones sociales
+        actividades = actividades.filter(clase=valor)
+        filtros['clase'] = valor
     valor = request.GET.get('validacion')
     if valor in Actividad.EstadoValidacion.values:
         actividades = actividades.filter(estado_validacion=valor)
@@ -80,6 +85,8 @@ def filtrar_listado_actividades(request, actividades):
             | Q(delegacion__nombre__icontains=query)
             | Q(categoria__nombre__icontains=query)
             | Q(funcionario__nombre__icontains=query)
+            | Q(contacto__icontains=query)          # v3.0: nombre del solicitante
+            | Q(vecino__rut__icontains=query)       # v3.0: RUT del vecino
         )
         filtros['q'] = query
     return actividades, filtros
@@ -91,7 +98,7 @@ def listado(request):
     Delegado las de su delegación y el Coordinador/Administrador todas."""
 
     base = filtrar_actividades(
-        request.user, Actividad.objects.select_related('delegacion', 'categoria', 'funcionario'),
+        request.user, Actividad.objects.select_related('delegacion', 'categoria', 'funcionario', 'vecino'),
     )
     actividades, filtros = filtrar_listado_actividades(request, base)
 
@@ -102,6 +109,7 @@ def listado(request):
         'actividades': actividades.annotate(total_evidencias=Count('evidencias')),
         'estados': Actividad.Estado.values,
         'estados_validacion': Actividad.EstadoValidacion.choices,
+        'clases': Actividad.Clase.choices,
         'estado_seleccionado': filtros.get('estado'),
         'validacion_seleccionada': filtros.get('validacion'),
         'query': filtros.get('q', ''),
@@ -155,10 +163,8 @@ def detalle(request, actividad_id):
             evidencia.actividad = actividad
             evidencia.subida_por = request.user
             evidencia.save()
-            if actividad.estado_validacion == Actividad.EstadoValidacion.RECHAZADA:
-                # Al corregir, la actividad vuelve a quedar pendiente de revisión.
-                actividad.estado_validacion = Actividad.EstadoValidacion.PENDIENTE
-                actividad.save(update_fields=['estado_validacion'])
+            # Al corregir o completar antecedentes, vuelve a quedar pendiente de revisión.
+            actividad.volver_a_pendiente()
             messages.success(request, f'Evidencia {evidencia} subida. Queda pendiente de validación del Delegado.')
             return redirect('gestion:detalle', actividad_id=actividad.id)
 
@@ -169,6 +175,9 @@ def detalle(request, actividad_id):
             if revision_form.cleaned_data['decision'] == 'aprobar':
                 actividad.marcar_validado(delegado)
                 messages.success(request, f'Actividad {actividad.codigo} validada: ahora suma al avance del funcionario.')
+            elif revision_form.cleaned_data['decision'] == 'antecedentes':
+                actividad.solicitar_antecedentes(delegado, revision_form.cleaned_data['observacion'])
+                messages.info(request, f'Se pidieron más antecedentes de {actividad.codigo}. El funcionario verá la observación.')
             else:
                 actividad.rechazar(delegado, revision_form.cleaned_data['observacion'])
                 messages.warning(request, f'Actividad {actividad.codigo} rechazada. El funcionario verá la observación.')
@@ -181,9 +190,10 @@ def detalle(request, actividad_id):
         'evidencia_form': evidencia_form,
         'revision_form': revision_form,
         'periodo_cerrado': periodo_cerrado,
-        'puede_editar': periodo_cerrado is None and (
+        'puede_editar': periodo_cerrado is None and not actividad.aprobada and (
             duenio and actividad.editable_por_funcionario or rol_de(request.user) == ADMINISTRADOR),
-        'puede_eliminar': periodo_cerrado is None and request.user.has_perm('gestion.delete_actividad') and (
+        'puede_eliminar': periodo_cerrado is None and not actividad.aprobada
+        and request.user.has_perm('gestion.delete_actividad') and (
             rol_de(request.user) == ADMINISTRADOR
             or (duenio and actividad.estado_validacion == Actividad.EstadoValidacion.PENDIENTE)),
         # RF-009: la actividad puede originar un compromiso futuro en la agenda colectiva.
@@ -214,6 +224,16 @@ def evidencia(request, evidencia_id):
 def crear(request):
     """Solo el Funcionario registra SUS actividades (el Administrador puede
     hacerlo en nombre de otro). El Delegado y el Coordinador no registran."""
+    return _registrar(request, ActividadForm, 'Registrar actividad')
+
+
+@permission_required('gestion.add_actividad', raise_exception=True)
+def crear_gestion_social(request):
+    """v3.0: gestión social (atención a un vecino con tipo y subtipo)."""
+    return _registrar(request, GestionSocialForm, 'Registrar gestión social')
+
+
+def _registrar(request, form_class, titulo):
     if not _puede_registrar(request.user):
         raise PermissionDenied('Su cuenta no está asociada a un funcionario activo.')
     es_admin = rol_de(request.user) == ADMINISTRADOR and perfil_de(request.user) is None
@@ -234,10 +254,10 @@ def crear(request):
                                         else Actividad.TipoSolicitante.VECINO)}
 
     if request.method == 'POST':
-        form = ActividadForm(request.POST, request.FILES, funcionario=funcionario, elegir_funcionario=es_admin)
+        form = form_class(request.POST, request.FILES, funcionario=funcionario, elegir_funcionario=es_admin)
         if form.is_valid():
             actividad = form.save(usuario=request.user)
-            mensaje = f'Actividad registrada con el código {actividad.codigo}.'
+            mensaje = f'{actividad.get_clase_display()} registrada con el código {actividad.codigo}.'
             if compromiso:
                 actividad.compromiso = compromiso
                 actividad.save(update_fields=['compromiso'])
@@ -246,13 +266,17 @@ def crear(request):
                                               f'Cumplido con la actividad {actividad.codigo}.', puede_reabrir=False)
                 mensaje += f' El compromiso {compromiso.codigo} quedó Realizado.'
             messages.success(request, mensaje)
+            if form.cleaned_data.get('ingresar_al_tubo') and not compromiso:
+                # v3.0: el registro puede ingresar (o no) al Tubo de seguimiento.
+                return redirect(f"{reverse('gestion:compromiso_crear')}?actividad={actividad.id}")
             return redirect('gestion:detalle', actividad_id=actividad.id)
     else:
-        form = ActividadForm(initial=inicial, funcionario=funcionario, elegir_funcionario=es_admin)
+        form = form_class(initial=inicial, funcionario=funcionario, elegir_funcionario=es_admin)
 
     contexto = {
-        'titulo_pagina': 'Registrar actividad',
-        'accion': 'Registrar actividad',
+        'titulo_pagina': titulo,
+        'accion': titulo,
+        'es_gestion_social': form_class is GestionSocialForm,
         'form': form,
         'funcionario': funcionario,
         'volver_url': reverse('gestion:listado'),
@@ -271,17 +295,22 @@ def editar(request, actividad_id):
     es_admin = rol_de(request.user) == ADMINISTRADOR
     if actividad.periodo_cerrado is not None:
         raise PermissionDenied(f'El período {actividad.periodo_cerrado} está cerrado: reábralo para corregir (RN-013).')
+    if actividad.aprobada:
+        # v3.0 (Guía PI Ev. 3): un registro aprobado no se modifica, ni siquiera el Administrador.
+        raise PermissionDenied('La actividad ya fue aprobada: no se puede modificar.')
     if not es_admin and not (_es_duenio(request, actividad) and actividad.editable_por_funcionario):
         raise PermissionDenied('Solo el funcionario que registró la actividad puede modificarla, y solo si no está validada.')
 
+    clase_form = GestionSocialForm if actividad.clase == Actividad.Clase.SOCIAL else ActividadForm
     if request.method == 'POST':
-        form = ActividadForm(request.POST, instance=actividad)
+        form = clase_form(request.POST, instance=actividad)
         if form.is_valid():
             actividad = form.save()
+            actividad.volver_a_pendiente()
             messages.success(request, f'Actividad "{actividad.codigo}" actualizada correctamente.')
             return redirect('gestion:detalle', actividad_id=actividad.id)
     else:
-        form = ActividadForm(instance=actividad)
+        form = clase_form(instance=actividad)
 
     contexto = {
         'titulo_pagina': f'Editar {actividad.codigo}',
@@ -298,6 +327,8 @@ def eliminar(request, actividad_id):
     actividad = _actividad_visible(request, actividad_id)
     if actividad.periodo_cerrado is not None:
         raise PermissionDenied(f'El período {actividad.periodo_cerrado} está cerrado: reábralo para corregir (RN-013).')
+    if actividad.aprobada:
+        raise PermissionDenied('La actividad ya fue aprobada: no se puede eliminar.')
     if rol_de(request.user) != ADMINISTRADOR and not (
             _es_duenio(request, actividad) and actividad.estado_validacion == Actividad.EstadoValidacion.PENDIENTE):
         raise PermissionDenied('No puede eliminar esta actividad.')

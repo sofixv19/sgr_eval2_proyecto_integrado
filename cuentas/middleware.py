@@ -21,5 +21,22 @@ class LoginObligatorioMiddleware:
     @staticmethod
     def _es_publica(ruta):
         estaticos = settings.STATIC_URL if settings.STATIC_URL.startswith('/') else '/' + settings.STATIC_URL
-        publicas = [reverse('cuentas:login'), '/admin/', estaticos]
+        publicas = [reverse('cuentas:login'), '/cuentas/recuperar/', '/cuentas/restablecer/', '/admin/', estaticos]
         return any(ruta.startswith(p) for p in publicas)
+
+
+class CambioClaveObligatorioMiddleware:
+    """v3.0: quien entró con una contraseña temporal solo puede ir a la
+    pantalla de cambio de contraseña (o cerrar sesión) hasta cambiarla."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from .models import debe_cambiar_clave
+        permitidas = (reverse('cuentas:cambiar_clave'), reverse('cuentas:logout'))
+        estaticos = settings.STATIC_URL if settings.STATIC_URL.startswith('/') else '/' + settings.STATIC_URL
+        if (request.path not in permitidas and not request.path.startswith(estaticos)
+                and debe_cambiar_clave(request.user)):
+            return redirect('cuentas:cambiar_clave')
+        return self.get_response(request)

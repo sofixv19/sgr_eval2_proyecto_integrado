@@ -88,9 +88,9 @@
                 </span>
                 {% endif %}
             </p>
-            {% if actividad.estado_validacion == "Rechazada" and actividad.observacion_validacion %}
+            {% if actividad.estado_validacion == "Rechazada" or actividad.estado_validacion == "Antecedentes" %}{% if actividad.observacion_validacion %}
             <div class="alert alert-warning small mt-2 mb-0"><strong>Observación del Delegado:</strong> {{ actividad.observacion_validacion }}</div>
-            {% endif %}
+            {% endif %}{% endif %}
         </div>
     </div>
     <div class="deleg-detalle-item deleg-detalle-full">
@@ -117,6 +117,22 @@
             <p class="mb-0">{{ actividad.fecha_registro|date:"d/m/Y H:i" }}</p>
         </div>
     </div>
+    {% if actividad.clase == "Social" %}
+    <div class="deleg-detalle-item">
+        <div>
+            <span class="deleg-detalle-label">Gestión social · atención</span>
+            <p class="mb-0">{{ actividad.subtipo_atencion|default:"—" }}</p>
+        </div>
+    </div>
+    {% endif %}
+    {% if actividad.vecino %}
+    <div class="deleg-detalle-item">
+        <div>
+            <span class="deleg-detalle-label">Vecino/a</span>
+            <p class="mb-0">{{ actividad.vecino.nombre }} · RUT {{ actividad.vecino.rut }}</p>
+        </div>
+    </div>
+    {% endif %}
     {% if actividad.contacto or actividad.telefono_contacto %}
     <div class="deleg-detalle-item">
         <div>

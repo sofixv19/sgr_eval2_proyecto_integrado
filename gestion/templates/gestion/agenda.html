@@ -38,7 +38,7 @@
         <div class="col-md-2 col-6"><label class="form-label small mb-1">Hasta</label>
             <input type="date" name="hasta" value="{{ filtros.hasta }}" class="form-control form-control-sm"></div>
         <div class="col-md-3 col-12"><label class="form-label small mb-1">Buscar</label>
-            <input type="text" name="q" value="{{ filtros.q }}" class="form-control form-control-sm" placeholder="Código, solicitante o texto"></div>
+            <input type="text" name="q" value="{{ filtros.q }}" class="form-control form-control-sm" placeholder="Código, RUT, solicitante o texto"></div>
         <div class="col-md-2 col-12 d-flex gap-2">
             <button class="btn btn-sm btn-institucional flex-grow-1">Filtrar</button>
             <a href="{% url 'gestion:agenda' %}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
@@ -47,14 +47,19 @@
 </form>
 
 <div class="dash-card mb-4">
-    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Compromisos</h2><div class="dash-card-sub">Ordenados por fecha comprometida · amarillo: próximo a vencer · rojo: vencido</div></div></div>
+    <div class="dash-card-cabecera"><div><h2 class="dash-card-titulo">Compromisos</h2><div class="dash-card-sub">Ordenados por fecha comprometida · amarillo: próximo a vencer · rojo: vencido</div></div>
+        <div class="d-flex align-items-center gap-2 buscador-dinamico">
+            <input type="search" class="form-control form-control-sm" placeholder="Buscar al escribir: código, RUT o nombre"
+                   aria-label="Buscar en el Tubo mientras se escribe" data-busqueda-dinamica="#tabla-tubo" data-contador="#total-tubo">
+            <span class="small text-muted text-nowrap"><span id="total-tubo">{{ compromisos|length }}</span></span>
+        </div></div>
     <div class="table-responsive">
     <table class="table align-middle mb-0 dash-tabla">
         <thead><tr><th>Código</th><th>Fecha comprometida</th><th>Solicitante</th><th>Compromiso</th><th>Territorio</th><th>Responsable</th><th>Estado</th></tr></thead>
-        <tbody>
+        <tbody id="tabla-tubo">
         {% for c in compromisos %}
         {% with sit=c.situacion %}
-        <tr class="fila-compromiso fila-{{ sit.0 }}">
+        <tr class="fila-compromiso fila-{{ sit.0 }}" data-buscar="{{ c.codigo }} {{ c.rut_solicitante }} {{ c.solicitante }} {{ c.organizacion|default:'' }}">
             <td><a href="{{ c.get_absolute_url }}" class="dash-codigo">{{ c.codigo }}</a></td>
             <td class="text-nowrap">{{ c.fecha_compromiso|date:"d/m/Y" }}<br><span class="dash-pill dash-pill-{{ sit.0 }} dash-pill-chica">{{ sit.1 }}</span></td>
             <td>{{ c.solicitante }}{% if c.organizacion %}<div class="small text-muted">{{ c.organizacion }}</div>{% endif %}</td>

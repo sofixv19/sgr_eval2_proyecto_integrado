@@ -69,8 +69,8 @@ class Periodo(models.Model):
 
     class Meta:
         db_table = 'periodos'
-        verbose_name = 'Período'
-        verbose_name_plural = 'Períodos de medición'
+        verbose_name = 'Trimestre'
+        verbose_name_plural = 'Trimestres (períodos de medición)'
         ordering = ['-fecha_inicio']
 
     def __str__(self):

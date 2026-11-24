@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'delegaciones',
     'organizacion',
     'gestion',
+    'territorio',   # v3.0: territorios, vecinos, JJVV, hitos, tipos de atención
 ]
 
 MIDDLEWARE = [
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'cuentas.middleware.LoginObligatorioMiddleware',
+    'cuentas.middleware.CambioClaveObligatorioMiddleware',   # v3.0: clave temporal
     'comun.auditoria.AuditoriaMiddleware',   # v2.1: auditoría de operaciones (RF-036)
 ]
 
@@ -178,7 +180,7 @@ SGR_LOGIN_MINUTOS_BLOQUEO = config('SGR_LOGIN_MINUTOS_BLOQUEO', default=15, cast
 
 # Versión del sistema (ver CHANGELOG.md). 1.x = requerimientos de la Guía SGR;
 # 2.0 = Nuevos requerimientos de octubre 2026.
-SGR_VERSION = '2.2.3'
+SGR_VERSION = '3.0'
 
 # Reglas de negocio parametrizables (Guía SGR, sección 13.1)
 SGR_TOPE_CUMPLIMIENTO = config('SGR_TOPE_CUMPLIMIENTO', default=150, cast=int)   # % máximo del colaborador
@@ -251,3 +253,22 @@ LOGGING = {
         'django.security': {'handlers': ['archivo_seguridad'], 'level': 'WARNING', 'propagate': False},
     },
 }
+
+
+# ---------------------------------------------------------------------------
+# Versión 3.0: correo para recuperar la contraseña.
+# Por defecto los correos se guardan como archivos en logs/correos/ (útil en
+# desarrollo y en el laboratorio sin servidor de correo). Para enviarlos de
+# verdad, definir en .env EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# y los datos del servidor SMTP (ver GUIA_DESPLIEGUE.md).
+# ---------------------------------------------------------------------------
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.filebased.EmailBackend')
+EMAIL_FILE_PATH = BASE_DIR / 'logs' / 'correos'
+EMAIL_HOST = config('EMAIL_HOST', default='')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='SGR La Serena <no-responder@sgr.local>')
+# El enlace para restablecer la contraseña vence a la hora (en segundos).
+PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', default=3600, cast=int)

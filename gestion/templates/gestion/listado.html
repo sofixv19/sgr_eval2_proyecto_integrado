@@ -22,6 +22,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="me-1"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         Registrar actividad
     </a>
+    <a href="{% url 'gestion:crear_gestion_social' %}" class="btn btn-outline-institucional btn-sm ms-1">+ Gestión social</a>
     {% else %}<span></span>{% endif %}
 
     <div class="d-flex gap-2">
@@ -33,6 +34,9 @@
     <summary class="fw-semibold">Buscar y filtrar{% if filtros %} <span class="badge-version">{{ filtros|length }} filtro{{ filtros|length|pluralize }}</span>{% endif %}</summary>
     <form method="get" class="row g-2 align-items-end mt-2">
         {% if estado_seleccionado %}<input type="hidden" name="estado" value="{{ estado_seleccionado }}">{% endif %}
+        <div class="col-md-3 col-6"><label class="form-label small mb-1">Clase</label>
+            <select name="clase" class="form-select form-select-sm"><option value="">Actividades y gestiones sociales</option>
+            {% for valor, texto in clases %}<option value="{{ valor }}" {% if filtros.clase == valor %}selected{% endif %}>{{ texto }}</option>{% endfor %}</select></div>
         <div class="col-md-3 col-6"><label class="form-label small mb-1">Validación</label>
             <select name="validacion" class="form-select form-select-sm"><option value="">Toda validación</option>
             {% for valor, texto in estados_validacion %}<option value="{{ valor }}" {% if validacion_seleccionada == valor %}selected{% endif %}>{{ texto }}</option>{% endfor %}</select></div>
@@ -57,7 +61,7 @@
         <div class="col-md-2 col-6"><label class="form-label small mb-1">Hasta</label>
             <input type="date" name="hasta" value="{{ filtros.hasta }}" class="form-control form-control-sm"></div>
         <div class="col-md-3 col-12"><label class="form-label small mb-1">Texto</label>
-            <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm" placeholder="Código, descripción, funcionario..."></div>
+            <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm" placeholder="Código, RUT o nombre del vecino, funcionario..."></div>
         <div class="col-md-2 col-12 d-flex gap-2">
             <button type="submit" class="btn btn-sm btn-institucional flex-grow-1">Filtrar</button>
             <a href="{% url 'gestion:listado' %}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
@@ -91,7 +95,7 @@
         <div class="deleg-card">
             <div class="deleg-card-body pt-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h2 class="h6 mb-0">{{ actividad.codigo }} &middot; {{ actividad.delegacion }}</h2>
+                    <h2 class="h6 mb-0">{{ actividad.codigo }} &middot; {{ actividad.delegacion }}{% if actividad.clase == "Social" %} <span class="badge-version">Gestión social</span>{% endif %}</h2>
                     {% if actividad.estado == "Pendiente" %}
                         <span class="badge-estado badge-pendiente">{{ actividad.estado }}</span>
                     {% elif actividad.estado == "En proceso" %}

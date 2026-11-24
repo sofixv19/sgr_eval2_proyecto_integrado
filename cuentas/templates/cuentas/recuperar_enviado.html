@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Revise su correo{% endblock %}
+{% block contenido %}
+<div class="form-card mx-auto mt-2" style="max-width: 480px;">
+    <h1 class="h4 mb-2">Revise su correo</h1>
+    <p>Si el correo está registrado, le enviamos un enlace para crear una nueva contraseña. El enlace vence en una hora.</p>
+    <p class="text-muted small">Si no lo recibe en unos minutos, revise la carpeta de correo no deseado o pida ayuda al Administrador.</p>
+    <a class="btn btn-outline-secondary w-100" href="{% url 'cuentas:login' %}">Volver a iniciar sesión</a>
+</div>
+{% endblock %}
