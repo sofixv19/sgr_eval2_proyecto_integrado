@@ -1,0 +1,19 @@
+stateDiagram-v2
+    direction LR
+    [*] --> Ingresado : se registra en la agenda<br/>(código AC-0001)
+    Ingresado --> Pendiente
+    Ingresado --> EnProceso
+    Ingresado --> Realizado
+    state "En proceso" as EnProceso
+    Pendiente --> EnProceso : cambio con observación
+    EnProceso --> Pendiente : cambio con observación
+    Pendiente --> Realizado : se registra la actividad<br/>que lo cumple
+    EnProceso --> Realizado : se cumple
+    Realizado --> EnProceso : solo el Delegado reabre
+    Realizado --> [*]
+    note right of EnProceso
+        Cada cambio queda en el historial
+        con autor, fecha y observación.
+        Vencido: sin cerrar tras la fecha
+        comprometida (en rojo).
+    end note

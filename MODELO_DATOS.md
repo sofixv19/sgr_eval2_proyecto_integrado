@@ -3,6 +3,168 @@
 Cubre los criterios **2.1.4.8** (entidades y relaciones) y **2.1.4.9**
 (bases estructuradas y no estructuradas) de la rúbrica de Evaluación 2.
 
+## Modelo entidad-relación actualizado (versión 2.2.2)
+
+Son las 15 tablas tal como están en MariaDB, con sus claves primarias (PK), foráneas (FK) y únicas (UK). Imagen: `docs/diagramas/mer.png`.
+
+```mermaid
+erDiagram
+    auth_user {
+        int id PK
+        varchar username UK
+        varchar password "hash PBKDF2"
+        bool is_active
+    }
+    delegaciones_delegacion {
+        bigint id PK
+        varchar nombre UK
+        varchar slug UK
+        varchar encargado
+        varchar territorio
+        bool activa
+    }
+    delegaciones_organizacioncomunitaria {
+        bigint id PK
+        bigint delegacion_id FK
+        varchar nombre
+        varchar tipo
+        int socios_activos
+        bool activa
+    }
+    cargos {
+        bigint id PK
+        varchar nombre_cargo UK
+        varchar area
+        bool active
+    }
+    funcionarios {
+        bigint id PK
+        bigint delegacion_id FK
+        bigint cargo_id FK
+        int usuario_id FK "único, nulo"
+        varchar nombre
+        varchar rut UK
+        varchar email UK
+        varchar rol
+        bool activo
+    }
+    periodos {
+        bigint id PK
+        varchar nombre UK
+        date fecha_inicio
+        date fecha_fin
+        varchar estado
+    }
+    metas {
+        bigint id PK
+        bigint cargo_id FK
+        bigint funcionario_id FK
+        bigint categoria_id FK
+        bigint periodo_id FK
+        varchar item_medible
+        varchar valor_objetivo
+        int ponderador
+    }
+    organizacion_reconocimiento {
+        bigint id PK
+        bigint funcionario_id FK
+        bigint periodo_id FK
+        bigint registrado_por_id FK
+        varchar tipo
+        date fecha
+        varchar respaldo
+    }
+    organizacion_ausencia {
+        bigint id PK
+        bigint funcionario_id FK
+        bigint registrado_por_id FK
+        varchar tipo
+        date desde
+        date hasta
+    }
+    gestion_categoria {
+        bigint id PK
+        varchar nombre UK
+    }
+    gestion_actividad {
+        bigint id PK
+        varchar codigo UK
+        bigint delegacion_id FK
+        bigint categoria_id FK
+        bigint funcionario_id FK
+        bigint organizacion_id FK "nulo"
+        bigint compromiso_id FK "nulo"
+        bigint validado_por_id FK "nulo"
+        date fecha
+        varchar estado
+        varchar contacto
+        varchar telefono_contacto
+        varchar tipo_gestion
+        bool puntuable
+        varchar version_reglas
+        varchar estado_validacion
+    }
+    gestion_evidencia {
+        bigint id PK
+        bigint actividad_id FK
+        int subida_por_id FK
+        varchar archivo
+        datetime fecha_carga
+    }
+    gestion_compromiso {
+        bigint id PK
+        varchar codigo UK
+        bigint delegacion_id FK
+        bigint responsable_id FK
+        bigint organizacion_id FK "nulo"
+        bigint actividad_origen_id FK "nulo"
+        varchar solicitante
+        date fecha_compromiso
+        varchar estado
+        date fecha_cierre
+    }
+    gestion_cambiocompromiso {
+        bigint id PK
+        bigint compromiso_id FK
+        int autor_id FK
+        varchar campo
+        varchar valor_anterior
+        varchar valor_nuevo
+        datetime fecha
+    }
+    comun_registroauditoria {
+        bigint id PK
+        int usuario_id FK "nulo"
+        datetime fecha
+        varchar accion
+        varchar entidad
+        json cambios
+        varchar ip
+    }
+    delegaciones_delegacion ||--o{ funcionarios : "tiene"
+    delegaciones_delegacion ||--o{ delegaciones_organizacioncomunitaria : "agrupa"
+    cargos ||--o{ funcionarios : "asigna"
+    auth_user |o--o| funcionarios : "cuenta"
+    funcionarios ||--o{ metas : "tiene"
+    cargos ||--o{ metas : "define"
+    periodos ||--o{ metas : "vigente en"
+    gestion_categoria ||--o{ metas : "mide"
+    funcionarios ||--o{ organizacion_reconocimiento : "recibe"
+    periodos ||--o{ organizacion_reconocimiento : "en"
+    funcionarios ||--o{ organizacion_ausencia : "registra"
+    delegaciones_delegacion ||--o{ gestion_actividad : "agrupa"
+    gestion_categoria ||--o{ gestion_actividad : "clasifica"
+    funcionarios ||--o{ gestion_actividad : "registra / valida"
+    delegaciones_organizacioncomunitaria |o--o{ gestion_actividad : "solicita"
+    gestion_actividad ||--o{ gestion_evidencia : "respalda"
+    delegaciones_delegacion ||--o{ gestion_compromiso : "agenda"
+    funcionarios ||--o{ gestion_compromiso : "responsable"
+    gestion_compromiso |o--o{ gestion_actividad : "se cumple con"
+    gestion_actividad |o--o{ gestion_compromiso : "origina"
+    gestion_compromiso ||--o{ gestion_cambiocompromiso : "historial"
+    auth_user |o--o{ comun_registroauditoria : "autor"
+```
+
 ## 2.1.4.8 — Entidades y relaciones
 
 El modelo de datos conceptual completo (13 clases, con el tipo exacto de

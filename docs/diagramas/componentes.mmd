@@ -1,0 +1,51 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+    nav["«component»<br/><b>Navegador web</b><br/>Chrome, Firefox o Brave<br/>(escritorio y teléfono)"]
+    subgraph app["«subsystem» Aplicación SGR · Django 4.2 · Python 3 · servicio sgr en AWS EC2"]
+        direction TB
+        subgraph mw["Middleware: cadena de responsabilidad"]
+            direction LR
+            m0["WhiteNoise<br/>(estilos e imágenes)"] --> m1["Sesión y<br/>autenticación"] --> m2["Protección<br/>CSRF"] --> m3["AuditoriaMiddleware<br/>(usuario, IP, 403)"]
+        end
+        cuentas["«component» <b>cuentas</b><br/>Login con bloqueo tras 5 intentos,<br/>roles y ámbito por delegación<br/>(perfiles.py, configurar_roles)"]
+        subgraph negocio["Aplicaciones de negocio"]
+            direction LR
+            deleg["«component» <b>delegaciones</b><br/>Delegaciones, organizaciones<br/>comunitarias y paneles por rol"]
+            org["«component» <b>organizacion</b><br/>Funcionarios, cargos, períodos,<br/>metas, felicitaciones y ausencias"]
+            gest["«component» <b>gestion</b><br/>Actividades, evidencias, validación<br/>y agenda colectiva"]
+        end
+        subgraph serv["Servicios de gestion"]
+            direction LR
+            ind["«component» <b>indicadores</b><br/>Cumplimiento, meta esperada<br/>y semáforo"]
+            ale["«component» <b>alertas</b><br/>Avisos y actividad reciente"]
+            exp["«component» <b>exportar</b><br/>CSV para Excel"]
+        end
+        comun["«component» <b>comun</b><br/>Mantenedores genéricos, validadores<br/>y <b>auditoría</b> (señales y vista)"]
+        admin["«component» <b>Django Admin</b>"]
+        orm["«component» <b>ORM de Django + PyMySQL</b>"]
+    end
+    db[("«database»<br/><b>MariaDB</b><br/>sgr_evaluacion")]
+    media[["«artifact»<br/>media/evidencias<br/>(fotos y PDF)"]]
+    log[["«artifact»<br/>logs/seguridad.log"]]
+
+    nav -- "HTTP :8000" --> mw
+    mw --> cuentas
+    cuentas -. "«use» sesión y permisos" .-> negocio
+    gest -. "«use»" .-> serv
+    deleg -. "«use»" .-> serv
+    negocio -. "«use»" .-> comun
+    negocio --> orm
+    comun --> orm
+    admin --> orm
+    orm -- "SQL :3306" --> db
+    gest -- "guarda archivos" --> media
+    cuentas -- "eventos de acceso" --> log
+    classDef comp fill:#FBEFEF,stroke:#8B0000,color:#262626;
+    classDef nuevo fill:#E6F2EE,stroke:#2B7A66,color:#1F1A1B;
+    classDef infra fill:#EEF1F4,stroke:#5A5A5A,color:#262626;
+    class nav,cuentas,deleg,org,gest,admin,orm comp;
+    class ind,ale,exp,comun,m3 nuevo;
+    class db,media,log,m0,m1,m2 infra;

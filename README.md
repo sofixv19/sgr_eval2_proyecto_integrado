@@ -1,10 +1,11 @@
 # SGR La Serena — Sistema de Gestión de Resultados
 
-> **Versión actual: 2.2.1** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
+> **Versión actual: 2.2.2** (Nuevos requerimientos, octubre 2026 + alcance mínimo completo de la Guía SGR) · Historial completo en [`CHANGELOG.md`](CHANGELOG.md) · Requisitos por versión en [`REQUISITOS_V2.md`](REQUISITOS_V2.md)
 
 | Versión | Qué trae | Pruebas |
 |---|---|---|
-| **2.2.1** | Corrección: instalar una versión nueva ya no revierte los nombres que el equipo cambió desde la página | 176 |
+| **2.2.2** | Documentación: diagramas de clases, datos, estados y componentes actualizados al código (`docs/diagramas/`), y revisión de seguridad OWASP Top 10:2025 en `SEGURIDAD.md` | 176 |
+| 2.2.1 | Corrección: instalar una versión nueva ya no revierte los nombres que el equipo cambió desde la página | 176 |
 | 2.2.0 | Interfaz más ordenada: todos los paneles con el mismo orden (indicadores → accesos rápidos "Registrar" y "Consultar" → cumplimiento y avisos → detalle) | 175 |
 | 2.1.2 | Datos de demostración limpios: equipo de ejemplo pequeño y coherente, y comando `reiniciar_demo` para borrar lo creado probando | 175 |
 | 2.1.1 | Se retira la página "Resumen de gestión", que repetía lo que ya muestran los paneles | 174 |
@@ -166,6 +167,7 @@ CHANGELOG.md         # Historial de versiones (1.0, 1.1, 2.0)
 REQUISITOS_V2.md     # Requerimientos por versión y cobertura de la Guía (RF-001 a RF-048)
 MATRIZ_TRAZABILIDAD.md  # HU → requisito → código → pruebas → resultado → evidencia
 MANUAL_USUARIO.md    # Manual breve de usuario por rol
+docs/diagramas/      # Diagramas actualizados (clases, MER, estados, componentes) en imagen y Mermaid
 DIAGRAMA_CLASES.md   # Diagrama de clases (Mermaid + PNG), 13 clases, estructura de Eval. 1
 TESTING.md           # Plan de pruebas: automatizadas + manuales + rendimiento, con evidencia
 CASOS_DE_USO.md       # Matriz de trazabilidad: caso de uso -> ruta -> prueba

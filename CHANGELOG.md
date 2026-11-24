@@ -6,10 +6,11 @@ El proyecto usa **versionado semántico** (`MAYOR.MENOR.PARCHE`):
 - **MENOR** cambia con funciones nuevas o correcciones pedidas en una revisión, sin cambiar los requerimientos base.
 - **PARCHE** cambia con arreglos chicos.
 
-La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`).
+La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`sgr_evaluacion/settings.py`). Cada versión queda marcada en Git con un *tag* (`v1.0`, `v1.1`, `v2.0`, `v2.1`, `v2.1.1`, `v2.1.2`, `v2.2`, `v2.2.1`, `v2.2.2`).
 
 | Versión | Fecha | Base de requerimientos | Pruebas |
 |---|---|---|---|
+| [2.2.2](#222--diagramas-y-seguridad-al-día) | 14-11-2026 | Evaluación 3 de Ingeniería de Software | 176 |
 | [2.2.1](#221--los-cambios-hechos-desde-la-página-se-respetan) | 12-11-2026 | Error reportado por el equipo | 176 |
 | [2.2.0](#220--interfaz-más-ordenada) | 12-11-2026 | Revisión visual del equipo | 175 |
 | [2.1.2](#212--datos-de-demostración-limpios) | 12-11-2026 | Ajuste tras revisión del equipo | 175 |
@@ -18,6 +19,24 @@ La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`s
 | [2.0.0](#200--nuevos-requerimientos-octubre-2026) | 12-11-2026 | Guía SGR + Nuevos Requerimientos (octubre 2026) | 156 |
 | [1.1.0](#110--correcciones-de-la-revisión-de-la-evaluación-2) | 05-11-2026 | Guía SGR + retroalimentación del profesor | 140 |
 | [1.0.0](#100--evaluación-2-de-proyecto-integrado) | 22-10-2026 | Guía SGR (RF-001 a RF-038) | 118 |
+
+---
+
+## 2.2.2 — Diagramas y seguridad al día
+
+Solo cambia la documentación; el código de la aplicación no cambia.
+
+### Cambiado
+- **Diagramas actualizados al código**, en `docs/diagramas/` (imagen y fuente Mermaid editable):
+  - clases de diseño;
+  - modelo entidad-relación de las 15 tablas;
+  - estados de la actividad y del compromiso;
+  - componentes.
+- Los diagramas de la Evaluación 2 eran un modelo conceptual: clases Indicador y Validacion, subclases por rol y el estado "Observada". Ya no coincidían con lo construido.
+- `DIAGRAMA_CLASES.md` y `MODELO_DATOS.md` muestran primero el diagrama actualizado.
+- `SEGURIDAD.md`:
+  - se reescribió la sección de autenticación y autorización, que todavía decía que el sitio no tenía inicio de sesión;
+  - se agregó la revisión OWASP Top 10:2025 con sus hallazgos (falta HTTPS; `pip-audit` encontró 9 avisos en Django 4.2.30, que se resolverán migrando a Django 5.2 LTS en el Sprint 6).
 
 ---
 

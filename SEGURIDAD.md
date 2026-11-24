@@ -6,30 +6,26 @@ codificación segura) de la rúbrica de Evaluación 2.
 
 ## 2.1.5.10 — Políticas de autenticación y autorización
 
-**Autenticación**: el sistema usa el mecanismo propio de Django
-(`django.contrib.auth`). Las contraseñas nunca se guardan en texto
-plano, sino con hash (PBKDF2) manejado automáticamente por el framework.
-El acceso a Django Admin exige una sesión iniciada con permisos de
-`staff` o `superuser`.
+> Actualizado en la versión 2.2.2 (noviembre 2026). La versión anterior de esta sección describía el sistema de la Evaluación 1, cuando el sitio todavía no tenía inicio de sesión.
 
-**Autorización — dos niveles, documentados de forma honesta**:
+**Autenticación** (`cuentas/`, `django.contrib.auth`):
+- Todas las páginas, salvo la de ingreso, exigen haber iniciado sesión.
+- Las contraseñas se guardan solo como hash PBKDF2-SHA256 con sal y pasan por los validadores de Django (largo mínimo, contraseñas comunes, solo números, parecido al usuario).
+- Después de 5 intentos fallidos la cuenta se bloquea 15 minutos (`SGR_LOGIN_MAX_INTENTOS`, `SGR_LOGIN_MINUTOS_BLOQUEO`).
+- La sesión vence a los 30 minutos sin actividad o al cerrar el navegador. La cookie es HttpOnly y SameSite=Lax.
+- Cuando se crea un funcionario, el sistema genera una contraseña temporal que se muestra una sola vez.
 
-| Nivel | Cómo se protege hoy | Alcance |
+**Autorización: permisos por rol y ámbito por delegación.** Cada cuenta pertenece a un grupo con permisos mínimos (`configurar_roles`). Además, cada consulta se filtra por el ámbito del usuario (`cuentas/perfiles.py`); un registro fuera de ese ámbito responde 404, sin confirmar siquiera que existe.
+
+| Rol | Permisos | Qué puede hacer |
 |---|---|---|
-| Django Admin | Login real + permisos de `staff`/`superuser` de Django | Control total: crear, editar, eliminar y validar cualquier entidad. |
-| Regla de negocio (modelo) | `Actividad.clean()` / `marcar_validado()` impiden que alguien sin rol Delegado valide, o que el Delegado se autovalide | Se aplica siempre, incluso si el dato se intenta guardar desde Admin, desde el formulario público o desde una prueba automatizada. |
-| Formularios públicos (`/gestion/`, `/delegaciones/`) | **Sin login todavía** — son formularios abiertos, no restringidos por sesión de usuario | Limitación declarada (ver también `CASOS_DE_USO.md`, CU-16/CU-17): un sistema de login por rol para el sitio público es el siguiente paso natural, fuera del alcance actual. |
+| Funcionario | 14 | Registrar y corregir sus actividades mientras están pendientes, subir evidencias, crear y actualizar compromisos de su delegación. Ve solo lo suyo |
+| Delegado | 32 | Validar o rechazar las actividades de su equipo (nunca las propias), asignar metas, registrar felicitaciones, reclamos y ausencias, crear funcionarios de su delegación y reasignar compromisos |
+| Coordinador | 22 | Ver todas las delegaciones, crearlas y desactivarlas, crear Delegados, administrar períodos y consultar la auditoría |
+| Verificador / Auditor | 14 | Solo lectura de todo el sistema, incluida la auditoría |
+| Administrador | 51 | Todas las tablas maestras. Tampoco puede modificar ni borrar la auditoría |
 
-Roles definidos en `Funcionario.rol` (principio de mínimo privilegio, en
-la medida de lo ya implementado):
-
-| Rol | Qué puede hacer hoy, en el código real |
-|---|---|
-| Funcionario Operativo | Registrar y actualizar sus propias actividades (CRUD público). |
-| **Delegado** | Lo mismo que el Funcionario Operativo, **más**: validar actividades de su delegación — nunca las que él mismo registró (única acción con control de autorización aplicado a nivel de datos). |
-| Coordinador Estratégico | Rol reservado en el catálogo para supervisión de varias delegaciones; sin funciones adicionales implementadas aún en el código (ver `CRONOGRAMA.md`, Sprint 5). |
-| Verificador / Auditor | Solo lectura de todo el sistema, incluida la auditoría (versión 2.1). |
-| Administrador (staff Django) | Control total desde Django Admin: catálogos, cargos, metas, usuarios, y acción masiva "Marcar como validadas". |
+Las acciones prohibidas responden "Acceso denegado" (403) y quedan registradas en la auditoría con usuario, IP y ruta.
 
 ## 2.1.5.11 — Amenazas comunes y medidas de mitigación
 
@@ -42,8 +38,8 @@ la medida de lo ya implementado):
 | Falsificación de solicitudes entre sitios (CSRF) | Middleware `CsrfViewMiddleware` de Django activo por defecto; todos los formularios del proyecto (incluidos los nuevos de Agregar/Modificar/Eliminar) usan `{% csrf_token %}`. |
 | Borrado accidental o indebido de datos en uso | Restricciones `on_delete=PROTECT/RESTRICT` impiden borrar un Funcionario o Categoría en uso; además, la pantalla de "Eliminar" pide confirmación explícita antes de borrar cualquier registro (ver `CASOS_DE_USO.md`). |
 | Validación falsa o manipulada (que alguien no autorizado marque una actividad como validada) | Aplicado en dos capas: el formulario público (`ValidacionForm`) solo lista Funcionarios con rol Delegado como opción, y el modelo (`Actividad.clean()`) rechaza igual la operación aunque se intente por otra vía (Admin, API futura, etc.). |
-| Acceso al sitio público sin autenticación (limitación declarada) | Mientras no exista login por rol para el sitio público, cualquiera con la URL puede registrar o editar actividades. Mitigación parcial actual: el despliegue está pensado para una red interna/instancia controlada (EC2 con `ALLOWED_HOSTS` restringido), no expuesto como sitio público masivo. |
-| Exposición de datos personales (RUT, email) en reportes | Pendiente de revisión conforme a la Ley N.º 19.628 sobre protección de datos personales, antes de un despliegue con datos reales (no ficticios) de funcionarios. |
+| Acceso horizontal (ver datos de otra delegación) | Cada consulta se filtra por el ámbito del usuario; un registro de otra delegación responde 404. Probado con CP-PERF y CP-AGE-001. |
+| Exposición de datos personales (RUT, correo, teléfono del vecino) | Solo datos ficticios en el prototipo; cada rol ve únicamente su ámbito. Antes de usar datos reales hay que cumplir la Ley 19.628 y preparar la Ley 21.719 (vigencia fijada para el 1-12-2026; un proyecto de ley en trámite propone postergarla al 15-10-2027). |
 
 ## 2.1.5.12 — Estándares de codificación segura
 
@@ -73,3 +69,29 @@ la medida de lo ya implementado):
 - **Protección**: el modelo `RegistroAuditoria` rechaza cualquier modificación o eliminación (`save()` y `delete()` lanzan `PermissionDenied`). En Django Admin está en solo lectura incluso para el Administrador.
 - **Acceso**: lo consultan solo el Administrador, el Coordinador y el Verificador, en `/auditoria/`. Un Funcionario recibe 403, y ese intento también queda registrado (CP-AUD-003 y CP-AUD-004).
 - **Períodos cerrados** (RN-013): sus resultados no se alteran. Reabrir un período queda registrado en la auditoría.
+
+
+## Revisión de seguridad de noviembre de 2026 (versión 2.2.2)
+
+Como parte de la Evaluación 3 de Ingeniería de Software, el sistema se revisó contra el **OWASP Top 10:2025**:
+
+| Riesgo | Control | Estado |
+|---|---|---|
+| A01 Control de acceso roto | Permisos por rol y filtro por delegación (404) | Cumple |
+| A02 Configuración insegura | DEBUG=False, ALLOWED_HOSTS, X-Frame-Options, nosniff, Referrer-Policy | Parcial: falta HTTPS y HSTS |
+| A03 Fallas en la cadena de suministro | 5 dependencias; revisión con `pip-audit` | Pendiente: ver hallazgo 2 |
+| A04 Fallas criptográficas | PBKDF2-SHA256; secretos en `.env` | Parcial: tráfico sin HTTPS |
+| A05 Inyección | ORM con SQL parametrizado; plantillas que escapan HTML | Cumple |
+| A06 Diseño inseguro | Nadie valida lo propio; períodos cerrados; tope de 7 ingresos diarios | Cumple |
+| A07 Fallas de autenticación | Bloqueo tras 5 intentos; validadores; sesión de 30 minutos | Cumple |
+| A08 Integridad de software o datos | CSRF; evidencias JPG, PNG o PDF de hasta 5 MB | Cumple |
+| A09 Registro y alertas | Auditoría que no se puede modificar; `logs/seguridad.log` | Cumple |
+| A10 Condiciones excepcionales | Páginas 403 y 404 propias; la auditoría nunca bloquea la operación | Cumple |
+
+**Hallazgos** (se informan tal como salieron):
+1. `python manage.py check --deploy` avisa que faltan HSTS, la redirección a HTTPS y las cookies seguras. El código está listo (`USAR_HTTPS=True` en `.env`); falta instalar un certificado (Nginx con Let's Encrypt o un balanceador de AWS con ACM). **Plan: Sprint 6.**
+2. `pip-audit -r requirements.txt` encontró **9 avisos de vulnerabilidad en Django 4.2.30**. La rama 4.2 dejó de recibir correcciones de seguridad en abril de 2026. Para actualizar a **Django 5.2 LTS** se necesita Python 3.10 o superior, y Amazon Linux 2023 trae Python 3.9. **Plan, Sprint 6:**
+   1. Instalar Python 3.11 en la instancia (`sudo dnf install python3.11`).
+   2. Recrear el `venv`.
+   3. Actualizar `requirements.txt` a `Django>=5.2,<5.3`.
+   4. Correr las pruebas y desplegar.

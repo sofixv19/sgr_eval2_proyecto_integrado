@@ -1,0 +1,16 @@
+stateDiagram-v2
+    direction LR
+    [*] --> Pendiente : el Funcionario registra la actividad<br/>(código automático, fecha de esta semana)
+    state "Pendiente de validación" as Pendiente
+    Pendiente --> Validada : el Delegado aprueba<br/>[Delegado ≠ autor y período abierto]
+    Pendiente --> Rechazada : el Delegado rechaza<br/>con observación obligatoria
+    Rechazada --> Pendiente : el Funcionario corrige<br/>y sube nueva evidencia
+    Validada --> [*] : cierre del período<br/>(ya no se puede modificar)
+    note right of Validada
+        Solo cuenta para el cumplimiento
+        si está Validada y suma puntaje.
+    end note
+    note right of Pendiente
+        Mientras está Pendiente, el Funcionario
+        puede editarla o eliminarla.
+    end note

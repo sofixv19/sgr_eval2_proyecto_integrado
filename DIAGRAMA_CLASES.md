@@ -1,5 +1,180 @@
 # Diagrama de clases — SGR La Serena
 
+## Diagrama de diseño actualizado (versión 2.2.2)
+
+Este es el diagrama que corresponde al código actual (`docs/diagramas/clases.png`):
+- El rol es un atributo del Funcionario, no una subclase.
+- La validación son campos de la Actividad.
+- Los indicadores y las alertas son servicios que se calculan al abrir cada panel, sin tabla propia.
+
+El modelo conceptual de las evaluaciones anteriores se conserva más abajo como referencia.
+
+```mermaid
+classDiagram
+direction LR
+class User {
+  <<Django auth>>
+  +username
+  +password : hash PBKDF2
+  +is_active
+}
+class Delegacion {
+  +nombre
+  +slug
+  +encargado
+  +territorio
+  +activa
+}
+class OrganizacionComunitaria {
+  +nombre
+  +tipo
+  +socios_activos
+  +activa
+}
+class CargoFuncion {
+  +nombre_cargo
+  +area
+  +active
+}
+class Funcionario {
+  +nombre
+  +rut
+  +email
+  +rol
+  +activo
+}
+class Periodo {
+  +nombre
+  +fecha_inicio
+  +fecha_fin
+  +estado
+  +cerrado_que_contiene(fecha)$
+}
+class MetaProyecto {
+  +item_medible
+  +valor_objetivo
+  +unidad
+  +ponderador
+}
+class Reconocimiento {
+  +tipo : felicitación o reclamo
+  +fecha
+  +respaldo
+}
+class Ausencia {
+  +tipo
+  +desde
+  +hasta
+}
+class Categoria {
+  +nombre
+}
+class Actividad {
+  +codigo
+  +fecha
+  +estado
+  +tipo_gestion
+  +tipo_solicitante
+  +contacto
+  +telefono_contacto
+  +puntuable
+  +version_reglas
+  +estado_validacion
+  +observacion_validacion
+  +siguiente_codigo(sigla)$
+  +motivos_sin_puntaje()
+  +marcar_validado(delegado)
+  +clean()
+}
+class Evidencia {
+  +archivo : JPG, PNG o PDF, máx. 5 MB
+  +descripcion
+  +fecha_carga
+}
+class Compromiso {
+  +codigo
+  +origen
+  +solicitante
+  +territorio
+  +area_apoyo
+  +fecha_compromiso
+  +estado
+  +fecha_cierre
+  +estados_siguientes()
+  +cambiar_estado(nuevo, usuario, obs)
+  +reasignar(responsable, usuario, motivo)
+  +vencido()
+  +proximo_a_vencer()
+}
+class CambioCompromiso {
+  +campo
+  +valor_anterior
+  +valor_nuevo
+  +observacion
+  +fecha
+}
+class RegistroAuditoria {
+  +fecha
+  +accion
+  +entidad
+  +objeto
+  +cambios : JSON
+  +ip
+  +save() solo permite altas
+  +delete() siempre bloqueado
+}
+class indicadores {
+  <<servicio>>
+  +cumplimiento_funcionario()
+  +cumplimiento_delegacion()
+  +porcentaje_esperado_funcionario()
+  +semaforo()
+}
+class alertas {
+  <<servicio>>
+  +alertas_funcionario()
+  +alertas_delegacion()
+  +alertas_coordinacion()
+  +actividad_reciente()
+}
+class auditoria {
+  <<servicio>>
+  +registrar()
+  +conectar_senales()
+}
+Delegacion "1" --> "0..*" Funcionario : pertenece
+Delegacion "1" --> "0..*" OrganizacionComunitaria : territorio
+CargoFuncion "1" --> "0..*" Funcionario : cargo
+User "0..1" -- "0..1" Funcionario : cuenta de acceso
+Funcionario "1" *-- "0..*" MetaProyecto : metas
+Periodo "1" --> "0..*" MetaProyecto : vigente en
+Categoria "1" --> "0..*" MetaProyecto : ítem medido
+Funcionario "1" --> "0..*" Actividad : registra
+Funcionario "0..1" --> "0..*" Actividad : valida (Delegado)
+Delegacion "1" --> "0..*" Actividad : agrupa
+Categoria "1" --> "0..*" Actividad : clasifica
+OrganizacionComunitaria "0..1" --> "0..*" Actividad : solicita
+Actividad "1" *-- "0..*" Evidencia : respalda
+Delegacion "1" --> "0..*" Compromiso : agenda
+Funcionario "1" --> "0..*" Compromiso : responsable
+Compromiso "1" *-- "0..*" CambioCompromiso : historial
+Actividad "0..1" --> "0..*" Compromiso : origina
+Compromiso "0..1" --> "0..*" Actividad : se cumple con
+Funcionario "1" *-- "0..*" Reconocimiento : recibe
+Funcionario "1" *-- "0..*" Ausencia : registra el Delegado
+User "0..1" --> "0..*" RegistroAuditoria : autor
+indicadores ..> Actividad : usa
+indicadores ..> MetaProyecto : usa
+indicadores ..> Ausencia : usa
+alertas ..> Compromiso : usa
+alertas ..> indicadores : usa
+auditoria ..> RegistroAuditoria : crea
+```
+
+---
+
+## Modelo conceptual (Evaluaciones 1 y 2)
+
 Este diagrama mantiene la **misma estructura y las mismas 13 clases** del
 diagrama entregado en la Evaluación 1 (Delegación, CargoFunción,
 Funcionario, Periodo, Meta, Actividad, Compromiso, Evidencia, Validación,
