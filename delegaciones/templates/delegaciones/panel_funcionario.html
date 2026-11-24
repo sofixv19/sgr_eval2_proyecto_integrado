@@ -10,13 +10,10 @@
             <div class="dash-chips">
                 <span class="dash-chip">{{ perfil.cargo.nombre_cargo }}</span>
                 <span class="dash-chip">Área {{ perfil.cargo.get_area_display }}</span>
-                {% if periodo %}<span class="dash-chip">{{ periodo }}</span>{% endif %}
+                {% include "includes/periodo_selector.html" %}
                 <span class="dash-chip">Hoy: {{ ingresos_hoy }} de {{ max_ingresos }} ingresos</span>
             </div>
         </div>
-    </div>
-    <div class="dash-banner-acciones">
-        {% include "includes/periodo_selector.html" %}
     </div>
 </section>
 

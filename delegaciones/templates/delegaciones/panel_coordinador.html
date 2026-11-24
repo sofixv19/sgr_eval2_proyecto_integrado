@@ -10,13 +10,10 @@
             <h1 class="dash-banner-titulo">Coordinación de delegaciones</h1>
             <div class="dash-chips">
                 <span class="dash-chip">{{ total_activas }} delegaciones activas</span>
-                {% if periodo %}<span class="dash-chip">{{ periodo }}</span>{% endif %}
+                {% include "includes/periodo_selector.html" %}
                 {% if sin_delegado %}<span class="dash-chip dash-chip-alerta">{{ sin_delegado|length }} sin Delegado</span>{% endif %}
             </div>
         </div>
-    </div>
-    <div class="dash-banner-acciones">
-        {% include "includes/periodo_selector.html" %}
     </div>
 </section>
 

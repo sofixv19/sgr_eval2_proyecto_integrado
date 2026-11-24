@@ -29,9 +29,14 @@ La versión vigente se ve en el pie de cada página y está en `SGR_VERSION` (`s
 
 Observación del equipo: al cambiar de página o abrir un menú todo aparecía de golpe, y los mensajes ("Bienvenido/a…", "Actividad registrada…") quedaban pegados arriba.
 
-- **Cambio de página**: fundido suave del contenido; la barra superior queda quieta (View Transitions en Chrome, Edge y Brave; fundido de entrada en los demás navegadores).
+- **Cambio de página**: al hacer clic el contenido se desvanece y la página nueva entra con un fundido; las tarjetas de los paneles aparecen una tras otra. La barra superior queda quieta. Funciona en todos los navegadores.
 - **Menús desplegables y autocompletar**: se abren con un fundido corto.
-- **Mensajes del sistema**: tarjetas flotantes arriba a la derecha (abajo en el celular) que se cierran solas: éxito e información 4,5 s, aviso 7 s, error 9 s. Una barra muestra el tiempo que queda; con el mouse encima esperan; la X los cierra al tiro.
+- **Mensajes del sistema**: tarjeta flotante centrada bajo la barra superior que se cierra sola: éxito e información 4,5 s, aviso 7 s, error 9 s. Una barra muestra el tiempo que queda; con el mouse encima esperan; la X los cierra al tiro.
+- El mensaje con la **contraseña temporal** de una cuenta nueva no se cierra solo: queda hasta apretar la X (CP-FUN-001).
+- **Corrección (INC-16)**: las páginas "Eliminar" de territorios, vecinos, socios/dirigentes e hitos daban error 500. Se revisaron todas las páginas con los 5 roles: sin errores, sin enlaces que lleven a "Acceso denegado", y los registros de otra delegación responden 404.
+- **Pantalla de acceso nueva** (login y recuperar contraseña): fondo rojo tipo vidrio a pantalla completa, tarjeta de vidrio esmerilado con el escudo, campos con íconos y botón para mostrar u ocultar la contraseña.
+- **Selector de período**: pasa a las etiquetas del encabezado (a la izquierda), para que el menú del usuario no lo tape.
+- Los archivos CSS y JS se piden con la versión (`?v=3.0.1`), así el navegador no usa copias antiguas.
 - Quien tiene activado "reducir movimiento" en su equipo no ve animaciones (accesibilidad).
 - Archivos: `static/css/custom.css`, `static/js/sgr.js`, `templates/base.html`. Sin cambios en la base de datos. 217 pruebas aprobadas.
 

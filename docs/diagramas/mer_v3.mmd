@@ -1,0 +1,40 @@
+---
+config:
+  layout: elk
+  er:
+    fontSize: 13
+---
+erDiagram
+    auth_user ||--o| funcionarios : "cuenta"
+    auth_user ||--|| cuentas_estadocuenta : "estado clave"
+    auth_user ||--o{ comun_registroauditoria : "registra"
+    delegaciones_delegacion ||--o{ funcionarios : "tiene"
+    cargos ||--o{ funcionarios : "cargo"
+    delegaciones_delegacion ||--o{ delegaciones_organizacioncomunitaria : "JJVV"
+    delegaciones_delegacion ||--o{ territorio_territorio : "territorios"
+    delegaciones_delegacion ||--o{ territorio_vecino : "vecinos"
+    territorio_territorio |o--o{ territorio_vecino : "vive en"
+    territorio_vecino ||--o{ territorio_membresiaorganizacion : "socio o dirigente"
+    delegaciones_organizacioncomunitaria ||--o{ territorio_membresiaorganizacion : "miembros"
+    delegaciones_delegacion ||--o{ territorio_hito : "hitos"
+    funcionarios ||--o{ territorio_hito : "responsable"
+    territorio_tipoatencion ||--o{ territorio_subtipoatencion : "subtipos"
+    cargos ||--o{ metas : "meta por cargo"
+    funcionarios |o--o{ metas : "asignación"
+    periodos |o--o{ metas : "trimestre"
+    gestion_categoria |o--o{ metas : "ítem del catálogo"
+    funcionarios ||--o{ gestion_actividad : "registra"
+    funcionarios |o--o{ gestion_actividad : "valida (Delegado)"
+    delegaciones_delegacion ||--o{ gestion_actividad : "pertenece"
+    gestion_categoria ||--o{ gestion_actividad : "ítem"
+    territorio_vecino |o--o{ gestion_actividad : "vecino atendido"
+    territorio_subtipoatencion |o--o{ gestion_actividad : "gestión social"
+    gestion_actividad ||--o{ gestion_evidencia : "evidencias"
+    gestion_actividad |o--o{ gestion_compromiso : "ingresa al Tubo"
+    funcionarios ||--o{ gestion_compromiso : "responsable"
+    gestion_compromiso ||--o{ gestion_cambiocompromiso : "historial"
+    delegaciones_delegacion ||--o{ gestion_carta : "Tubo de cartas"
+    funcionarios ||--o{ gestion_carta : "encargado"
+    funcionarios ||--o{ organizacion_reconocimiento : "felicitaciones"
+    funcionarios ||--o{ organizacion_ausencia : "ausencias"
+    periodos ||--o{ organizacion_reconocimiento : "trimestre"

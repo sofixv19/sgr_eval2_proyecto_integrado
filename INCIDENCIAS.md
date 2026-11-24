@@ -4,6 +4,7 @@ Incidencias reales ocurridas al configurar, desplegar o probar el sistema, con s
 
 | N.º | Fecha | Entorno | Incidencia | Causa | Solución | Comprobación |
 |---|---|---|---|---|---|---|
+| INC-16 | 24-11-2026 | Revisión de permisos (v3.0.1) | Las páginas "Eliminar" de territorios, vecinos, socios/dirigentes e hitos respondían error 500. | La confirmación de eliminar usa un formulario simple, y la vista le pasaba la delegación como si fuera el de crear/editar. | Solo los formularios de crear/editar reciben la delegación (`territorio/views.py`). | Recorrido automático de todas las páginas con los 5 roles: 0 errores; CP-COM-001 y CP-COM-004 ampliados. |
 | INC-15 | 23-11-2026 | Desarrollo (v3.0) | flake8 avisó una línea de más de 120 caracteres en `comun/auditoria.py`. | Diccionario de acciones en una sola línea. | Se movió a la constante `ACCIONES_VALIDACION`. | `flake8` sin avisos. |
 | INC-14 | 23-11-2026 | Desarrollo (v3.0) | Los gráficos del dashboard mostraban decimales en el eje y la línea de tendencia bajaba de 0. | Opciones por defecto de Chart.js (curva suavizada, pasos decimales). | Línea recta, ejes enteros y barras horizontales para nombres largos. | CP-DAS-001 a 003 y CP-MAN-11. |
 | INC-13 | 23-11-2026 | Pruebas manuales (v3.0) | Al pasar una gestión social al Tubo el compromiso no se guardaba. | El territorio del compromiso es obligatorio y no se copiaba desde el vecino. | `gestion/views_agenda.py` completa el territorio desde el vecino. | CP-GSO-005 (nueva) y CP-MAN-07/08 en la ejecución 4. |

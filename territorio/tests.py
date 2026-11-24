@@ -21,7 +21,11 @@ class ComunidadV3Tests(EscenarioBase):
         """CP-COM-001: El Delegado crea un territorio y queda asignado a su propia delegación."""
         self.entrar(self.delegado_rural)
         self.client.post(reverse('territorio:territorio_crear'), {'nombre': 'Sector El Romeral', 'activo': 'on'})
-        self.assertEqual(Territorio.objects.get(nombre='Sector El Romeral').delegacion, self.rural)
+        territorio = Territorio.objects.get(nombre='Sector El Romeral')
+        self.assertEqual(territorio.delegacion, self.rural)
+        # El Delegado crea y edita territorios, pero no los elimina (solo el Administrador)
+        url = reverse('territorio:territorio_eliminar', args=[territorio.pk])
+        self.assertEqual(self.client.get(url).status_code, 403)
 
     def test_cp_com_002_territorio_repetido_se_rechaza(self):
         """CP-COM-002: No se puede repetir el nombre de un territorio en la misma delegación."""
@@ -48,6 +52,12 @@ class ComunidadV3Tests(EscenarioBase):
         vecino = Vecino.objects.get(nombre='Juan Soto Rojas')
         self.assertEqual(vecino.rut, '12.222.222-5')
         self.assertEqual(vecino.delegacion, self.rural)
+        # v3.0.1: el Delegado abre la página de eliminar (antes daba error 500) y elimina
+        self.entrar(self.delegado_rural)
+        url = reverse('territorio:vecino_eliminar', args=[vecino.pk])
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.client.post(url)
+        self.assertFalse(Vecino.objects.filter(pk=vecino.pk).exists())
 
     def test_cp_com_005_otra_delegacion_no_ve_los_vecinos(self):
         """CP-COM-005: Un funcionario de otra delegación no ve ni puede editar los vecinos ajenos (404)."""

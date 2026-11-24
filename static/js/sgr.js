@@ -5,7 +5,10 @@
  *     mientras se escribe (código, RUT o nombre del solicitante).
  *  3. (v3.0.1) Mensajes del sistema: aparecen arriba a la derecha y se
  *     cierran solos (éxito 4,5 s; aviso 7 s; error 9 s). Si el mouse está
- *     encima, esperan.
+ *     encima, esperan. Los que traen una contraseña (.fijo) quedan hasta
+ *     cerrarlos con la X.
+ *  4. (v3.0.1) Cambio de página: al hacer clic en un enlace interno o enviar
+ *     un formulario, el contenido se desvanece antes de ir a la página nueva.
  */
 (function () {
   'use strict';
@@ -135,7 +138,48 @@
       boton.removeAttribute('data-bs-dismiss');
       boton.addEventListener('click', function () { clearTimeout(reloj); cerrarMensaje(alerta); });
     }
+    if (alerta.classList.contains('fijo')) return;  // credenciales: se cierra solo con la X
     pausas = 1;
     correr();
+  });
+  // ------------------------------------------------ 4. Salida suave al cambiar de página
+  var contenido = document.querySelector('main.page-content');
+  function salir() {
+    if (!contenido) return;
+    contenido.classList.add('saliendo');
+    // si la navegación no ocurre (descarga de Excel, error), se vuelve a mostrar
+    setTimeout(function () { contenido.classList.remove('saliendo'); }, 1500);
+  }
+  window.addEventListener('pageshow', function () { if (contenido) contenido.classList.remove('saliendo'); });
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var href = a.getAttribute('href');
+    if (!href || href.charAt(0) === '#' || a.target === '_blank' || a.hasAttribute('download') ||
+        a.hasAttribute('data-bs-toggle') || a.origin !== location.origin || /exportar|descargar|\/media\//.test(a.pathname)) return;
+    if (a.pathname === location.pathname && a.search === location.search && a.hash) return;
+    e.preventDefault();
+    salir();
+    setTimeout(function () { location.href = a.href; }, 200);
+  });
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (e.defaultPrevented || f.method.toLowerCase() === 'get' && /exportar/.test(f.action)) return;
+    if (f.querySelector('input[type=file]')) return;  // la subida de archivos muestra su propio avance
+    salir();
+  });
+  // ------------------------------------------------ 5. Mostrar u ocultar la contraseña (pantalla de acceso)
+  document.querySelectorAll('[data-ver-clave]').forEach(function (boton) {
+    var campo = document.getElementById(boton.getAttribute('data-ver-clave'));
+    if (!campo) return;
+    campo.setAttribute('data-visible', '');
+    boton.addEventListener('click', function () {
+      var ver = campo.type === 'password';
+      campo.type = ver ? 'text' : 'password';
+      boton.setAttribute('aria-pressed', ver ? 'true' : 'false');
+      boton.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      boton.title = boton.getAttribute('aria-label');
+      campo.focus();
+    });
   });
 })();

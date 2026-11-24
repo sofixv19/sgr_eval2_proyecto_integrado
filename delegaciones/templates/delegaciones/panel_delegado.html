@@ -10,13 +10,10 @@
             <h1 class="dash-banner-titulo">Delegación {{ delegacion }}</h1>
             <div class="dash-chips">
                 <span class="dash-chip">{{ detalle|length }} funcionario{{ detalle|length|pluralize }}</span>
-                {% if periodo %}<span class="dash-chip">{{ periodo }}</span>{% endif %}
+                {% include "includes/periodo_selector.html" %}
                 {% if total_por_validar %}<span class="dash-chip dash-chip-alerta">{{ total_por_validar }} por validar</span>{% endif %}
             </div>
         </div>
-    </div>
-    <div class="dash-banner-acciones">
-        {% include "includes/periodo_selector.html" %}
     </div>
 </section>
 

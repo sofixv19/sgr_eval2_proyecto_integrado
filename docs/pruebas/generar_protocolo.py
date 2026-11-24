@@ -103,6 +103,11 @@ GRUPOS = {
 
 # Defectos encontrados (ID = INCIDENCIAS.md). caso -> defecto
 DEFECTOS = [
+    ('INC-16', '24-11-2026', 'Recorrido de todas las páginas con los 5 roles',
+     'Las páginas "Eliminar" de territorios, vecinos, socios/dirigentes e hitos respondían error 500.', 'Alta',
+     'La vista pasaba la delegación al formulario simple de confirmación de borrado.',
+     'Solo los formularios de crear/editar reciben la delegación (territorio/views.py); CP-COM-001 y 004 ampliados.',
+     '3.0.1', 'CP-COM-001 y CP-COM-004: Aprobado; recorrido con 0 errores', 'Corregido'),
     # id, fecha, detectado_por, descripcion, severidad, causa, correccion, version, reejecucion, estado
     ('INC-15', '23-11-2026', 'flake8 (revisión estática)', 'Línea de más de 120 caracteres en comun/auditoria.py.',
      'Baja', 'Diccionario de acciones escrito en una sola línea.', 'Se movió a la constante ACCIONES_VALIDACION.',
@@ -141,7 +146,7 @@ DEFECTOS = [
 ]
 DEFECTO_DE_CASO = {
     'CP-GSO-001': 'INC-08', 'CP-GSO-002': 'INC-08', 'CP-GSO-003': 'INC-08', 'CP-GSO-004': 'INC-08',
-    'CP-GSO-005': 'INC-13', 'CP-VER-001': 'INC-09', 'CP-CLA-008': 'INC-10', 'CP-DEM-002': 'INC-06',
+    'CP-GSO-005': 'INC-13', 'CP-COM-001': 'INC-16', 'CP-COM-004': 'INC-16', 'CP-VER-001': 'INC-09', 'CP-CLA-008': 'INC-10', 'CP-DEM-002': 'INC-06',
 }
 
 # Protocolo manual (ejecutado en navegador Chromium con docs/pruebas/protocolo_manual.js)

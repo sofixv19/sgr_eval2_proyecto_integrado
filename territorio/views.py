@@ -9,7 +9,7 @@ from comun.vistas import MantenedorCrear, MantenedorEditar, MantenedorEliminar, 
 from cuentas.perfiles import delegacion_fija, filtrar_por_delegacion
 
 from .forms import (
-    HitoForm, MembresiaForm, SubtipoAtencionForm, TerritorioForm, TipoAtencionForm, VecinoForm,
+    DelegacionFijaMixin, HitoForm, MembresiaForm, SubtipoAtencionForm, TerritorioForm, TipoAtencionForm, VecinoForm,
 )
 from .models import Hito, MembresiaOrganizacion, SubtipoAtencion, Territorio, TipoAtencion, Vecino
 
@@ -22,7 +22,10 @@ class PorDelegacion:
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['delegacion'] = delegacion_fija(self.request.user)
+        # v3.0.1: solo los formularios de crear/editar reciben la delegación;
+        # la confirmación de eliminar usa un formulario simple (antes daba error 500).
+        if issubclass(self.get_form_class(), DelegacionFijaMixin):
+            kwargs['delegacion'] = delegacion_fija(self.request.user)
         return kwargs
 
 

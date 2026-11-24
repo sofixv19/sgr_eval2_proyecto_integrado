@@ -7,10 +7,10 @@
     <title>{% block titulo %}SGR La Serena{% endblock %} · Municipalidad de La Serena</title>
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=22">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v={{ sgr_version }}">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="site-body">
+<body class="site-body {% block clase_body %}{% endblock %}">
 
     <header class="site-header">
         <nav class="navbar navbar-expand-lg navbar-dark">
@@ -149,17 +149,18 @@
         </nav>
     </header>
 
-    <main class="container page-content">
-        {% if messages %}
-        <div class="mensajes-sistema" aria-live="polite">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'success' }} alert-dismissible" role="{% if message.level >= 30 %}alert{% else %}status{% endif %}">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-            </div>
-            {% endfor %}
+    {% if messages %}
+    <div class="mensajes-sistema" aria-live="polite">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.level_tag|default:'success' }} alert-dismissible{% if 'fijo' in message.extra_tags %} fijo{% endif %}" role="{% if message.level >= 30 %}alert{% else %}status{% endif %}">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
-        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="container page-content">
         {% block contenido %}{% endblock %}
     </main>
 
@@ -173,7 +174,7 @@
     </footer>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-    <script src="{% static 'js/sgr.js' %}" defer></script>
+    <script src="{% static 'js/sgr.js' %}?v={{ sgr_version }}" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

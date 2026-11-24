@@ -2,13 +2,15 @@
 {% load static %}
 
 {% block titulo %}Iniciar sesión{% endblock %}
+{% block clase_body %}pagina-acceso{% endblock %}
 
 {% block contenido %}
-<div class="form-card mx-auto mt-2" style="max-width: 440px;">
-    <div class="text-center mb-3">
-        <img src="{% static 'img/escudo-la-serena.jpg' %}" alt="Escudo de La Serena" width="64" class="mb-2">
-        <h1 class="h4 mb-1">Sistema de Gestión de Resultados</h1>
-        <p class="text-muted small mb-0">Delegaciones Municipales · La Serena</p>
+<div class="acceso-card">
+    <div class="acceso-marca">
+        <span class="acceso-escudo"><img src="{% static 'img/escudo-la-serena.jpg' %}" alt="Escudo de La Serena" width="58" height="58"></span>
+        <p class="acceso-eyebrow">Ilustre Municipalidad de La Serena</p>
+        <h1 class="acceso-titulo">Sistema de Gestión de Resultados</h1>
+        <p class="acceso-sub">Delegaciones Municipales</p>
     </div>
 
     <form method="post" novalidate>
@@ -16,20 +18,28 @@
         <input type="hidden" name="next" value="{{ next }}">
 
         {% if form.non_field_errors %}
-        <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+        <div class="alert alert-danger acceso-error" role="alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
         {% endif %}
 
-        <div class="mb-3">
-            <label class="form-label" for="{{ form.usuario.id_for_label }}">{{ form.usuario.label }}</label>
+        <label class="form-label" for="{{ form.usuario.id_for_label }}">{{ form.usuario.label }}</label>
+        <div class="acceso-campo mb-3">
+            <svg class="acceso-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             {{ form.usuario }}
         </div>
-        <div class="mb-3">
-            <label class="form-label" for="{{ form.contrasena.id_for_label }}">{{ form.contrasena.label }}</label>
+
+        <label class="form-label" for="{{ form.contrasena.id_for_label }}">{{ form.contrasena.label }}</label>
+        <div class="acceso-campo mb-4">
+            <svg class="acceso-icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             {{ form.contrasena }}
+            <button type="button" class="acceso-ver" data-ver-clave="{{ form.contrasena.id_for_label }}" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+            </button>
         </div>
-        <button type="submit" class="btn btn-institucional w-100">Ingresar</button>
+
+        <button type="submit" class="btn acceso-boton w-100">Ingresar</button>
     </form>
-    <p class="text-center small mt-3 mb-0"><a href="{% url 'cuentas:recuperar' %}">¿Olvidó su contraseña?</a></p>
-    <p class="text-muted small text-center mt-3 mb-0">Acceso solo para personal municipal autorizado.</p>
+
+    <p class="text-center mt-3 mb-0"><a class="acceso-enlace" href="{% url 'cuentas:recuperar' %}">¿Olvidó su contraseña?</a></p>
+    <p class="acceso-nota">Acceso solo para personal municipal autorizado.</p>
 </div>
 {% endblock %}

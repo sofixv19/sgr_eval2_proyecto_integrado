@@ -182,6 +182,7 @@ class FuncionarioMantenedorTests(TestCase):
         self.assertEqual(funcionario.email, 'ana.rojas@laserena.cl')
         self.assertIsNotNone(funcionario.usuario)
         self.assertContains(respuesta, 'Credenciales para entregar')
+        self.assertContains(respuesta, 'alert-dismissible fijo')  # v3.0.1: no se cierra solo
 
     def test_cp_fun_002_rut_con_dv_incorrecto(self):
         """CP-FUN-002: El formulario rechaza un RUT con dígito verificador incorrecto."""

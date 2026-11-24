@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 {% block titulo %}Recuperar contraseña{% endblock %}
+{% block clase_body %}pagina-acceso{% endblock %}
 {% block contenido %}
-<div class="form-card mx-auto mt-2" style="max-width: 480px;">
-    <h1 class="h4 mb-2">Recuperar contraseña</h1>
+<div class="acceso-card">
+    <h1 class="acceso-titulo text-start mb-2">Recuperar contraseña</h1>
     <p class="text-muted small">Escriba el correo registrado en su cuenta. Le enviaremos un enlace para crear una nueva contraseña; el enlace sirve una sola vez y vence en una hora.</p>
     <form method="post" novalidate>
         {% csrf_token %}
         {% include "cuentas/_form_campos.html" %}
-        <button type="submit" class="btn btn-institucional w-100">Enviar enlace</button>
+        <button type="submit" class="btn acceso-boton w-100">Enviar enlace</button>
     </form>
-    <p class="text-center small mt-3 mb-0"><a href="{% url 'cuentas:login' %}">Volver a iniciar sesión</a></p>
+    <p class="text-center small mt-3 mb-0"><a class="acceso-enlace" href="{% url 'cuentas:login' %}">Volver a iniciar sesión</a></p>
 </div>
 {% endblock %}
