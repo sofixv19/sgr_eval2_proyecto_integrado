@@ -162,7 +162,12 @@ def sincronizar_cuenta(funcionario, clave=None, temporal=True):
     usuario = funcionario.usuario
     clave_generada = None
     if usuario is None:
-        usuario = User(username=_nombre_usuario_libre(funcionario.email.split('@')[0]))
+        # v3.0.1 (INC-17): si la persona tuvo una cuenta que quedó desactivada al
+        # eliminar su ficha, se reutiliza (mismo usuario) en vez de crear otra.
+        usuario = User.objects.filter(email__iexact=funcionario.email, is_active=False, is_superuser=False,
+                                      funcionario__isnull=True).first()
+        if usuario is None:
+            usuario = User(username=_nombre_usuario_libre(funcionario.email.split('@')[0]))
         clave_generada = clave or generar_clave()
         usuario.set_password(clave_generada)
     elif clave:

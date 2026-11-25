@@ -71,7 +71,8 @@ def _mensaje_credenciales(request, funcionario, clave):
     messages.info(
         request,
         f'Credenciales para entregar a {funcionario.nombre}: usuario «{funcionario.usuario.username}», '
-        f'contraseña temporal «{clave}». Cópielas ahora: la contraseña no se volverá a mostrar.',
+        f'contraseña temporal «{clave}» (sin los signos « »). También puede entrar con su correo '
+        f'{funcionario.email}. Cópielas ahora: la contraseña no se volverá a mostrar.',
         extra_tags='fijo',  # v3.0.1: este mensaje no se cierra solo
     )
 

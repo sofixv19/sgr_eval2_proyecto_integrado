@@ -2,7 +2,7 @@
 
 **Dirección:** http://184.194.243.125:8000 (Firefox, Edge o Chrome).
 
-Al entrar se pide usuario y contraseña. Después de 5 intentos fallidos la cuenta se bloquea 15 minutos. Cada persona ve **solo lo que corresponde a su rol y a su delegación**. El número de versión aparece en el pie de cada página.
+Al entrar se pide usuario (o el correo de la cuenta) y contraseña. Después de 5 intentos fallidos la cuenta se bloquea 15 minutos. Cada persona ve **solo lo que corresponde a su rol y a su delegación**. El número de versión aparece en el pie de cada página.
 
 ## Cuentas de demostración
 

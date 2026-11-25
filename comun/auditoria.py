@@ -11,7 +11,7 @@ import threading
 
 from django.apps import apps
 from django.contrib.auth.signals import user_logged_in, user_login_failed
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models.signals import post_delete, post_save, pre_save
 
 _local = threading.local()
@@ -75,8 +75,12 @@ def registrar(accion, instancia=None, cambios=None, detalle='', usuario=None):
         'usuario': usuario, 'usuario_texto': usuario.get_username() if usuario else 'sistema',
     }
     if instancia is not None:
+        try:
+            nombre = str(instancia)[:200]
+        except ObjectDoesNotExist:  # v3.0.1 (INC-18): borrado en cascada
+            nombre = f'{instancia._meta.verbose_name} #{instancia.pk}'
         datos.update({'entidad': str(instancia._meta.verbose_name).capitalize(), 'objeto_id': str(instancia.pk),
-                      'objeto': str(instancia)[:200]})
+                      'objeto': nombre})
     try:
         RegistroAuditoria.objects.create(**datos)
     except Exception:  # la auditoría nunca debe impedir la operación principal
@@ -85,7 +89,13 @@ def registrar(accion, instancia=None, cambios=None, detalle='', usuario=None):
 
 def _valor(instancia, campo):
     if campo.is_relation:
-        relacionado = getattr(instancia, campo.name, None)
+        try:
+            relacionado = getattr(instancia, campo.name, None)
+        except ObjectDoesNotExist:
+            # v3.0.1 (INC-18): en un borrado en cascada el registro relacionado
+            # ya no existe; se guarda su identificador en vez de romper el borrado.
+            identificador = getattr(instancia, campo.attname, None)
+            return f'#{identificador} (eliminado)' if identificador is not None else ''
         return str(relacionado) if relacionado is not None else ''
     valor = campo.value_from_object(instancia)
     if campo.choices:

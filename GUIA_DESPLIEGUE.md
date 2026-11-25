@@ -243,7 +243,7 @@ ls logs/correos/          # un archivo .log por correo
 cat logs/correos/*.log    # ahí está el enlace para restablecer la contraseña
 ```
 
-Para enviarlos de verdad, se agregan al `.env` del servidor las variables `EMAIL_*` indicadas en `.env.example` (por ejemplo, Gmail con una contraseña de aplicación) y se reinicia el servicio. **La contraseña del correo va solo en el `.env` del servidor, nunca en GitHub.**
+Para enviarlos de verdad con Gmail: activar la verificación en dos pasos de la cuenta, crear una **contraseña de aplicación** (myaccount.google.com/apppasswords) y ejecutar desde el PC `bash configurar_correo.sh`, que la pide por teclado, la guarda solo en el `.env` del servidor y envía un correo de prueba. También se pueden agregar a mano al `.env` del servidor las variables `EMAIL_*` indicadas en `.env.example` (por ejemplo, Gmail con una contraseña de aplicación) y se reinicia el servicio. **La contraseña del correo va solo en el `.env` del servidor, nunca en GitHub.**
 
 ### Respaldo y recuperación
 

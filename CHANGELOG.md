@@ -33,6 +33,10 @@ Observación del equipo: al cambiar de página o abrir un menú todo aparecía d
 - **Menús desplegables y autocompletar**: se abren con un fundido corto.
 - **Mensajes del sistema**: tarjeta flotante centrada bajo la barra superior que se cierra sola: éxito e información 4,5 s, aviso 7 s, error 9 s. Una barra muestra el tiempo que queda; con el mouse encima esperan; la X los cierra al tiro.
 - El mensaje con la **contraseña temporal** de una cuenta nueva no se cierra solo: queda hasta apretar la X (CP-FUN-001).
+- **Corrección (INC-18)**: eliminar un registro con datos asociados (por ejemplo, un funcionario con metas) ya no rompe la auditoría (CP-FUN-010 ampliado).
+- **Entrar con el correo**: en el login se puede escribir el usuario **o el correo** de la cuenta (el usuario lo genera el sistema y era difícil de recordar). El mensaje de credenciales lo indica (CP-LOGIN-001 ampliado).
+- **Corrección de seguridad (INC-17)**: al eliminar un funcionario, su cuenta ahora se desactiva y pierde su rol (antes quedaba activa). Si se vuelve a crear con el mismo correo, recupera la misma cuenta. La migración `organizacion/0010` desactiva las cuentas que ya habían quedado sin ficha (CP-FUN-010 ampliado).
+- **Correo de recuperación**: se comprobó con una prueba que, si el servidor de correo falla, la página no se cae y muestra el mismo mensaje (CP-CLA-004 ampliado). Script `configurar_correo.sh` para activar Gmail en el servidor sin guardar la contraseña en el repositorio.
 - **Corrección (INC-16)**: las páginas "Eliminar" de territorios, vecinos, socios/dirigentes e hitos daban error 500. Se revisaron todas las páginas con los 5 roles: sin errores, sin enlaces que lleven a "Acceso denegado", y los registros de otra delegación responden 404.
 - **Pantalla de acceso nueva** (login y recuperar contraseña): fondo rojo tipo vidrio a pantalla completa, tarjeta de vidrio esmerilado con el escudo, campos con íconos y botón para mostrar u ocultar la contraseña.
 - **Selector de período**: pasa a las etiquetas del encabezado (a la izquierda), para que el menú del usuario no lo tape.

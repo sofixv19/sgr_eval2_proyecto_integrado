@@ -30,6 +30,11 @@ class ValidarCredencialesTests(TestCase):
         self.assertTrue(resultado.ok)
         self.assertEqual(resultado.codigo, servicios.OK)
         self.assertEqual(resultado.usuario, self.usuario)
+        # v3.0.1: también se puede entrar con el correo de la cuenta
+        self.usuario.email = 'usuario.prueba@laserena.cl'
+        self.usuario.save()
+        self.assertTrue(validar_credenciales('Usuario.Prueba@LaSerena.cl', CLAVE_PRUEBA).ok)
+        self.assertFalse(validar_credenciales('usuario.prueba@laserena.cl', 'otraClave.123').ok)
 
     def test_cp_login_002_contrasena_incorrecta(self):
         """CP-LOGIN-002: Usuario válido y contraseña incorrecta -> autenticación rechazada."""

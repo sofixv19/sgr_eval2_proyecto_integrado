@@ -19,6 +19,8 @@ original del proyecto de Sofía.
 """
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils import timezone
 
 from delegaciones.models import Delegacion
@@ -259,3 +261,18 @@ class Ausencia(models.Model):
         """Días de esta ausencia que caen dentro del rango [inicio, fin]."""
         desde, hasta = max(self.desde, inicio), min(self.hasta, fin)
         return max((hasta - desde).days + 1, 0)
+
+
+@receiver(post_delete, sender=Funcionario, dispatch_uid='desactivar_cuenta_de_funcionario_eliminado')
+def desactivar_cuenta_de_funcionario_eliminado(sender, instance, **kwargs):
+    """v3.0.1 (INC-17): al eliminar un funcionario, su cuenta de acceso se
+    desactiva y pierde su rol. No se borra, para conservar el historial de
+    la auditoría. Si la persona se vuelve a crear con el mismo correo, se
+    reutiliza la misma cuenta (ver cuentas.perfiles.sincronizar_cuenta)."""
+    if instance.usuario_id:
+        from django.contrib.auth import get_user_model
+        usuario = get_user_model().objects.filter(pk=instance.usuario_id).first()
+        if usuario:
+            usuario.is_active = False
+            usuario.save(update_fields=['is_active'])
+            usuario.groups.clear()

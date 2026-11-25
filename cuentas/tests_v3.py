@@ -58,6 +58,12 @@ class ClavesTests(TestCase):
         self.assertRedirects(r2, reverse('cuentas:recuperar_enviado'))
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('/cuentas/restablecer/', mail.outbox[0].body)
+        # v3.0.1: si el servidor de correo falla, la página no se cae (Django registra el error)
+        import smtplib
+        from unittest import mock
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=smtplib.SMTPException('caído')):
+            r3 = self.client.post(reverse('cuentas:recuperar'), {'email': 'ana@laserena.cl'})
+        self.assertRedirects(r3, reverse('cuentas:recuperar_enviado'))
 
     def test_cp_cla_005_enlace_sirve_una_vez(self):
         """CP-CLA-005: El enlace de recuperación permite crear una clave nueva y deja de servir después de usarlo."""

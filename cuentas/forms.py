@@ -9,7 +9,7 @@ class LoginForm(forms.Form):
     forma unitaria."""
 
     usuario = forms.CharField(
-        label='Usuario', max_length=150, required=False,
+        label='Usuario o correo', max_length=150, required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'username', 'autofocus': True}),
     )
     contrasena = forms.CharField(

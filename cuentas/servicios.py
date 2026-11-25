@@ -103,8 +103,15 @@ def validar_credenciales(usuario, contrasena, request=None):
             f'Intente nuevamente en {_minutos_bloqueo()} minutos.',
         )
 
-    # 4) Autenticación contra la base de datos (contraseña con hash PBKDF2)
-    user = authenticate(request, username=usuario, password=contrasena)
+    # 4) Autenticación contra la base de datos (contraseña con hash PBKDF2).
+    #    v3.0.1: también se puede entrar con el correo de la cuenta.
+    nombre_usuario = usuario
+    if '@' in usuario:
+        cuenta = (get_user_model().objects.filter(email__iexact=usuario, is_active=True)
+                  .order_by('-last_login', '-pk').first())
+        if cuenta is not None:
+            nombre_usuario = cuenta.get_username()
+    user = authenticate(request, username=nombre_usuario, password=contrasena)
     if user is not None:
         limpiar_intentos(usuario)
         return ResultadoLogin(True, OK, 'Inicio de sesión correcto.', user)
@@ -112,7 +119,7 @@ def validar_credenciales(usuario, contrasena, request=None):
     # 5) authenticate() devuelve None también para cuentas inactivas: se
     #    distingue solo si la contraseña es correcta, para no dar pistas.
     modelo = get_user_model()
-    existente = modelo.objects.filter(username__iexact=usuario).first()
+    existente = modelo.objects.filter(username__iexact=nombre_usuario).first()
     if existente is not None and not existente.is_active and existente.check_password(contrasena):
         logger.warning('Intento de acceso con cuenta inactiva: %s', usuario)
         return ResultadoLogin(

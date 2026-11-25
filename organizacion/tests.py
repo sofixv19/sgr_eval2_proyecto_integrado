@@ -251,8 +251,25 @@ class FuncionarioMantenedorTests(TestCase):
         """CP-FUN-010: El detalle responde 200 y un funcionario sin actividades se elimina."""
         funcionario = self._existente()
         self.assertEqual(self.client.get(reverse('organizacion:funcionario_detalle', args=[funcionario.pk])).status_code, 200)
+        from cuentas.perfiles import sincronizar_cuenta
+        usuario, _ = sincronizar_cuenta(funcionario, temporal=False)
+        # v3.0.1 (INC-18): con una meta asignada, el borrado en cascada no debe romper la auditoría
+        MetaProyecto.objects.create(cargo=self.cargo, funcionario=funcionario, item_medible='Visitas',
+                                    valor_objetivo='10', ponderador=50)
         self.client.post(reverse('organizacion:funcionario_eliminar', args=[funcionario.pk]))
         self.assertFalse(Funcionario.objects.filter(pk=funcionario.pk).exists())
+        # v3.0.1 (INC-17): la cuenta queda desactivada y sin rol (no puede entrar)
+        usuario.refresh_from_db()
+        self.assertFalse(usuario.is_active)
+        self.assertFalse(usuario.groups.exists())
+        # si la persona se vuelve a crear con el mismo correo, se reutiliza la misma cuenta
+        self.client.post(reverse('organizacion:funcionario_crear'), {
+            'nombre': 'Pedro Soto', 'rut': '7.654.321-6', 'email': 'pedro@laserena.cl',
+            'delegacion': self.delegacion.pk, 'cargo': self.cargo.pk, 'rol': 'Funcionario', 'activo': 'on'})
+        nuevo = Funcionario.objects.get(rut='7.654.321-6')
+        self.assertEqual(nuevo.usuario_id, usuario.pk)
+        usuario.refresh_from_db()
+        self.assertTrue(usuario.is_active)
 
     def test_cp_fun_011_busqueda_en_listado(self):
         """CP-FUN-011: El listado filtra por nombre, RUT, cargo o delegación."""
